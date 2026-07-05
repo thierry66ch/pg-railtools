@@ -1,0 +1,36 @@
+{
+  "actions": {
+    "exportPdf": "Exporter en PDF",
+    "exportMarkdown": "Exporter en Markdown",
+    "exportPng": "Exporter en PNG",
+    "exportProject": "Exporter ce projet",
+    "importProject": "Importer un projet",
+    "exportEnvironment": "Exporter tout l'environnement",
+    "importEnvironment": "Importer un environnement",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "confirmDelete": "Supprimer ?"
+  },
+  "units": {
+    "unit": "Unité",
+    "scale": "Échelle"
+  },
+  "language": {
+    "select": "Langue"
+  },
+  "version": {
+    "label": "Version {version} (build {build})"
+  },
+  "projects": {
+    "title": "Projets",
+    "empty": "Aucun projet enregistré pour l'instant.",
+    "namePlaceholder": "Nom du projet",
+    "new": "Nouveau projet",
+    "open": "Ouvrir",
+    "rename": "Renommer",
+    "duplicate": "Dupliquer",
+    "delete": "Supprimer",
+    "createdOn": "Créé le {date}",
+    "updatedOn": "Modifié le {date}"
+  }
+}

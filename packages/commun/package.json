@@ -1,0 +1,32 @@
+{
+  "name": "@railtools/commun",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./theme/tokens.css": "./src/theme/tokens.css"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "build": "echo 'no build step: consumed as TypeScript source via transpilePackages'"
+  },
+  "peerDependencies": {
+    "next": "^16.0.0",
+    "react": "^19",
+    "react-dom": "^19"
+  },
+  "dependencies": {
+    "jspdf": "^2.5.2",
+    "html2canvas": "^1.4.1",
+    "next-intl": "^4.13.1"
+  },
+  "devDependencies": {
+    "next": "16.2.10",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "typescript": "^5.7.3"
+  }
+}

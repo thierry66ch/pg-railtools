@@ -1,0 +1,154 @@
+/**
+ * Jetons de thème visuel communs à tout le portail et à tous les modules.
+ * Importé une seule fois dans apps/portail (layout racine).
+ */
+
+:root {
+  --rt-color-bg: #f7f8fa;
+  --rt-color-surface: #ffffff;
+  --rt-color-border: #d8dde3;
+  --rt-color-text: #1c2530;
+  --rt-color-text-muted: #5b6672;
+  --rt-color-primary: #1f5f8b;
+  --rt-color-primary-hover: #184a6d;
+  --rt-color-primary-contrast: #ffffff;
+  --rt-color-danger: #b3261e;
+
+  --rt-radius: 6px;
+  --rt-spacing-xs: 4px;
+  --rt-spacing-sm: 8px;
+  --rt-spacing-md: 16px;
+  --rt-spacing-lg: 24px;
+  --rt-spacing-xl: 40px;
+
+  --rt-font-sans:
+    system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+body {
+  background: var(--rt-color-bg);
+  color: var(--rt-color-text);
+  font-family: var(--rt-font-sans);
+}
+
+a {
+  color: var(--rt-color-primary);
+}
+
+.rt-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--rt-spacing-xs);
+  padding: var(--rt-spacing-sm) var(--rt-spacing-md);
+  border-radius: var(--rt-radius);
+  border: 1px solid var(--rt-color-primary);
+  background: var(--rt-color-primary);
+  color: var(--rt-color-primary-contrast);
+  font-family: var(--rt-font-sans);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.rt-button:hover {
+  background: var(--rt-color-primary-hover);
+  border-color: var(--rt-color-primary-hover);
+}
+
+.rt-button:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--rt-color-primary) 40%, white);
+  outline-offset: 1px;
+}
+
+.rt-button--secondary {
+  background: var(--rt-color-surface);
+  color: var(--rt-color-primary);
+}
+
+.rt-button--danger {
+  background: var(--rt-color-surface);
+  color: var(--rt-color-danger);
+  border-color: var(--rt-color-danger);
+}
+
+.rt-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.rt-card {
+  background: var(--rt-color-surface);
+  border: 1px solid var(--rt-color-border);
+  border-radius: var(--rt-radius);
+  padding: var(--rt-spacing-md);
+}
+
+.rt-select,
+.rt-input {
+  padding: var(--rt-spacing-xs) var(--rt-spacing-sm);
+  border-radius: var(--rt-radius);
+  border: 1px solid var(--rt-color-border);
+  background: var(--rt-color-surface);
+  color: var(--rt-color-text);
+  font-family: var(--rt-font-sans);
+  font-size: 0.9rem;
+}
+
+.rt-select:focus-visible,
+.rt-input:focus-visible {
+  outline: 2px solid var(--rt-color-primary);
+  outline-offset: 1px;
+}
+
+.rt-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--rt-spacing-xs);
+}
+
+.rt-field label {
+  font-size: 0.8rem;
+  color: var(--rt-color-text-muted);
+}
+
+.rt-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--rt-color-border);
+  color: var(--rt-color-text-muted);
+  font-size: 0.75rem;
+}
+
+.rt-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--rt-spacing-sm);
+  align-items: center;
+}
+
+.rt-header {
+  justify-content: space-between;
+  padding: var(--rt-spacing-md) var(--rt-spacing-lg);
+  background: var(--rt-color-surface);
+  border-bottom: 1px solid var(--rt-color-border);
+}
+
+.rt-footer {
+  justify-content: center;
+  padding: var(--rt-spacing-md) var(--rt-spacing-lg);
+  background: var(--rt-color-surface);
+  border-top: 1px solid var(--rt-color-border);
+  color: var(--rt-color-text-muted);
+}
+
+.rt-main {
+  flex: 1;
+  padding: var(--rt-spacing-lg);
+  max-width: 960px;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--rt-spacing-lg);
+}

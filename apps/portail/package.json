@@ -1,0 +1,29 @@
+{
+  "name": "portail",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "prebuild": "node ../../scripts/bump-build.mjs ../../version.json",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@railtools/commun": "workspace:*",
+    "@railtools/module-demo": "workspace:*",
+    "next": "16.2.10",
+    "next-intl": "^4.13.1",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.10",
+    "typescript": "^5"
+  }
+}

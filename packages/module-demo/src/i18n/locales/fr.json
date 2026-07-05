@@ -1,0 +1,12 @@
+{
+  "title": "Longueur de rail à l'échelle",
+  "description": "Module de démonstration : convertit une longueur réelle en longueur à l'échelle du modèle choisi, et dessine le segment de rail correspondant. Sert de référence pour les futurs modules — ne couvre pas de cas d'usage réel de tracé de voie.",
+  "form": {
+    "realLength": "Longueur réelle"
+  },
+  "result": {
+    "realLength": "Longueur réelle",
+    "scale": "Échelle",
+    "modelLength": "Longueur modèle"
+  }
+}

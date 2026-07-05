@@ -1,0 +1,20 @@
+{
+  "home": {
+    "title": "Portail RailTools",
+    "subtitle": "Modules de calcul géométrique pour la planification de tracés de voie en modélisme ferroviaire.",
+    "modulesTitle": "Modules disponibles",
+    "openModule": "Ouvrir"
+  },
+  "nav": {
+    "home": "Accueil",
+    "about": "À propos"
+  },
+  "footer": {
+    "baseCommuneLabel": "Base commune"
+  },
+  "about": {
+    "title": "À propos",
+    "description": "RailTools est une base commune fédérant des modules indépendants de calcul géométrique pour la planification de tracés de voie en modélisme ferroviaire.",
+    "changelogTitle": "Historique des versions de la base commune"
+  }
+}

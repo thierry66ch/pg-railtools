@@ -1,0 +1,28 @@
+node_modules/
+.pnpm-store/
+
+# Next.js
+.next/
+out/
+dist/
+build/
+*.tsbuildinfo
+
+# Env
+.env
+.env.local
+.env*.local
+
+# Logs
+npm-debug.log*
+pnpm-debug.log*
+
+# OS
+.DS_Store
+
+# IDE
+.vscode/*
+!.vscode/extensions.json
+
+# Claude Code (local, machine-specific)
+.claude/settings.local.json
