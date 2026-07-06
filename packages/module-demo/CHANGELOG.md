@@ -1,5 +1,11 @@
 # Changelog — module-demo
 
+## 1.4 — 2026-07-06
+
+Marge gauche du dessin réduite à 1 cm (au lieu de 5 cm) pour laisser le maximum de place
+au dessin dans l'export PDF ; les autres marges (haut/droite/bas) restent suffisantes pour
+les cotes.
+
 ## 1.3 — 2026-07-06
 
 La cote de longueur d'arc utilise à nouveau la même distance (10 mm de dessin) que la

@@ -3,14 +3,19 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Button } from './Button';
-import { exportElementToPdfFile, type PdfFormat } from '../export/pdf';
+import { exportElementToPdfFile, type PdfPageFormat } from '../export/pdf';
 import { exportResultToMarkdownFile } from '../export/markdown';
 import { exportSvgToPngFile, svgMarkupToPngDataUrl } from '../export/png';
 import type { ResultData } from '../export/types';
 
 const APP_NAME = 'RailTools';
 const LOGO_URL = '/icon.svg';
-const PDF_FORMATS: PdfFormat[] = ['a4', 'a3'];
+const PDF_PAGE_FORMATS: { value: PdfPageFormat; label: string }[] = [
+  { value: 'a4-landscape', label: 'A4 paysage' },
+  { value: 'a4-portrait', label: 'A4 portrait' },
+  { value: 'a3-landscape', label: 'A3 paysage' },
+  { value: 'a3-portrait', label: 'A3 portrait' },
+];
 
 async function getLogoDataUrl(): Promise<string | undefined> {
   try {
@@ -47,7 +52,7 @@ export function ExportButtons({
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [isExportingPng, setIsExportingPng] = useState(false);
   const [isExportingMarkdown, setIsExportingMarkdown] = useState(false);
-  const [pdfFormat, setPdfFormat] = useState<PdfFormat>('a4');
+  const [pdfFormat, setPdfFormat] = useState<PdfPageFormat>('a4-landscape');
 
   async function handlePdf() {
     const element = getResultElement();
@@ -98,11 +103,11 @@ export function ExportButtons({
         <select
           className="rt-select"
           value={pdfFormat}
-          onChange={(event) => setPdfFormat(event.target.value as PdfFormat)}
+          onChange={(event) => setPdfFormat(event.target.value as PdfPageFormat)}
         >
-          {PDF_FORMATS.map((format) => (
-            <option key={format} value={format}>
-              {format.toUpperCase()}
+          {PDF_PAGE_FORMATS.map(({ value, label }) => (
+            <option key={value} value={value}>
+              {label}
             </option>
           ))}
         </select>

@@ -8,7 +8,15 @@ import type { jsPDF } from 'jspdf';
 import { blobToDataUrl } from '../transfer/files';
 import { getSvgMmSize, svgToPngBlob } from './png';
 
-export type PdfFormat = 'a4' | 'a3';
+export type PdfPageFormat = 'a4-landscape' | 'a4-portrait' | 'a3-landscape' | 'a3-portrait';
+
+function parsePageFormat(pageFormat: PdfPageFormat): {
+  format: 'a4' | 'a3';
+  orientation: 'landscape' | 'portrait';
+} {
+  const [format, orientation] = pageFormat.split('-') as ['a4' | 'a3', 'landscape' | 'portrait'];
+  return { format, orientation };
+}
 
 export interface PdfCartouche {
   appName: string;
@@ -20,7 +28,7 @@ export interface PdfCartouche {
 }
 
 export interface PdfExportOptions {
-  format?: PdfFormat;
+  format?: PdfPageFormat;
   cartouche?: PdfCartouche;
   /** Dessin à placer à l'échelle réelle (1 mm de dessin = 1 mm papier), sans mise à l'échelle. */
   svg?: SVGSVGElement;
@@ -87,8 +95,8 @@ export async function exportElementToPdfFile(
   ]);
 
   const svgSize = options.svg ? getSvgMmSize(options.svg) : null;
-  const orientation = svgSize && svgSize.width > svgSize.height ? 'landscape' : 'portrait';
-  const pdf = new jsPDF({ unit: 'mm', format: options.format ?? 'a4', orientation });
+  const { format, orientation } = parsePageFormat(options.format ?? 'a4-landscape');
+  const pdf = new jsPDF({ unit: 'mm', format, orientation });
   const pageWidth = pdf.internal.pageSize.getWidth();
   const contentWidth = pageWidth - MARGIN_MM * 2;
 
@@ -97,14 +105,7 @@ export async function exportElementToPdfFile(
     cursorY = drawCartouche(pdf, options.cartouche, MARGIN_MM, cursorY, contentWidth) + 4;
   }
 
-  // `foreignObjectRendering` délègue le rendu du texte au moteur natif du navigateur
-  // (via SVG `<foreignObject>`) plutôt qu'à la réimplémentation de html2canvas, qui avale
-  // parfois les espaces entre les mots.
-  const canvas = await html2canvas(element, {
-    backgroundColor: '#ffffff',
-    scale: 2,
-    foreignObjectRendering: true,
-  });
+  const canvas = await html2canvas(element, { backgroundColor: '#ffffff', scale: 2 });
   const imageData = canvas.toDataURL('image/png');
   const tableRenderWidth = contentWidth;
   const tableRenderHeight = (canvas.height / canvas.width) * tableRenderWidth;

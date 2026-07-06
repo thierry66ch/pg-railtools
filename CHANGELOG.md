@@ -4,6 +4,17 @@ Toutes les évolutions fonctionnelles notables de la base commune sont document�
 Format de version : majeur.mineur (voir §9 du cahier des charges). Chaque module a son propre
 `CHANGELOG.md` (ex. [packages/module-demo/CHANGELOG.md](packages/module-demo/CHANGELOG.md)).
 
+## 1.4 — 2026-07-06
+
+- **Correctif critique** : `foreignObjectRendering` (activé en 1.2 pour corriger un bug
+  d'espacement html2canvas) rendait en réalité le tableau de résultats **totalement vide**
+  dans le PDF, dans certaines conditions de rendu — confirmé sur un export réel fourni par
+  l'utilisateur (le cartouche restait correct, seul le tableau disparaissait). Retiré :
+  `exportElementToPdfFile` utilise à nouveau le rendu html2canvas par défaut.
+- **Export PDF** : le format est désormais un choix explicite parmi 4 combinaisons (A4
+  paysage, A4 portrait, A3 paysage, A3 portrait) au lieu d'une orientation auto-détectée
+  à partir du dessin.
+
 ## 1.3 — 2026-07-06
 
 Corrections suite au deuxième essai :

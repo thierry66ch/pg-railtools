@@ -46,7 +46,13 @@ const DEFAULT_CURVE_RADIUS_MM = 300;
 const DEFAULT_CURVE_ANGLE_DEG = 30;
 /** Dimensions cible (mm) utilisées par le mode d'échelle de dessin "fit". */
 const FIT_TARGET_MM = { width: 180, height: 260 };
-const DRAWING_MARGIN_MM = 50;
+/** Marges (mm de dessin) autour de la géométrie — la gauche est réduite au minimum pour
+ * laisser le maximum de place au dessin ; les autres côtés gardent de la place pour les
+ * cotes (H en haut, rayon/angle/longueur d'arc à droite et en bas). */
+const LEFT_MARGIN_MM = 10;
+const TOP_MARGIN_MM = 30;
+const RIGHT_MARGIN_MM = 20;
+const BOTTOM_GAP_MM = 30;
 const SCALE_BAR_EXTRA_MM = 26;
 /** Épaisseur du trait de voie, en mm de dessin — fixe, indépendante de l'échelle/taille. */
 const RAIL_STROKE_WIDTH_MM = 2;
@@ -149,10 +155,10 @@ export function DemoModulePage() {
   const pathD = `M ${dStart.x} ${dStart.y} L ${dTangent.x} ${dTangent.y} A ${dRadius} ${dRadius} 0 ${largeArcFlag} 1 ${dArcEnd.x} ${dArcEnd.y}`;
   const centerlineProps = lineStyleToSvgProps({ kind: 'centerline', color: '#333333', widthMm: 0.3 });
 
-  const viewBoxMinX = -DRAWING_MARGIN_MM;
-  const viewBoxMinY = -DRAWING_MARGIN_MM;
-  const viewBoxWidth = drawingWidth + DRAWING_MARGIN_MM * 2;
-  const viewBoxHeight = drawingHeight + DRAWING_MARGIN_MM * 2 + SCALE_BAR_EXTRA_MM;
+  const viewBoxMinX = -LEFT_MARGIN_MM;
+  const viewBoxMinY = -TOP_MARGIN_MM;
+  const viewBoxWidth = drawingWidth + LEFT_MARGIN_MM + RIGHT_MARGIN_MM;
+  const viewBoxHeight = drawingHeight + TOP_MARGIN_MM + BOTTOM_GAP_MM + SCALE_BAR_EXTRA_MM;
 
   const resultData: ResultData = useMemo(
     () => ({
@@ -307,7 +313,7 @@ export function DemoModulePage() {
         <ScaleBar
           resolved={resolvedScale}
           x={0}
-          y={drawingHeight + DRAWING_MARGIN_MM}
+          y={drawingHeight + BOTTOM_GAP_MM}
           unitCaption={tCommon('drawing.cotesInUnit', { unit: 'mm' })}
         />
       </svg>
