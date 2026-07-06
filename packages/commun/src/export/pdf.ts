@@ -44,9 +44,15 @@ function drawCartoucheLogoFallback(pdf: jsPDF, x: number, y: number, logoSize: n
 function drawCartouche(pdf: jsPDF, cartouche: PdfCartouche, x: number, y: number, width: number): number {
   const logoSize = 10;
 
-  if (cartouche.logoDataUrl) {
-    pdf.addImage(cartouche.logoDataUrl, 'PNG', x, y, logoSize, logoSize);
-  } else {
+  // L'embarquement du logo ne doit jamais empêcher le reste du cartouche (nom du
+  // module, projet, date) de s'afficher, même si l'image pose problème.
+  try {
+    if (cartouche.logoDataUrl) {
+      pdf.addImage(cartouche.logoDataUrl, 'PNG', x, y, logoSize, logoSize);
+    } else {
+      drawCartoucheLogoFallback(pdf, x, y, logoSize);
+    }
+  } catch {
     drawCartoucheLogoFallback(pdf, x, y, logoSize);
   }
 
@@ -57,10 +63,10 @@ function drawCartouche(pdf: jsPDF, cartouche: PdfCartouche, x: number, y: number
   pdf.text(cartouche.moduleName, x + logoSize + 3, y + 9);
 
   const dateLabel = (cartouche.date ?? new Date()).toLocaleString('fr-CH');
-  pdf.setFontSize(6.5);
+  pdf.setFontSize(7.5);
   pdf.text(dateLabel, x + width, y + 4, { align: 'right' });
   if (cartouche.projectName) {
-    pdf.text(cartouche.projectName, x + width, y + 8, { align: 'right' });
+    pdf.text(cartouche.projectName, x + width, y + 8.5, { align: 'right' });
   }
 
   pdf.setDrawColor(200, 200, 200);

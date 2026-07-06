@@ -4,6 +4,19 @@ Toutes les évolutions fonctionnelles notables de la base commune sont document�
 Format de version : majeur.mineur (voir §9 du cahier des charges). Chaque module a son propre
 `CHANGELOG.md` (ex. [packages/module-demo/CHANGELOG.md](packages/module-demo/CHANGELOG.md)).
 
+## 1.3 — 2026-07-06
+
+Corrections suite au deuxième essai :
+
+- **Cote de longueur d'arc** : la distance à l'arc redevient identique à celle de la cote
+  de longueur droite (10 mm de dessin) — les deux traits de cote se rejoignent exactement
+  au point de tangence, sans décalage visible (le point précédent avait introduit une
+  distance différente par erreur, recréant le décalage qu'il devait supprimer).
+- **Cartouche PDF** : le rendu du logo n'empêche plus jamais l'affichage du nom du
+  module/projet/date même en cas d'échec (garde-fou ajouté) ; taille du texte
+  projet/date légèrement augmentée (6.5 → 7.5 pt), la réduction précédente la rendant
+  quasi illisible.
+
 ## 1.2 — 2026-07-06
 
 Deuxième vague d'ajustements suite aux essais :

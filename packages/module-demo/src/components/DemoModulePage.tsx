@@ -140,10 +140,9 @@ export function DemoModulePage() {
   const drawingHeight = modelToDrawing(modelHeight, resolvedScale);
 
   const sizing = suggestDimensionSizing();
-  // Cote de longueur d'arc : toujours à l'extérieur, à une distance distincte de la cote
-  // de longueur droite (pour ne jamais coïncider à la jonction segment/arc). Cote
-  // d'angle : toujours à l'intérieur.
-  const ARC_LENGTH_COTE_OFFSET_MM = DEFAULT_COTE_OFFSET_MM + 4;
+  // Même distance (mm de dessin) que la cote de longueur droite : au point de tangence,
+  // les deux traits de cote se rejoignent exactement, sans décalage/rupture visible.
+  // Cote d'angle : toujours à l'intérieur.
   const angleDimRadius = Math.max(dRadius - DEFAULT_COTE_OFFSET_MM, 1);
 
   const largeArcFlag = curveAngleRad > Math.PI ? 1 : 0;
@@ -290,7 +289,6 @@ export function DemoModulePage() {
         <ArcLengthCote
           center={dArcCenter}
           radiusMm={dRadius}
-          offsetMm={ARC_LENGTH_COTE_OFFSET_MM}
           startAngleRad={arcStartAngleRad}
           endAngleRad={arcEndAngleRad}
           label={formatCoteLength(arcLengthMm)}

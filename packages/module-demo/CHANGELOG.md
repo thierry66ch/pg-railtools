@@ -1,5 +1,10 @@
 # Changelog — module-demo
 
+## 1.3 — 2026-07-06
+
+La cote de longueur d'arc utilise à nouveau la même distance (10 mm de dessin) que la
+cote de longueur droite, pour se rejoindre exactement au point de tangence.
+
 ## 1.2 — 2026-07-06
 
 Correction du bug de trait de rappel qui traversait le dessin sur la cote de longueur
