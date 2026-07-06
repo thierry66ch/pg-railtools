@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Button } from './Button';
+import { IconButton } from './IconButton';
+import { IconCopy, IconDownload, IconFolderOpen, IconPencil, IconPlus, IconTrash, IconUpload } from './icons';
 import {
   createProject,
   deleteProject,
@@ -17,7 +18,6 @@ import {
 export interface ProjectManagerProps<T> {
   moduleId: string;
   activeProjectId?: string;
-  /** Fournit les données initiales d'un nouveau projet. */
   createDefaultData: () => T;
   onOpen: (project: Project<T>) => void;
 }
@@ -85,12 +85,17 @@ export function ProjectManager<T>({
           value={newName}
           onChange={(event) => setNewName(event.target.value)}
         />
-        <Button type="button" onClick={() => void handleCreate()}>
-          {t('projects.new')}
-        </Button>
-        <Button type="button" variant="secondary" onClick={() => fileInputRef.current?.click()}>
-          {t('actions.importProject')}
-        </Button>
+        <IconButton
+          variant="primary"
+          label={t('projects.new')}
+          icon={<IconPlus />}
+          onClick={() => void handleCreate()}
+        />
+        <IconButton
+          label={t('actions.importProject')}
+          icon={<IconUpload />}
+          onClick={() => fileInputRef.current?.click()}
+        />
         <input
           ref={fileInputRef}
           type="file"
@@ -112,25 +117,28 @@ export function ProjectManager<T>({
             <li key={project.id} aria-current={project.id === activeProjectId}>
               <span>{project.name}</span>
               <div className="rt-toolbar">
-                <Button type="button" variant="secondary" onClick={() => onOpen(project)}>
-                  {t('projects.open')}
-                </Button>
-                <Button type="button" variant="secondary" onClick={() => void handleRename(project)}>
-                  {t('projects.rename')}
-                </Button>
-                <Button type="button" variant="secondary" onClick={() => void handleDuplicate(project)}>
-                  {t('projects.duplicate')}
-                </Button>
-                <Button
-                  type="button"
-                  variant="secondary"
+                <IconButton label={t('projects.open')} icon={<IconFolderOpen />} onClick={() => onOpen(project)} />
+                <IconButton
+                  label={t('projects.rename')}
+                  icon={<IconPencil />}
+                  onClick={() => void handleRename(project)}
+                />
+                <IconButton
+                  label={t('projects.duplicate')}
+                  icon={<IconCopy />}
+                  onClick={() => void handleDuplicate(project)}
+                />
+                <IconButton
+                  label={t('actions.exportProject')}
+                  icon={<IconDownload />}
                   onClick={() => void exportProjectToFile(moduleId, project.id)}
-                >
-                  {t('actions.exportProject')}
-                </Button>
-                <Button type="button" variant="danger" onClick={() => void handleDelete(project)}>
-                  {t('projects.delete')}
-                </Button>
+                />
+                <IconButton
+                  variant="danger"
+                  label={t('projects.delete')}
+                  icon={<IconTrash />}
+                  onClick={() => void handleDelete(project)}
+                />
               </div>
             </li>
           ))}

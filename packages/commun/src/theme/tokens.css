@@ -75,6 +75,72 @@ a {
   cursor: not-allowed;
 }
 
+.rt-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border-radius: var(--rt-radius);
+  border: 1px solid var(--rt-color-border);
+  background: var(--rt-color-surface);
+  color: var(--rt-color-primary);
+  cursor: pointer;
+}
+
+.rt-icon-button:hover {
+  background: var(--rt-color-bg);
+  border-color: var(--rt-color-primary);
+}
+
+.rt-icon-button:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--rt-color-primary) 40%, white);
+  outline-offset: 1px;
+}
+
+.rt-icon-button--primary {
+  background: var(--rt-color-primary);
+  color: var(--rt-color-primary-contrast);
+  border-color: var(--rt-color-primary);
+}
+
+.rt-icon-button--primary:hover {
+  background: var(--rt-color-primary-hover);
+  border-color: var(--rt-color-primary-hover);
+}
+
+.rt-icon-button--danger {
+  color: var(--rt-color-danger);
+  border-color: var(--rt-color-danger);
+}
+
+.rt-icon-button--danger:hover {
+  background: color-mix(in srgb, var(--rt-color-danger) 8%, white);
+}
+
+.rt-icon-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.rt-dialog {
+  border: none;
+  border-radius: var(--rt-radius);
+  padding: var(--rt-spacing-lg);
+  max-width: 32rem;
+  width: 90vw;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.rt-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.rt-dialog-content {
+  margin-bottom: var(--rt-spacing-md);
+}
+
 .rt-card {
   background: var(--rt-color-surface);
   border: 1px solid var(--rt-color-border);

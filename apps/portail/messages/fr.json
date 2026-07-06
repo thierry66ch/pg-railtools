@@ -3,7 +3,8 @@
     "title": "Portail RailTools",
     "subtitle": "Modules de calcul géométrique pour la planification de tracés de voie en modélisme ferroviaire.",
     "modulesTitle": "Modules disponibles",
-    "openModule": "Ouvrir"
+    "openModule": "Ouvrir",
+    "moduleInfo": "Description du module"
   },
   "nav": {
     "home": "Accueil",

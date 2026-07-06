@@ -1,3 +1,4 @@
+import type { ComponentType } from 'react';
 import type { VersionInfo } from '../version';
 
 /**
@@ -13,4 +14,6 @@ export interface ModuleManifest {
   route: string;
   i18nNamespace: string;
   version: VersionInfo;
+  /** Petit logo du module affiché sur la page d'accueil (ex. 32×32, SVG). Optionnel. */
+  icon?: ComponentType;
 }

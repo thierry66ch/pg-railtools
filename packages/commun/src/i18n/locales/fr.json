@@ -9,6 +9,7 @@
     "importEnvironment": "Importer un environnement",
     "save": "Enregistrer",
     "cancel": "Annuler",
+    "close": "Fermer",
     "confirmDelete": "Supprimer ?"
   },
   "units": {

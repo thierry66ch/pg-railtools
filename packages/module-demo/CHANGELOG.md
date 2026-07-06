@@ -1,5 +1,10 @@
 # Changelog — module-demo
 
+## 1.6 — 2026-07-06
+
+Ajout d'un petit logo de module (`icon.tsx`, `DemoModuleIcon`) affiché sur la page
+d'accueil du portail, à côté du titre.
+
 ## 1.5 — 2026-07-06
 
 Mise à jour suite au changement d'API PDF de `packages/commun` : `ExportButtons` n'a plus

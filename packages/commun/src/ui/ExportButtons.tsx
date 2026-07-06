@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Button } from './Button';
+import { IconButton } from './IconButton';
+import { IconFilePdf, IconFileText, IconImage } from './icons';
 import { exportElementToPdfFile, type PdfPageFormat } from '../export/pdf';
 import { exportResultToMarkdownFile } from '../export/markdown';
 import { exportSvgToPngFile, svgMarkupToPngDataUrl } from '../export/png';
@@ -108,21 +109,25 @@ export function ExportButtons({
           ))}
         </select>
       </label>
-      <Button type="button" variant="secondary" onClick={() => void handlePdf()} disabled={isExportingPdf}>
-        {t('actions.exportPdf')}
-      </Button>
-      <Button
-        type="button"
-        variant="secondary"
+      <IconButton
+        label={t('actions.exportPdf')}
+        icon={<IconFilePdf />}
+        onClick={() => void handlePdf()}
+        disabled={isExportingPdf}
+      />
+      <IconButton
+        label={t('actions.exportMarkdown')}
+        icon={<IconFileText />}
         onClick={() => void handleMarkdown()}
         disabled={isExportingMarkdown}
-      >
-        {t('actions.exportMarkdown')}
-      </Button>
+      />
       {getSvgElement && (
-        <Button type="button" variant="secondary" onClick={() => void handlePng()} disabled={isExportingPng}>
-          {t('actions.exportPng')}
-        </Button>
+        <IconButton
+          label={t('actions.exportPng')}
+          icon={<IconImage />}
+          onClick={() => void handlePng()}
+          disabled={isExportingPng}
+        />
       )}
     </div>
   );

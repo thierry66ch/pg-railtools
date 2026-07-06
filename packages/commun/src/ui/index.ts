@@ -1,4 +1,7 @@
 export * from './Button';
+export * from './IconButton';
+export * from './InfoButton';
+export * from './icons';
 export * from './VersionBadge';
 export * from './LanguageSelector';
 export * from './UnitScaleSelector';

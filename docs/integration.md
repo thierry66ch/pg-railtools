@@ -158,8 +158,10 @@ Points importants :
 Trois points d'intégration dans `apps/portail`, tous illustrés par le module `demo` :
 
 1. **Manifest et registre** — le module exporte un `ModuleManifest`
-   (`src/manifest.ts`, ex. `demoModuleManifest`) avec `id`, `route`, `i18nNamespace` et
-   `version` (relu depuis `version.json`). Ajouter ce manifest dans
+   (`src/manifest.ts`, ex. `demoModuleManifest`) avec `id`, `route`, `i18nNamespace`,
+   `version` (relu depuis `version.json`) et, optionnellement, `icon` (petit composant
+   React affiché à côté du titre sur la page d'accueil — voir `module-demo/src/icon.tsx`
+   pour un exemple). Ajouter ce manifest dans
    [`apps/portail/lib/moduleRegistry.ts`](../apps/portail/lib/moduleRegistry.ts) :
 
    ```ts
