@@ -2,26 +2,31 @@ import { blobToDataUrl, downloadTextFile } from '../transfer/files';
 import { svgToPngBlob } from './png';
 import type { ResultData } from './types';
 
-export interface MarkdownDrawingOptions {
-  svg: SVGSVGElement;
-  alt?: string;
+export interface MarkdownExportOptions {
+  svg?: SVGSVGElement;
+  drawingAlt?: string;
   scaleFactor?: number;
+  projectName?: string;
+  date?: Date;
 }
 
 export async function resultToMarkdown(
   result: ResultData,
-  drawing?: MarkdownDrawingOptions,
+  options: MarkdownExportOptions = {},
 ): Promise<string> {
   const lines: string[] = [`# ${result.title}`, ''];
 
-  if (result.description) {
-    lines.push(result.description, '');
+  const metaLines: string[] = [];
+  if (options.projectName) {
+    metaLines.push(`**Projet :** ${options.projectName}`);
   }
+  metaLines.push(`**Généré le :** ${(options.date ?? new Date()).toLocaleString('fr-CH')}`);
+  lines.push(metaLines.join('  \n'), '');
 
-  if (drawing) {
-    const blob = await svgToPngBlob(drawing.svg, drawing.scaleFactor);
+  if (options.svg) {
+    const blob = await svgToPngBlob(options.svg, options.scaleFactor);
     const dataUrl = await blobToDataUrl(blob);
-    const alt = drawing.alt ?? result.drawingAlt ?? result.title;
+    const alt = options.drawingAlt ?? result.drawingAlt ?? result.title;
     lines.push(`![${alt}](${dataUrl})`, '');
   }
 
@@ -48,7 +53,7 @@ export async function resultToMarkdown(
 export async function exportResultToMarkdownFile(
   result: ResultData,
   filename: string,
-  drawing?: MarkdownDrawingOptions,
+  options: MarkdownExportOptions = {},
 ): Promise<void> {
-  downloadTextFile(filename, await resultToMarkdown(result, drawing), 'text/markdown');
+  downloadTextFile(filename, await resultToMarkdown(result, options), 'text/markdown');
 }

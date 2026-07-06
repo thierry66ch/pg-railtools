@@ -18,7 +18,7 @@ export interface RadiusCoteProps extends CoteBaseProps {
  * jamais jusqu'au centre réel, qui peut être très éloigné).
  */
 export function RadiusCote({ center, pointOnArc, label, style, sizing }: RadiusCoteProps) {
-  const resolvedSizing = sizing ?? suggestDimensionSizing(RADIUS_LINE_LENGTH_MM * 5);
+  const resolvedSizing = sizing ?? suggestDimensionSizing();
   const resolvedStyle: LineStyle = style ?? { kind: 'solid' };
   const svgProps = lineStyleToSvgProps(resolvedStyle);
 

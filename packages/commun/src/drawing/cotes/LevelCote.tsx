@@ -4,7 +4,8 @@ import { suggestDimensionSizing } from '../sizing';
 import { arrowHeadPoints } from './arrow';
 import type { CoteBaseProps } from './types';
 
-const LEADER_LENGTH_MM = 10;
+/** Distance fixe (mm de dessin) du texte au point coté, pour éviter les conflits avec les cotes de longueur. */
+const LEADER_LENGTH_MM = 20;
 
 export interface LevelCoteProps extends CoteBaseProps {
   point: Point;
@@ -21,7 +22,7 @@ export function LevelCote({
   style,
   sizing,
 }: LevelCoteProps) {
-  const resolvedSizing = sizing ?? suggestDimensionSizing(LEADER_LENGTH_MM * 5);
+  const resolvedSizing = sizing ?? suggestDimensionSizing();
   const resolvedStyle: LineStyle = style ?? { kind: 'solid' };
   const svgProps = lineStyleToSvgProps(resolvedStyle);
 

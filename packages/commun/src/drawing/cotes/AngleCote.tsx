@@ -25,7 +25,7 @@ export function AngleCote({
   style,
   sizing,
 }: AngleCoteProps) {
-  const resolvedSizing = sizing ?? suggestDimensionSizing(radiusMm * 2);
+  const resolvedSizing = sizing ?? suggestDimensionSizing();
   const resolvedStyle: LineStyle = style ?? { kind: 'solid' };
   const svgProps = lineStyleToSvgProps(resolvedStyle);
 

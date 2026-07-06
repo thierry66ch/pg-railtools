@@ -1,6 +1,6 @@
-import { angleOf, distance, offsetPoint, radToDeg, subPoints, type Point } from '../../geometry';
+import { angleOf, offsetPoint, radToDeg, subPoints, type Point } from '../../geometry';
 import { lineStyleToSvgProps, type LineStyle } from '../lineStyle';
-import { suggestDimensionSizing } from '../sizing';
+import { DEFAULT_COTE_OFFSET_MM, suggestDimensionSizing } from '../sizing';
 import { arrowHeadPoints } from './arrow';
 import type { CoteBaseProps } from './types';
 
@@ -14,10 +14,10 @@ export interface LengthCoteProps extends CoteBaseProps {
 
 /** Cote de longueur : trait parallèle au segment, décalé, avec 1 mm d'espace au départ. */
 export function LengthCote({ from, to, offsetMm, label, style, sizing }: LengthCoteProps) {
-  const resolvedSizing = sizing ?? suggestDimensionSizing(distance(from, to) || 100);
+  const resolvedSizing = sizing ?? suggestDimensionSizing();
   const resolvedStyle: LineStyle = style ?? { kind: 'solid' };
   const svgProps = lineStyleToSvgProps(resolvedStyle);
-  const offset = offsetMm ?? resolvedSizing.gapMm + resolvedSizing.arrowSizeMm;
+  const offset = offsetMm ?? DEFAULT_COTE_OFFSET_MM;
 
   const dimFrom = offsetPoint(from, from, to, offset);
   const dimTo = offsetPoint(to, from, to, offset);

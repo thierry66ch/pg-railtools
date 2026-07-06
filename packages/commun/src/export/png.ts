@@ -4,7 +4,8 @@
 
 import { downloadBlob } from '../transfer/files';
 
-function getSvgPixelSize(svg: SVGSVGElement): { width: number; height: number } {
+/** Taille (mm de dessin) du SVG, lue depuis son `viewBox` (1 unité SVG = 1 mm de dessin). */
+export function getSvgMmSize(svg: SVGSVGElement): { width: number; height: number } {
   const viewBox = svg.viewBox.baseVal;
   if (viewBox && viewBox.width > 0 && viewBox.height > 0) {
     return { width: viewBox.width, height: viewBox.height };
@@ -14,7 +15,7 @@ function getSvgPixelSize(svg: SVGSVGElement): { width: number; height: number } 
 }
 
 export async function svgToPngBlob(svg: SVGSVGElement, scaleFactor = 4): Promise<Blob> {
-  const { width, height } = getSvgPixelSize(svg);
+  const { width, height } = getSvgMmSize(svg);
   if (width <= 0 || height <= 0) {
     throw new Error('Impossible de déterminer les dimensions du dessin SVG à exporter.');
   }

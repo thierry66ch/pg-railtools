@@ -1,6 +1,6 @@
 import { normalizeAngle, pointOnCircle, tangentDirection, type Point } from '../../geometry';
 import { lineStyleToSvgProps, type LineStyle } from '../lineStyle';
-import { suggestDimensionSizing } from '../sizing';
+import { DEFAULT_COTE_OFFSET_MM, suggestDimensionSizing } from '../sizing';
 import { arrowHeadPoints } from './arrow';
 import type { CoteBaseProps } from './types';
 
@@ -25,10 +25,10 @@ export function ArcLengthCote({
   style,
   sizing,
 }: ArcLengthCoteProps) {
-  const resolvedSizing = sizing ?? suggestDimensionSizing(radiusMm * 2);
+  const resolvedSizing = sizing ?? suggestDimensionSizing();
   const resolvedStyle: LineStyle = style ?? { kind: 'solid' };
   const svgProps = lineStyleToSvgProps(resolvedStyle);
-  const offset = offsetMm ?? resolvedSizing.gapMm + resolvedSizing.arrowSizeMm;
+  const offset = offsetMm ?? DEFAULT_COTE_OFFSET_MM;
   const dimRadius = radiusMm + offset;
 
   const sweep = normalizeAngle(endAngleRad - startAngleRad);

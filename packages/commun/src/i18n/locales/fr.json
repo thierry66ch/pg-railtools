@@ -19,7 +19,11 @@
     "scale": {
       "label": "Échelle de dessin",
       "fit": "Ajustée à la page"
-    }
+    },
+    "cotesInUnit": "Cotes en {unit}"
+  },
+  "export": {
+    "pdfFormat": "Format PDF"
   },
   "language": {
     "select": "Langue"

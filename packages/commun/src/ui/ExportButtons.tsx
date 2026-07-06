@@ -3,10 +3,13 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Button } from './Button';
-import { exportElementToPdfFile } from '../export/pdf';
+import { exportElementToPdfFile, type PdfFormat } from '../export/pdf';
 import { exportResultToMarkdownFile } from '../export/markdown';
 import { exportSvgToPngFile } from '../export/png';
 import type { ResultData } from '../export/types';
+
+const APP_NAME = 'RailTools';
+const PDF_FORMATS: PdfFormat[] = ['a4', 'a3'];
 
 export interface ExportButtonsProps {
   /** Nom de fichier sans extension, ex. "rayon-courbure-resultat". */
@@ -17,6 +20,8 @@ export interface ExportButtonsProps {
   resultData: ResultData;
   /** Élément SVG du dessin, si le module en produit un (active le bouton PNG). */
   getSvgElement?: () => SVGSVGElement | null;
+  /** Nom du projet actif, ex. pour le cartouche PDF et l'en-tête Markdown. */
+  projectName?: string;
 }
 
 export function ExportButtons({
@@ -24,18 +29,28 @@ export function ExportButtons({
   getResultElement,
   resultData,
   getSvgElement,
+  projectName,
 }: ExportButtonsProps) {
   const t = useTranslations('common');
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [isExportingPng, setIsExportingPng] = useState(false);
   const [isExportingMarkdown, setIsExportingMarkdown] = useState(false);
+  const [pdfFormat, setPdfFormat] = useState<PdfFormat>('a4');
 
   async function handlePdf() {
     const element = getResultElement();
     if (!element) return;
     setIsExportingPdf(true);
     try {
-      await exportElementToPdfFile(element, `${filenameBase}.pdf`);
+      await exportElementToPdfFile(element, `${filenameBase}.pdf`, {
+        format: pdfFormat,
+        svg: getSvgElement?.() ?? undefined,
+        cartouche: {
+          appName: APP_NAME,
+          moduleName: resultData.title,
+          projectName,
+        },
+      });
     } finally {
       setIsExportingPdf(false);
     }
@@ -45,11 +60,7 @@ export function ExportButtons({
     const svg = getSvgElement?.() ?? undefined;
     setIsExportingMarkdown(true);
     try {
-      await exportResultToMarkdownFile(
-        resultData,
-        `${filenameBase}.md`,
-        svg ? { svg } : undefined,
-      );
+      await exportResultToMarkdownFile(resultData, `${filenameBase}.md`, { svg, projectName });
     } finally {
       setIsExportingMarkdown(false);
     }
@@ -68,6 +79,20 @@ export function ExportButtons({
 
   return (
     <div className="rt-toolbar">
+      <label className="rt-field">
+        <span>{t('export.pdfFormat')}</span>
+        <select
+          className="rt-select"
+          value={pdfFormat}
+          onChange={(event) => setPdfFormat(event.target.value as PdfFormat)}
+        >
+          {PDF_FORMATS.map((format) => (
+            <option key={format} value={format}>
+              {format.toUpperCase()}
+            </option>
+          ))}
+        </select>
+      </label>
       <Button type="button" variant="secondary" onClick={() => void handlePdf()} disabled={isExportingPdf}>
         {t('actions.exportPdf')}
       </Button>

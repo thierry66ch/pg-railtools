@@ -5,6 +5,8 @@ export interface ScaleBarProps {
   /** Position (mm de dessin) du coin inférieur gauche du segment millimétrique. */
   x: number;
   y: number;
+  /** Légende affichée sous le ratio, ex. "Cotes en mm" (texte déjà formaté par l'appelant). */
+  unitCaption?: string;
 }
 
 const TICK_HEIGHT_MM = 3;
@@ -24,7 +26,7 @@ function formatRatio(ratio: number): string {
  * distance modèle réduit, graduée tous les 1 cm, précédée d'un segment de 1 cm
  * subdivisé en mm pour la précision près de l'origine.
  */
-export function ScaleBar({ resolved, x, y }: ScaleBarProps) {
+export function ScaleBar({ resolved, x, y, unitCaption }: ScaleBarProps) {
   const cm = modelToDrawing(10, resolved);
   const mm = modelToDrawing(1, resolved);
   const mmSegmentLength = cm;
@@ -71,6 +73,18 @@ export function ScaleBar({ resolved, x, y }: ScaleBarProps) {
       >
         {`1:${formatRatio(resolved.ratio)} — cm`}
       </text>
+      {unitCaption && (
+        <text
+          x={x}
+          y={y + MAX_FONT_SIZE_MM * 2 + 4}
+          fontSize={MAX_FONT_SIZE_MM}
+          stroke="none"
+          fill="#1a1a1a"
+          textAnchor="start"
+        >
+          {unitCaption}
+        </text>
+      )}
     </g>
   );
 }
