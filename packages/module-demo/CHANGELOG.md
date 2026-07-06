@@ -1,5 +1,11 @@
 # Changelog — module-demo
 
+## 1.5 — 2026-07-06
+
+Mise à jour suite au changement d'API PDF de `packages/commun` : `ExportButtons` n'a plus
+besoin de `getResultElement` (le tableau est désormais dessiné nativement par la
+librairie à partir de `resultData.table`).
+
 ## 1.4 — 2026-07-06
 
 Marge gauche du dessin réduite à 1 cm (au lieu de 5 cm) pour laisser le maximum de place

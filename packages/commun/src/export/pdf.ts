@@ -1,12 +1,15 @@
 /**
- * Export d'une page de résultat (tableau rendu dans un élément DOM, et/ou dessin SVG) en
- * PDF. Les dépendances (jspdf, html2canvas) sont chargées dynamiquement : elles ne sont
- * utilisées que côté client, au moment du clic sur "Export PDF".
+ * Export d'une page de résultat (tableau de données, et/ou dessin SVG) en PDF. Le
+ * tableau est dessiné nativement (texte vectoriel jsPDF), pas capturé depuis le DOM :
+ * html2canvas s'est montré peu fiable pour du texte (espaces avalés, voire rendu
+ * totalement vide selon les options). La dépendance (jspdf) est chargée dynamiquement :
+ * elle n'est utilisée que côté client, au moment du clic sur "Export PDF".
  */
 
 import type { jsPDF } from 'jspdf';
 import { blobToDataUrl } from '../transfer/files';
 import { getSvgMmSize, svgToPngBlob } from './png';
+import type { ResultTable } from './types';
 
 export type PdfPageFormat = 'a4-landscape' | 'a4-portrait' | 'a3-landscape' | 'a3-portrait';
 
@@ -30,12 +33,18 @@ export interface PdfCartouche {
 export interface PdfExportOptions {
   format?: PdfPageFormat;
   cartouche?: PdfCartouche;
+  /** Tableau de données du résultat, dessiné nativement (texte vectoriel). */
+  table?: ResultTable;
   /** Dessin à placer à l'échelle réelle (1 mm de dessin = 1 mm papier), sans mise à l'échelle. */
   svg?: SVGSVGElement;
 }
 
 const MARGIN_MM = 10;
 const CARTOUCHE_HEIGHT_MM = 16;
+const TABLE_HEADER_HEIGHT_MM = 8;
+const TABLE_ROW_HEIGHT_MM = 7;
+const TABLE_CELL_PADDING_MM = 1.5;
+const TABLE_FONT_SIZE = 8;
 
 function drawCartoucheLogoFallback(pdf: jsPDF, x: number, y: number, logoSize: number): void {
   pdf.setFillColor(31, 95, 139);
@@ -64,6 +73,7 @@ function drawCartouche(pdf: jsPDF, cartouche: PdfCartouche, x: number, y: number
     drawCartoucheLogoFallback(pdf, x, y, logoSize);
   }
 
+  pdf.setFont('helvetica', 'normal');
   pdf.setTextColor(20, 20, 20);
   pdf.setFontSize(11);
   pdf.text(cartouche.appName, x + logoSize + 3, y + 4);
@@ -84,15 +94,46 @@ function drawCartouche(pdf: jsPDF, cartouche: PdfCartouche, x: number, y: number
   return y + CARTOUCHE_HEIGHT_MM;
 }
 
+/** Dessine le tableau de résultat en texte vectoriel (pas de capture DOM). */
+function drawTable(pdf: jsPDF, table: ResultTable, x: number, y: number, width: number): number {
+  const colCount = table.headers.length;
+  const colWidth = width / colCount;
+  let cursorY = y;
+
+  pdf.setDrawColor(216, 221, 227);
+  pdf.setLineWidth(0.2);
+  pdf.setTextColor(28, 37, 48);
+
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(TABLE_FONT_SIZE);
+  table.headers.forEach((header, i) => {
+    pdf.text(header, x + i * colWidth + TABLE_CELL_PADDING_MM, cursorY + TABLE_HEADER_HEIGHT_MM - 2.5);
+  });
+  cursorY += TABLE_HEADER_HEIGHT_MM;
+  pdf.line(x, cursorY, x + width, cursorY);
+
+  pdf.setFont('helvetica', 'normal');
+  for (const row of table.rows) {
+    row.forEach((cell, i) => {
+      pdf.text(String(cell), x + i * colWidth + TABLE_CELL_PADDING_MM, cursorY + TABLE_ROW_HEIGHT_MM - 2.5);
+    });
+    cursorY += TABLE_ROW_HEIGHT_MM;
+    pdf.line(x, cursorY, x + width, cursorY);
+  }
+
+  for (let i = 0; i <= colCount; i++) {
+    const lineX = x + i * colWidth;
+    pdf.line(lineX, y, lineX, cursorY);
+  }
+
+  return cursorY;
+}
+
 export async function exportElementToPdfFile(
-  element: HTMLElement,
   filename: string,
   options: PdfExportOptions = {},
 ): Promise<void> {
-  const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
-    import('html2canvas'),
-    import('jspdf'),
-  ]);
+  const { jsPDF } = await import('jspdf');
 
   const svgSize = options.svg ? getSvgMmSize(options.svg) : null;
   const { format, orientation } = parsePageFormat(options.format ?? 'a4-landscape');
@@ -105,12 +146,9 @@ export async function exportElementToPdfFile(
     cursorY = drawCartouche(pdf, options.cartouche, MARGIN_MM, cursorY, contentWidth) + 4;
   }
 
-  const canvas = await html2canvas(element, { backgroundColor: '#ffffff', scale: 2 });
-  const imageData = canvas.toDataURL('image/png');
-  const tableRenderWidth = contentWidth;
-  const tableRenderHeight = (canvas.height / canvas.width) * tableRenderWidth;
-  pdf.addImage(imageData, 'PNG', MARGIN_MM, cursorY, tableRenderWidth, tableRenderHeight);
-  cursorY += tableRenderHeight + 6;
+  if (options.table && options.table.rows.length > 0) {
+    cursorY = drawTable(pdf, options.table, MARGIN_MM, cursorY, contentWidth) + 6;
+  }
 
   if (options.svg && svgSize) {
     const blob = await svgToPngBlob(options.svg, 8);
@@ -118,7 +156,10 @@ export async function exportElementToPdfFile(
     // Échelle réelle : 1 mm de dessin = 1 mm papier, aucune mise à l'échelle automatique.
     // Si le dessin dépasse la page (ou est trop petit), c'est à l'utilisateur de choisir
     // une échelle de dessin adaptée et de refaire l'export.
-    pdf.addImage(dataUrl, 'PNG', MARGIN_MM, cursorY, svgSize.width, svgSize.height);
+    // `svgSize.x` compense la marge interne du viewBox du dessin, pour que son contenu
+    // (pas le bord de l'image, qui inclut cette marge) s'aligne avec le cartouche/tableau.
+    const drawingX = MARGIN_MM + svgSize.x;
+    pdf.addImage(dataUrl, 'PNG', drawingX, cursorY, svgSize.width, svgSize.height);
   }
 
   pdf.save(filename);

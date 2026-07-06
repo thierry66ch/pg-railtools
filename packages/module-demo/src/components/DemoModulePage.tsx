@@ -83,7 +83,6 @@ export function DemoModulePage() {
   const [drawingScale, setDrawingScale] = useState<DrawingScale>(DEFAULT_DRAWING_SCALE);
   const [activeProjectId, setActiveProjectId] = useState<string | undefined>();
   const [activeProjectName, setActiveProjectName] = useState<string | undefined>();
-  const resultRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
@@ -245,24 +244,22 @@ export function DemoModulePage() {
         )}
       </div>
 
-      <div ref={resultRef}>
-        <table>
-          <thead>
-            <tr>
-              {resultData.table?.headers.map((header) => <th key={header}>{header}</th>)}
+      <table>
+        <thead>
+          <tr>
+            {resultData.table?.headers.map((header) => <th key={header}>{header}</th>)}
+          </tr>
+        </thead>
+        <tbody>
+          {resultData.table?.rows.map((row, rowIndex) => (
+            <tr key={rowIndex}>
+              {row.map((cell, cellIndex) => (
+                <td key={cellIndex}>{cell}</td>
+              ))}
             </tr>
-          </thead>
-          <tbody>
-            {resultData.table?.rows.map((row, rowIndex) => (
-              <tr key={rowIndex}>
-                {row.map((cell, cellIndex) => (
-                  <td key={cellIndex}>{cell}</td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+          ))}
+        </tbody>
+      </table>
 
       <svg
         ref={svgRef}
@@ -321,7 +318,6 @@ export function DemoModulePage() {
       <ExportButtons
         filenameBase={`demo-rail-${scale}`}
         resultData={resultData}
-        getResultElement={() => resultRef.current}
         getSvgElement={() => svgRef.current}
         projectName={activeProjectName}
       />

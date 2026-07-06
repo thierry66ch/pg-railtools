@@ -4,14 +4,24 @@
 
 import { downloadBlob } from '../transfer/files';
 
-/** Taille (mm de dessin) du SVG, lue depuis son `viewBox` (1 unité SVG = 1 mm de dessin). */
-export function getSvgMmSize(svg: SVGSVGElement): { width: number; height: number } {
+/**
+ * Taille et origine (mm de dessin) du SVG, lues depuis son `viewBox` (1 unité SVG = 1 mm
+ * de dessin). `x`/`y` correspondent à la marge interne éventuelle du viewBox (ex. réservée
+ * pour les cotes) — utile pour aligner le *contenu* du dessin (pas le bord de l'image
+ * rasterisée, qui inclut cette marge) avec d'autres éléments lors d'un export.
+ */
+export function getSvgMmSize(svg: SVGSVGElement): {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+} {
   const viewBox = svg.viewBox.baseVal;
   if (viewBox && viewBox.width > 0 && viewBox.height > 0) {
-    return { width: viewBox.width, height: viewBox.height };
+    return { x: viewBox.x, y: viewBox.y, width: viewBox.width, height: viewBox.height };
   }
   const bbox = svg.getBBox();
-  return { width: bbox.width, height: bbox.height };
+  return { x: bbox.x, y: bbox.y, width: bbox.width, height: bbox.height };
 }
 
 export async function svgToPngBlob(svg: SVGSVGElement, scaleFactor = 4): Promise<Blob> {

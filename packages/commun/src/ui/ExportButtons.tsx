@@ -31,9 +31,7 @@ async function getLogoDataUrl(): Promise<string | undefined> {
 export interface ExportButtonsProps {
   /** Nom de fichier sans extension, ex. "rayon-courbure-resultat". */
   filenameBase: string;
-  /** Élément DOM contenant la page de résultat à capturer pour le PDF. */
-  getResultElement: () => HTMLElement | null;
-  /** Données structurées du résultat, pour l'export Markdown. */
+  /** Données structurées du résultat, pour les exports PDF/Markdown. */
   resultData: ResultData;
   /** Élément SVG du dessin, si le module en produit un (active le bouton PNG). */
   getSvgElement?: () => SVGSVGElement | null;
@@ -43,7 +41,6 @@ export interface ExportButtonsProps {
 
 export function ExportButtons({
   filenameBase,
-  getResultElement,
   resultData,
   getSvgElement,
   projectName,
@@ -55,13 +52,12 @@ export function ExportButtons({
   const [pdfFormat, setPdfFormat] = useState<PdfPageFormat>('a4-landscape');
 
   async function handlePdf() {
-    const element = getResultElement();
-    if (!element) return;
     setIsExportingPdf(true);
     try {
       const logoDataUrl = await getLogoDataUrl();
-      await exportElementToPdfFile(element, `${filenameBase}.pdf`, {
+      await exportElementToPdfFile(`${filenameBase}.pdf`, {
         format: pdfFormat,
+        table: resultData.table,
         svg: getSvgElement?.() ?? undefined,
         cartouche: {
           appName: APP_NAME,

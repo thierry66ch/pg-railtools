@@ -4,6 +4,23 @@ Toutes les évolutions fonctionnelles notables de la base commune sont document�
 Format de version : majeur.mineur (voir §9 du cahier des charges). Chaque module a son propre
 `CHANGELOG.md` (ex. [packages/module-demo/CHANGELOG.md](packages/module-demo/CHANGELOG.md)).
 
+## 1.5 — 2026-07-06
+
+- **Correctif de fond** : le tableau de résultats de l'export PDF est désormais dessiné
+  nativement (texte vectoriel jsPDF), et non plus capturé depuis le DOM via html2canvas —
+  qui avalait les espaces entre les mots ("Longueur réelle" → "Longueurréelle"), et avait
+  déjà causé un rendu totalement vide avec `foreignObjectRendering`. html2canvas est
+  retiré du projet (plus aucun usage). `exportElementToPdfFile` prend maintenant un
+  `table?: ResultTable` au lieu d'un élément DOM ; `ExportButtonsProps.getResultElement`
+  est supprimé (devenu inutile).
+- **Export PDF** : le dessin s'aligne maintenant exactement avec le cartouche/tableau à
+  gauche — la marge interne du viewBox du dessin (réservée aux cotes) n'est plus comptée
+  en plus de la marge de page.
+
+**Rupture de compatibilité** : `exportElementToPdfFile(element, filename, options)`
+devient `exportElementToPdfFile(filename, options)` avec `options.table?: ResultTable` ;
+`ExportButtonsProps.getResultElement` est supprimé.
+
 ## 1.4 — 2026-07-06
 
 - **Correctif critique** : `foreignObjectRendering` (activé en 1.2 pour corriger un bug
