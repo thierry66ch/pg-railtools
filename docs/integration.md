@@ -8,6 +8,10 @@ module) en donnant les emplacements exacts de fichiers et les commandes à exéc
 `packages/module-demo` est un exemple fonctionnel qui illustre chacune des étapes
 ci-dessous — s'y référer en cas de doute.
 
+**Avant de commencer**, lire [`pieges-a-eviter.md`](pieges-a-eviter.md) : des erreurs
+réelles rencontrées pendant le développement de la base commune (certaines corrigées puis
+réintroduites par erreur), qui coûteront moins cher à éviter qu'à redécouvrir.
+
 ## 1. Créer le package du module
 
 ```
@@ -69,11 +73,13 @@ Ne jamais redévelopper ce qui existe déjà dans `@railtools/commun` :
 |---|---|
 | Géométrie 2D (points, angles, arcs, intersections) | `geometry` (barrel racine) |
 | Unités et échelles (mm/cm/m, Z/N/TT/H0/0/I/G, conversions) | `units` |
+| Dessin technique annoté à l'échelle (si le module produit un dessin SVG) : échelle de dessin, styles de trait CAO, cotes (longueur, rayon, angle, longueur d'arc, niveau), barre d'échelle | `drawing` (barrel — voir §2bis) |
+| Champ numérique tolérant virgule/point (saisie utilisateur) | `ui` (`NumberInput`) — ne pas utiliser `<input type="number">` nu, voir `pieges-a-eviter.md` |
 | Stockage local générique | `commonStorage`, `moduleStorage(moduleId)` |
 | Projets utilisateur (CRUD + export/import individuel) | `projects` (`listProjects`, `createProject`, `updateProject`, `renameProject`, `duplicateProject`, `deleteProject`, `exportProjectToFile`, `importProjectFromFile`) |
 | Export/import en vrac de l'environnement du module | `transfer/bulk` (`exportModuleEnvironment`, `importModuleEnvironment`) |
-| Export PDF / Markdown / PNG à l'échelle | `export` (`exportElementToPdfFile`, `resultToMarkdown`/`exportResultToMarkdownFile`, `exportSvgToPngFile`) |
-| Composants UI communs | `ui` (`Button`, `VersionBadge`, `LanguageSelector`, `UnitScaleSelector`, `ExportButtons`, `ProjectManager<T>`, `EnvironmentTransfer`, `ResultPageLayout`) |
+| Export PDF / Markdown / PNG à l'échelle | `ui` (`<ExportButtons resultData={...} getSvgElement={...} projectName={...} />` — voir §2ter, gère tout automatiquement) |
+| Composants UI communs | `ui` (`Button`, `VersionBadge`, `LanguageSelector`, `UnitScaleSelector`, `DrawingScaleSelector`, `NumberInput`, `ExportButtons`, `ProjectManager<T>`, `EnvironmentTransfer`, `ResultPageLayout`) |
 | Thème visuel | `import '@railtools/commun/theme/tokens.css'` (déjà importé une fois dans `apps/portail/app/globals.css` — ne pas le réimporter dans le module, réutiliser les classes `.rt-*`) |
 
 Tout appel à ces fonctions se fait avec l'identifiant du module (`moduleId`, ex. `'demo'`)
@@ -84,6 +90,68 @@ isole les données du module des autres (voir `src/storage/index.ts` et
 Si un besoin générique manque dans `packages/commun`, l'ajouter là plutôt que de le
 dupliquer localement dans le module (voir `packages/commun/src/index.ts` pour le barrel
 à mettre à jour).
+
+## 2bis. Dessin technique annoté (si le module produit un dessin SVG)
+
+Uniquement pertinent pour un module qui dessine une géométrie à l'échelle (voir
+`packages/module-demo/src/components/DemoModulePage.tsx` pour un exemple complet). Le
+pipeline à suivre, dans l'ordre :
+
+1. Calculer toute la géométrie en **mm modèle réduit** (après conversion unité →
+   `realToScale`, comme avant).
+2. Résoudre l'échelle de dessin choisie par l'utilisateur (`DrawingScale`, distincte de
+   l'échelle modèle — voir `pieges-a-eviter.md`) via `resolveDrawingScale(drawingScale,
+   { width, height })`, où `{width, height}` est la taille de la géométrie en mm modèle.
+3. Convertir chaque coordonnée en **mm de dessin** via `modelToDrawing(mm, resolved)`
+   juste avant de les utiliser dans le SVG (jamais avant).
+4. Construire le `viewBox` du SVG avec une marge interne par côté (mm de dessin) —
+   suffisante pour que les cotes ne soient pas coupées, mais pas plus (voir
+   `pieges-a-eviter.md` pour l'alignement de cette marge dans les exports).
+5. Annoter avec les primitives de `drawing/cotes` : `LengthCote`, `RadiusCote`,
+   `AngleCote`, `ArcLengthCote`, `LevelCote` — chacune prend un `sizing?:
+   DimensionSizing` (calculé une fois via `suggestDimensionSizing()`, sans paramètre, et
+   partagé entre toutes les cotes du dessin pour un rendu cohérent) et un `style?:
+   LineStyle` (`drawing/lineStyle.ts` : continu, traitillé long/court, trait d'axe,
+   pointillé).
+6. Ajouter `<ScaleBar resolved={resolved} x={...} y={...} unitCaption="Cotes en mm" />`
+   pour indiquer l'échelle de dessin réellement utilisée.
+7. Ajouter `<DrawingScaleSelector value={drawingScale} onChange={...} />` dans la barre
+   d'outils pour laisser l'utilisateur choisir l'échelle de dessin (1:1 à 1:50, ou "fit").
+
+Persistance de l'échelle de dessin choisie : à la discrétion du module (préférence
+globale via `getPreferredDrawingScale`/`setPreferredDrawingScale`, ou par projet en
+l'ajoutant à la structure de données du projet — c'est le choix fait par `module-demo`).
+
+## 2ter. Exports (PDF / Markdown / PNG) via `ExportButtons`
+
+Un module n'a normalement **jamais besoin d'appeler directement**
+`exportElementToPdfFile`/`resultToMarkdown`/`exportSvgToPngFile` : le composant
+`<ExportButtons>` s'en charge à partir de `resultData` (voir `export/types.ts` pour
+`ResultData`/`ResultTable`) :
+
+```tsx
+<ExportButtons
+  filenameBase={`mon-module-${scale}`}
+  resultData={resultData}       // { title, table?, notes?, drawingAlt? }
+  getSvgElement={() => svgRef.current}  // omettre si le module ne dessine rien
+  projectName={activeProjectName}       // nom du projet actif, pour le cartouche PDF et l'en-tête Markdown
+/>
+```
+
+Points importants :
+- Le **tableau** (`resultData.table`) est dessiné nativement dans le PDF (texte
+  vectoriel jsPDF) — ne pas essayer de le capturer depuis le DOM (voir
+  `pieges-a-eviter.md`, section html2canvas).
+- Le **format PDF** (A4/A3 × paysage/portrait) est choisi par l'utilisateur via un
+  sélecteur intégré à `ExportButtons` — rien à faire côté module.
+- Le **cartouche PDF** (logo, nom de l'app, nom du module, projet, date) est généré
+  automatiquement ; le nom du module vient de `resultData.title`.
+- Si le module fournit un dessin (`getSvgElement`), il est placé à **l'échelle réelle**
+  dans le PDF (1 mm de dessin = 1 mm papier, aucune mise à l'échelle automatique) — si le
+  dessin dépasse la page, c'est à l'utilisateur de choisir une échelle de dessin adaptée
+  et de refaire l'export (comportement voulu, pas un bug à corriger).
+- L'export Markdown inclut le nom du projet et la date/heure de génération (pas la
+  description du module).
 
 ## 3. S'enregistrer dans le portail
 

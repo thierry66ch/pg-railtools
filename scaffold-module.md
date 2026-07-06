@@ -13,6 +13,12 @@ Ce module vit dans son propre dossier `packages/module-[nom-du-module]` et doit 
 - exposer une page/route consommée par `apps/portail`,
 - respecter les conventions ci-dessous pour rester cohérent avec les autres modules.
 
+**Avant de commencer à coder**, lire `docs/integration.md` (marche à suivre détaillée,
+emplacements de fichiers exacts) et surtout `docs/pieges-a-eviter.md` (erreurs réelles
+déjà rencontrées — certaines corrigées puis réintroduites par erreur — sur l'échelle de
+dessin, le dimensionnement des cotes, l'alignement des dessins dans les exports, et
+l'export PDF/Markdown en général).
+
 ## 1. Description du module
 
 - **Nom du module** : [nom]
@@ -27,12 +33,20 @@ Ce module vit dans son propre dossier `packages/module-[nom-du-module]` et doit 
 À réutiliser depuis `packages/commun` (ne pas dupliquer) :
 - [ ] Fonctions géométriques de base nécessaires (préciser lesquelles : arcs, intersections, angles, etc.)
 - [ ] Gestion des unités/échelles (préciser les échelles pertinentes pour ce module si restriction particulière)
+- [ ] Champs numériques via `NumberInput` (jamais `<input type="number">` nu — voir `pieges-a-eviter.md`)
+- [ ] Si le module produit un dessin technique : librairie `drawing` (échelle de dessin,
+      styles de trait CAO, cotes de longueur/rayon/angle/longueur d'arc/niveau, barre
+      d'échelle, `DrawingScaleSelector`) — voir `docs/integration.md` §2bis pour le
+      pipeline exact (mm modèle → résolution de l'échelle de dessin → mm de dessin)
 - [ ] Couche de stockage local générique
 - [ ] Gestion de projets utilisateur (créer/lister/ouvrir/renommer/dupliquer/supprimer, export/import individuel)
 - [ ] Fonction d'export/import en vrac de l'environnement du module (config + librairie d'éléments + tous les projets)
-- [ ] Fonction d'export PDF de la page de résultat
-- [ ] Fonction d'export Markdown de la page de résultat
-- [ ] Fonction d'export PNG à l'échelle (fond transparent), si le module produit un dessin
+- [ ] `<ExportButtons resultData={...} getSvgElement={...} projectName={...} />` — gère
+      automatiquement l'export PDF (tableau + dessin à l'échelle réelle + cartouche,
+      choix du format A4/A3 paysage/portrait), Markdown (avec nom du projet + date) et
+      PNG à l'échelle (fond transparent, si le module fournit `getSvgElement`) ; voir
+      `docs/integration.md` §2ter — ne pas appeler les fonctions d'export bas niveau
+      directement ni tenter de capturer le DOM soi-même
 - [ ] Composants UI partagés (sélecteurs, boutons d'export, gestion de librairie d'éléments, gestion de projets)
 - [ ] Composant d'affichage du numéro de version/build (voir §7)
 
@@ -57,9 +71,9 @@ Ce module vit dans son propre dossier `packages/module-[nom-du-module]` et doit 
 - Route dans le portail : `/modules/[nom-du-module]`
 - Bandeau/en-tête reprenant le texte descriptif public (but et limites du module).
 - Gestion de projets visible (créer un nouveau projet, ouvrir un projet existant, sauvegarder, exporter/importer ce projet).
-- Formulaire de saisie des paramètres d'entrée.
-- Zone de résultat : [tableau / dessin SVG à l'échelle / les deux]
-- Boutons d'action : Export PDF, Export Markdown, Export PNG (si dessin), Exporter ce projet, Importer un projet, Exporter tout l'environnement du module, Importer un environnement.
+- Formulaire de saisie des paramètres d'entrée (champs numériques via `NumberInput`).
+- Zone de résultat : [tableau / dessin SVG à l'échelle (avec cotes et barre d'échelle, si pertinent) / les deux]
+- Boutons d'action (via `<ExportButtons>`, voir §2) : Export PDF, Export Markdown, Export PNG (si dessin), Exporter ce projet, Importer un projet, Exporter tout l'environnement du module, Importer un environnement.
 - Numéro de version/build du module affiché (ex. pied de page).
 - Respect du thème visuel et du layout communs du portail (ne pas créer de style propre divergent).
 
@@ -93,9 +107,14 @@ Ce module vit dans son propre dossier `packages/module-[nom-du-module]` et doit 
 - [ ] Export/import individuel d'un projet fonctionnel (transfert d'un navigateur à l'autre testé).
 - [ ] Export/import en vrac de l'environnement du module fonctionnel (config + librairie + tous les projets).
 - [ ] Tous les textes sont traduisibles (pas de chaîne en dur).
-- [ ] Export PDF fonctionnel et fidèle au contenu affiché.
-- [ ] Export Markdown fonctionnel.
+- [ ] Export PDF fonctionnel et fidèle au contenu affiché (tableau + dessin le cas
+      échéant, cartouche correct, testé dans au moins 2 des 4 formats A4/A3
+      paysage/portrait).
+- [ ] Export Markdown fonctionnel (nom du projet + date présents, dessin embarqué le cas échéant).
 - [ ] Export PNG à l'échelle avec fond transparent fonctionnel (si applicable).
+- [ ] Si le module dessine une géométrie : cotes lisibles à toutes les échelles de
+      dessin proposées (1:1 à 1:50 et "fit"), sans chevauchement ni élément coupé par la
+      marge du `viewBox`.
 - [ ] Numéro de version (majeur.mineur) et numéro de build affichés, `CHANGELOG.md` du module à jour.
 - [ ] Le module s'intègre dans la navigation du portail (visible depuis la page d'accueil, avec son texte descriptif et sa version).
 - [ ] Design cohérent avec le reste du portail (thème, composants communs).
