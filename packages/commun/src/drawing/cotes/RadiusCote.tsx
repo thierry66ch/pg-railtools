@@ -28,7 +28,7 @@ export function RadiusCote({ center, pointOnArc, label, style, sizing }: RadiusC
   const textPoint = pointOnCircle(innerEnd, resolvedSizing.textSizeMm, inwardRad);
 
   return (
-    <g {...svgProps} fill="none">
+    <g {...svgProps} fill="none" fontFamily="Arial, Helvetica, sans-serif">
       <line x1={pointOnArc.x} y1={pointOnArc.y} x2={innerEnd.x} y2={innerEnd.y} />
       <polygon
         points={arrowHeadPoints(pointOnArc, outwardRad, resolvedSizing.arrowSizeMm)}

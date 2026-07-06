@@ -24,7 +24,7 @@ export async function resultToMarkdown(
   lines.push(metaLines.join('  \n'), '');
 
   if (options.svg) {
-    const blob = await svgToPngBlob(options.svg, options.scaleFactor);
+    const blob = await svgToPngBlob(options.svg, options.scaleFactor ?? 8);
     const dataUrl = await blobToDataUrl(blob);
     const alt = options.drawingAlt ?? result.drawingAlt ?? result.title;
     lines.push(`![${alt}](${dataUrl})`, '');

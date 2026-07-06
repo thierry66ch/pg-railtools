@@ -2,7 +2,7 @@ import { modelToDrawing, type ResolvedDrawingScale } from './scale';
 
 export interface ScaleBarProps {
   resolved: ResolvedDrawingScale;
-  /** Position (mm de dessin) du coin inférieur gauche du segment millimétrique. */
+  /** Position (mm de dessin) de l'origine (graduation "0") de la barre. */
   x: number;
   y: number;
   /** Légende affichée sous le ratio, ex. "Cotes en mm" (texte déjà formaté par l'appelant). */
@@ -16,6 +16,7 @@ const MIN_FONT_SIZE_MM = 1;
 /** En dessous de cet espacement (mm de dessin) par cm, les chiffres de 1 à 9 se chevauchent. */
 const MIN_CM_LABEL_SPACING_MM = 4;
 const STROKE_WIDTH_MM = 0.25;
+const FONT_FAMILY = 'Arial, Helvetica, sans-serif';
 
 function formatRatio(ratio: number): string {
   return Number.isInteger(ratio) ? String(ratio) : ratio.toFixed(1);
@@ -23,14 +24,12 @@ function formatRatio(ratio: number): string {
 
 /**
  * Barre d'échelle représentant l'échelle de dessin (pas l'échelle modèle) : 10 cm de
- * distance modèle réduit, graduée tous les 1 cm, précédée d'un segment de 1 cm
+ * distance modèle réduit, graduée tous les 1 cm, avec le premier intervalle (0-1 cm)
  * subdivisé en mm pour la précision près de l'origine.
  */
 export function ScaleBar({ resolved, x, y, unitCaption }: ScaleBarProps) {
   const cm = modelToDrawing(10, resolved);
   const mm = modelToDrawing(1, resolved);
-  const mmSegmentLength = cm;
-  const barStartX = x + mmSegmentLength;
   const barLength = cm * 10;
 
   const fontSize = Math.min(Math.max(cm * 0.5, MIN_FONT_SIZE_MM), MAX_FONT_SIZE_MM);
@@ -38,11 +37,11 @@ export function ScaleBar({ resolved, x, y, unitCaption }: ScaleBarProps) {
   const labelEveryCm = cm >= MIN_CM_LABEL_SPACING_MM;
 
   const mmTicks = Array.from({ length: 11 }, (_, i) => x + i * mm);
-  const cmTicks = Array.from({ length: 11 }, (_, i) => barStartX + i * cm);
+  const cmTicks = Array.from({ length: 11 }, (_, i) => x + i * cm);
 
   return (
-    <g stroke="#1a1a1a" strokeWidth={STROKE_WIDTH_MM} fill="none" fontFamily="sans-serif">
-      <line x1={x} y1={y} x2={barStartX + barLength} y2={y} />
+    <g stroke="#1a1a1a" strokeWidth={STROKE_WIDTH_MM} fill="none" fontFamily={FONT_FAMILY}>
+      <line x1={x} y1={y} x2={x + barLength} y2={y} />
       {mmTicks.map((tickX, i) => (
         <line key={`mm-${i}`} x1={tickX} y1={y} x2={tickX} y2={y - MM_TICK_HEIGHT_MM} />
       ))}

@@ -1,5 +1,12 @@
 # Changelog — module-demo
 
+## 1.2 — 2026-07-06
+
+Correction du bug de trait de rappel qui traversait le dessin sur la cote de longueur
+droite, distance de la cote de longueur d'arc désormais distincte de celle de la cote de
+longueur droite (évite qu'elles coïncident à la jonction segment/arc), libellé de la cote
+de niveau capitalisé ("H = ...").
+
 ## 1.1 — 2026-07-06
 
 Ajustements suite aux premiers essais : formatage des angles (jusqu'à 2 décimales, sans

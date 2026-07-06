@@ -4,6 +4,26 @@ Toutes les évolutions fonctionnelles notables de la base commune sont document�
 Format de version : majeur.mineur (voir §9 du cahier des charges). Chaque module a son propre
 `CHANGELOG.md` (ex. [packages/module-demo/CHANGELOG.md](packages/module-demo/CHANGELOG.md)).
 
+## 1.2 — 2026-07-06
+
+Deuxième vague d'ajustements suite aux essais :
+
+- **Cotes** : police Arial/compatible sur toutes les primitives, correction d'un bug où le
+  trait de rappel ("witness line") des cotes de longueur/longueur d'arc pouvait traverser
+  le dessin lorsque la cote était décalée du côté négatif, texte davantage écarté du trait
+  de cote, cote d'angle rapprochée et décalée angulairement pour éviter le conflit avec une
+  cote de rayon centrée, flèche de la cote de niveau doublée.
+- **`ScaleBar`** : la subdivision millimétrique est désormais intégrée au premier
+  intervalle (0-1 cm) plutôt qu'ajoutée comme segment séparé avant le zéro ; police Arial.
+- **Export PDF** : `foreignObjectRendering` activé pour éviter un bug html2canvas qui
+  avalait parfois les espaces entre les mots du tableau ; taille de texte réduite pour le
+  nom du projet et la date dans le cartouche ; le logo de l'application (favicon) est
+  désormais utilisé dans le cartouche au lieu d'un pictogramme simplifié ; résolution du
+  dessin doublée.
+- **Export Markdown** : résolution du dessin embarqué doublée par défaut.
+- **Portail** : logo affiché dans l'en-tête (`PortailHeader`), avec la classe utilitaire
+  `.rt-brand`.
+
 ## 1.1 — 2026-07-06
 
 Ajustements suite aux premiers essais de la librairie de dessin :

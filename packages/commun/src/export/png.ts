@@ -49,6 +49,34 @@ export async function svgToPngBlob(svg: SVGSVGElement, scaleFactor = 4): Promise
   });
 }
 
+/**
+ * Rasterise un SVG arbitraire (donné sous forme de balisage, pas de dimensions "mm de
+ * dessin") en PNG carré, encodé en data URL — utile pour embarquer un logo/icône
+ * statique (ex. dans un cartouche PDF), indépendamment du système d'échelle de dessin.
+ */
+export async function svgMarkupToPngDataUrl(svgMarkup: string, sizePx: number): Promise<string> {
+  const svgDataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgMarkup)}`;
+
+  const image = new Image();
+  const loaded = new Promise<void>((resolve, reject) => {
+    image.onload = () => resolve();
+    image.onerror = () => reject(new Error('Échec du chargement du SVG.'));
+  });
+  image.src = svgDataUrl;
+  await loaded;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = sizePx;
+  canvas.height = sizePx;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) {
+    throw new Error('Contexte de rendu Canvas 2D indisponible.');
+  }
+  ctx.drawImage(image, 0, 0, sizePx, sizePx);
+
+  return canvas.toDataURL('image/png');
+}
+
 export async function exportSvgToPngFile(
   svg: SVGSVGElement,
   filename: string,

@@ -134,6 +134,15 @@ a {
   border-bottom: 1px solid var(--rt-color-border);
 }
 
+.rt-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--rt-spacing-sm);
+  font-weight: 700;
+  color: var(--rt-color-primary);
+  text-decoration: none;
+}
+
 .rt-footer {
   justify-content: center;
   padding: var(--rt-spacing-md) var(--rt-spacing-lg);

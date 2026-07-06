@@ -5,11 +5,23 @@ import { useTranslations } from 'next-intl';
 import { Button } from './Button';
 import { exportElementToPdfFile, type PdfFormat } from '../export/pdf';
 import { exportResultToMarkdownFile } from '../export/markdown';
-import { exportSvgToPngFile } from '../export/png';
+import { exportSvgToPngFile, svgMarkupToPngDataUrl } from '../export/png';
 import type { ResultData } from '../export/types';
 
 const APP_NAME = 'RailTools';
+const LOGO_URL = '/icon.svg';
 const PDF_FORMATS: PdfFormat[] = ['a4', 'a3'];
+
+async function getLogoDataUrl(): Promise<string | undefined> {
+  try {
+    const response = await fetch(LOGO_URL);
+    if (!response.ok) return undefined;
+    const svgMarkup = await response.text();
+    return await svgMarkupToPngDataUrl(svgMarkup, 128);
+  } catch {
+    return undefined;
+  }
+}
 
 export interface ExportButtonsProps {
   /** Nom de fichier sans extension, ex. "rayon-courbure-resultat". */
@@ -42,6 +54,7 @@ export function ExportButtons({
     if (!element) return;
     setIsExportingPdf(true);
     try {
+      const logoDataUrl = await getLogoDataUrl();
       await exportElementToPdfFile(element, `${filenameBase}.pdf`, {
         format: pdfFormat,
         svg: getSvgElement?.() ?? undefined,
@@ -49,6 +62,7 @@ export function ExportButtons({
           appName: APP_NAME,
           moduleName: resultData.title,
           projectName,
+          logoDataUrl,
         },
       });
     } finally {

@@ -32,10 +32,10 @@ export function LevelCote({
   const textAnchor = Math.cos(directionRad) >= 0 ? 'start' : 'end';
 
   return (
-    <g {...svgProps} fill="none">
+    <g {...svgProps} fill="none" fontFamily="Arial, Helvetica, sans-serif">
       <line x1={tail.x} y1={tail.y} x2={point.x} y2={point.y} />
       <polygon
-        points={arrowHeadPoints(point, arrowDir, resolvedSizing.arrowSizeMm)}
+        points={arrowHeadPoints(point, arrowDir, resolvedSizing.arrowSizeMm * 2)}
         fill={svgProps.stroke}
         stroke="none"
       />

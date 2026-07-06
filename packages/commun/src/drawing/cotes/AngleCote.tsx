@@ -35,13 +35,16 @@ export function AngleCote({
   const startPoint = pointOnCircle(center, radiusMm, startAngleRad);
   const endPoint = pointOnCircle(center, radiusMm, endAngleRad);
   const midAngle = startAngleRad + sweep / 2;
-  const labelPoint = pointOnCircle(center, radiusMm + resolvedSizing.textSizeMm, midAngle);
+  // Décalé du milieu exact de l'arc (souvent occupé par une cote de rayon centrée) et
+  // rapproché de l'arc pour rester lisible sans trop s'écarter.
+  const labelAngle = midAngle - sweep * 0.2;
+  const labelPoint = pointOnCircle(center, radiusMm + resolvedSizing.textSizeMm * 0.5, labelAngle);
 
   const startArrowDir = tangentDirection(startAngleRad) + Math.PI;
   const endArrowDir = tangentDirection(endAngleRad);
 
   return (
-    <g {...svgProps} fill="none">
+    <g {...svgProps} fill="none" fontFamily="Arial, Helvetica, sans-serif">
       <path
         d={`M ${startPoint.x} ${startPoint.y} A ${radiusMm} ${radiusMm} 0 ${largeArcFlag} 1 ${endPoint.x} ${endPoint.y}`}
       />

@@ -29,23 +29,26 @@ export function ArcLengthCote({
   const resolvedStyle: LineStyle = style ?? { kind: 'solid' };
   const svgProps = lineStyleToSvgProps(resolvedStyle);
   const offset = offsetMm ?? DEFAULT_COTE_OFFSET_MM;
+  const gapSigned = Math.sign(offset) * resolvedSizing.gapMm;
   const dimRadius = radiusMm + offset;
 
   const sweep = normalizeAngle(endAngleRad - startAngleRad);
   const largeArcFlag = sweep > Math.PI ? 1 : 0;
 
-  const witnessStart = pointOnCircle(center, radiusMm + resolvedSizing.gapMm, startAngleRad);
-  const witnessEnd = pointOnCircle(center, radiusMm + resolvedSizing.gapMm, endAngleRad);
+  const witnessStart = pointOnCircle(center, radiusMm + gapSigned, startAngleRad);
+  const witnessEnd = pointOnCircle(center, radiusMm + gapSigned, endAngleRad);
   const dimStart = pointOnCircle(center, dimRadius, startAngleRad);
   const dimEnd = pointOnCircle(center, dimRadius, endAngleRad);
   const midAngle = startAngleRad + sweep / 2;
-  const labelPoint = pointOnCircle(center, dimRadius, midAngle);
+  // Écarte le texte du trait de cote courbé (au-delà du simple rayon de cote).
+  const labelRadius = dimRadius + Math.sign(offset) * (resolvedSizing.textSizeMm * 0.4 + 1);
+  const labelPoint = pointOnCircle(center, labelRadius, midAngle);
 
   const startArrowDir = tangentDirection(startAngleRad) + Math.PI;
   const endArrowDir = tangentDirection(endAngleRad);
 
   return (
-    <g {...svgProps} fill="none">
+    <g {...svgProps} fill="none" fontFamily="Arial, Helvetica, sans-serif">
       <line x1={witnessStart.x} y1={witnessStart.y} x2={dimStart.x} y2={dimStart.y} />
       <line x1={witnessEnd.x} y1={witnessEnd.y} x2={dimEnd.x} y2={dimEnd.y} />
       <path

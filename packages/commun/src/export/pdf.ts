@@ -15,6 +15,8 @@ export interface PdfCartouche {
   moduleName: string;
   projectName?: string;
   date?: Date;
+  /** Data URL (PNG) du logo à afficher dans le cartouche. À défaut, un logo simplifié est dessiné. */
+  logoDataUrl?: string;
 }
 
 export interface PdfExportOptions {
@@ -27,9 +29,7 @@ export interface PdfExportOptions {
 const MARGIN_MM = 10;
 const CARTOUCHE_HEIGHT_MM = 16;
 
-function drawCartouche(pdf: jsPDF, cartouche: PdfCartouche, x: number, y: number, width: number): number {
-  const logoSize = 10;
-
+function drawCartoucheLogoFallback(pdf: jsPDF, x: number, y: number, logoSize: number): void {
   pdf.setFillColor(31, 95, 139);
   pdf.rect(x, y, logoSize, logoSize, 'F');
   pdf.setDrawColor(255, 255, 255);
@@ -39,6 +39,16 @@ function drawCartouche(pdf: jsPDF, cartouche: PdfCartouche, x: number, y: number
   pdf.setTextColor(255, 255, 255);
   pdf.setFontSize(5);
   pdf.text('PG', x + logoSize / 2, y + 4, { align: 'center' });
+}
+
+function drawCartouche(pdf: jsPDF, cartouche: PdfCartouche, x: number, y: number, width: number): number {
+  const logoSize = 10;
+
+  if (cartouche.logoDataUrl) {
+    pdf.addImage(cartouche.logoDataUrl, 'PNG', x, y, logoSize, logoSize);
+  } else {
+    drawCartoucheLogoFallback(pdf, x, y, logoSize);
+  }
 
   pdf.setTextColor(20, 20, 20);
   pdf.setFontSize(11);
@@ -47,10 +57,10 @@ function drawCartouche(pdf: jsPDF, cartouche: PdfCartouche, x: number, y: number
   pdf.text(cartouche.moduleName, x + logoSize + 3, y + 9);
 
   const dateLabel = (cartouche.date ?? new Date()).toLocaleString('fr-CH');
-  pdf.setFontSize(8);
+  pdf.setFontSize(6.5);
   pdf.text(dateLabel, x + width, y + 4, { align: 'right' });
   if (cartouche.projectName) {
-    pdf.text(cartouche.projectName, x + width, y + 9, { align: 'right' });
+    pdf.text(cartouche.projectName, x + width, y + 8, { align: 'right' });
   }
 
   pdf.setDrawColor(200, 200, 200);
@@ -81,7 +91,14 @@ export async function exportElementToPdfFile(
     cursorY = drawCartouche(pdf, options.cartouche, MARGIN_MM, cursorY, contentWidth) + 4;
   }
 
-  const canvas = await html2canvas(element, { backgroundColor: '#ffffff', scale: 2 });
+  // `foreignObjectRendering` délègue le rendu du texte au moteur natif du navigateur
+  // (via SVG `<foreignObject>`) plutôt qu'à la réimplémentation de html2canvas, qui avale
+  // parfois les espaces entre les mots.
+  const canvas = await html2canvas(element, {
+    backgroundColor: '#ffffff',
+    scale: 2,
+    foreignObjectRendering: true,
+  });
   const imageData = canvas.toDataURL('image/png');
   const tableRenderWidth = contentWidth;
   const tableRenderHeight = (canvas.height / canvas.width) * tableRenderWidth;
@@ -89,7 +106,7 @@ export async function exportElementToPdfFile(
   cursorY += tableRenderHeight + 6;
 
   if (options.svg && svgSize) {
-    const blob = await svgToPngBlob(options.svg);
+    const blob = await svgToPngBlob(options.svg, 8);
     const dataUrl = await blobToDataUrl(blob);
     // Échelle réelle : 1 mm de dessin = 1 mm papier, aucune mise à l'échelle automatique.
     // Si le dessin dépasse la page (ou est trop petit), c'est à l'utilisateur de choisir
