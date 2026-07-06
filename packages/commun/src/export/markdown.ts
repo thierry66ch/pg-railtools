@@ -1,11 +1,28 @@
-import { downloadTextFile } from '../transfer/files';
+import { blobToDataUrl, downloadTextFile } from '../transfer/files';
+import { svgToPngBlob } from './png';
 import type { ResultData } from './types';
 
-export function resultToMarkdown(result: ResultData): string {
+export interface MarkdownDrawingOptions {
+  svg: SVGSVGElement;
+  alt?: string;
+  scaleFactor?: number;
+}
+
+export async function resultToMarkdown(
+  result: ResultData,
+  drawing?: MarkdownDrawingOptions,
+): Promise<string> {
   const lines: string[] = [`# ${result.title}`, ''];
 
   if (result.description) {
     lines.push(result.description, '');
+  }
+
+  if (drawing) {
+    const blob = await svgToPngBlob(drawing.svg, drawing.scaleFactor);
+    const dataUrl = await blobToDataUrl(blob);
+    const alt = drawing.alt ?? result.drawingAlt ?? result.title;
+    lines.push(`![${alt}](${dataUrl})`, '');
   }
 
   if (result.table && result.table.rows.length > 0) {
@@ -28,6 +45,10 @@ export function resultToMarkdown(result: ResultData): string {
   return lines.join('\n');
 }
 
-export function exportResultToMarkdownFile(result: ResultData, filename: string): void {
-  downloadTextFile(filename, resultToMarkdown(result), 'text/markdown');
+export async function exportResultToMarkdownFile(
+  result: ResultData,
+  filename: string,
+  drawing?: MarkdownDrawingOptions,
+): Promise<void> {
+  downloadTextFile(filename, await resultToMarkdown(result, drawing), 'text/markdown');
 }

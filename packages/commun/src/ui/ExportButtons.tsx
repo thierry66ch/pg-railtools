@@ -28,6 +28,7 @@ export function ExportButtons({
   const t = useTranslations('common');
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [isExportingPng, setIsExportingPng] = useState(false);
+  const [isExportingMarkdown, setIsExportingMarkdown] = useState(false);
 
   async function handlePdf() {
     const element = getResultElement();
@@ -40,8 +41,18 @@ export function ExportButtons({
     }
   }
 
-  function handleMarkdown() {
-    exportResultToMarkdownFile(resultData, `${filenameBase}.md`);
+  async function handleMarkdown() {
+    const svg = getSvgElement?.() ?? undefined;
+    setIsExportingMarkdown(true);
+    try {
+      await exportResultToMarkdownFile(
+        resultData,
+        `${filenameBase}.md`,
+        svg ? { svg } : undefined,
+      );
+    } finally {
+      setIsExportingMarkdown(false);
+    }
   }
 
   async function handlePng() {
@@ -60,7 +71,12 @@ export function ExportButtons({
       <Button type="button" variant="secondary" onClick={() => void handlePdf()} disabled={isExportingPdf}>
         {t('actions.exportPdf')}
       </Button>
-      <Button type="button" variant="secondary" onClick={handleMarkdown}>
+      <Button
+        type="button"
+        variant="secondary"
+        onClick={() => void handleMarkdown()}
+        disabled={isExportingMarkdown}
+      >
         {t('actions.exportMarkdown')}
       </Button>
       {getSvgElement && (

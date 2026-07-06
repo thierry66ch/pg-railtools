@@ -56,6 +56,24 @@ export function arcLength(radius: number, angleRad: number): number {
   return radius * Math.abs(angleRad);
 }
 
+/** Vecteur unitaire perpendiculaire à la direction `a → b`. */
+export function perpendicularUnit(a: Point, b: Point): Point {
+  const d = subPoints(b, a);
+  const len = Math.hypot(d.x, d.y) || 1;
+  return { x: -d.y / len, y: d.x / len };
+}
+
+/** Décale `p` perpendiculairement à la direction `a → b`, de `distance` (peut être négatif). */
+export function offsetPoint(p: Point, a: Point, b: Point, distance: number): Point {
+  const n = perpendicularUnit(a, b);
+  return { x: p.x + n.x * distance, y: p.y + n.y * distance };
+}
+
+/** Direction tangente (radians) à un cercle, au point situé à `angleRad`. */
+export function tangentDirection(angleRad: number): number {
+  return normalizeAngle(angleRad + Math.PI / 2);
+}
+
 /**
  * Intersection de deux segments/droites définis par deux points chacun.
  * Retourne le point d'intersection des droites infinies portées par (p1,p2) et (p3,p4),

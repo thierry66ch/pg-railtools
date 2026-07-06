@@ -1,5 +1,6 @@
 export * from './geometry';
 export * from './units';
+export * from './drawing';
 export * from './storage';
 export * from './projects';
 export * from './transfer/files';

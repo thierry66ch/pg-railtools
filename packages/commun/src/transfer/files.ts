@@ -39,6 +39,15 @@ export function readJsonFile<T>(file: File): Promise<T> {
   });
 }
 
+export function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(reader.error ?? new Error('Unable to read blob'));
+    reader.readAsDataURL(blob);
+  });
+}
+
 export function generateId(): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return crypto.randomUUID();

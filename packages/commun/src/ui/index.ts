@@ -2,6 +2,7 @@ export * from './Button';
 export * from './VersionBadge';
 export * from './LanguageSelector';
 export * from './UnitScaleSelector';
+export * from './DrawingScaleSelector';
 export * from './ExportButtons';
 export * from './ProjectManager';
 export * from './EnvironmentTransfer';

@@ -13,4 +13,6 @@ export interface ResultData {
   description?: string;
   table?: ResultTable;
   notes?: string[];
+  /** Texte alternatif du dessin, utilisé si un dessin est embarqué dans l'export Markdown. */
+  drawingAlt?: string;
 }

@@ -1,19 +1,37 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
+  AngleCote,
+  ArcLengthCote,
+  DEFAULT_DRAWING_SCALE,
   DEFAULT_PREFERRED_SCALE,
   DEFAULT_PREFERRED_UNIT,
+  DrawingScaleSelector,
   EnvironmentTransfer,
   ExportButtons,
+  LengthCote,
+  LevelCote,
   ProjectManager,
+  RadiusCote,
   ResultPageLayout,
+  ScaleBar,
   UnitScaleSelector,
+  arcLength,
   convertLength,
+  degToRad,
+  getPreferredDrawingScale,
+  lineStyleToSvgProps,
+  modelToDrawing,
+  pointOnCircle,
   realToScale,
+  resolveDrawingScale,
+  suggestDimensionSizing,
   updateProject,
+  type DrawingScale,
   type LengthUnit,
+  type Point,
   type Project,
   type ResultData,
   type ScaleKey,
@@ -22,6 +40,17 @@ import versionInfo from '../../version.json';
 import type { DemoProjectData } from '../types';
 
 const MODULE_ID = 'demo';
+const DEFAULT_CURVE_RADIUS_MM = 300;
+const DEFAULT_CURVE_ANGLE_DEG = 30;
+/** Dimensions cible (mm) utilisées par le mode d'échelle de dessin "fit". */
+const FIT_TARGET_MM = { width: 180, height: 260 };
+const DRAWING_MARGIN_MM = 50;
+const SCALE_BAR_EXTRA_MM = 20;
+const ANGLE_OFFSET_EXTRA_MM = 14;
+
+function formatMm(mm: number): string {
+  return `${mm.toFixed(1)} mm`;
+}
 
 export function DemoModulePage() {
   const t = useTranslations('moduleDemo');
@@ -30,36 +59,141 @@ export function DemoModulePage() {
   const [realLengthValue, setRealLengthValue] = useState(1000);
   const [unit, setUnit] = useState<LengthUnit>(DEFAULT_PREFERRED_UNIT);
   const [scale, setScale] = useState<ScaleKey>(DEFAULT_PREFERRED_SCALE);
+  const [curveRadiusMm, setCurveRadiusMm] = useState(DEFAULT_CURVE_RADIUS_MM);
+  const [curveAngleDeg, setCurveAngleDeg] = useState(DEFAULT_CURVE_ANGLE_DEG);
+  const [drawingScale, setDrawingScale] = useState<DrawingScale>(DEFAULT_DRAWING_SCALE);
   const [activeProjectId, setActiveProjectId] = useState<string | undefined>();
   const resultRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
 
+  useEffect(() => {
+    if (!activeProjectId) {
+      void getPreferredDrawingScale().then(setDrawingScale);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const realLengthMm = convertLength(realLengthValue, unit, 'mm');
   const modelLengthMm = realToScale(realLengthMm, scale);
   const railHeightMm = Math.max(modelLengthMm * 0.05, 2);
+  const curveAngleRad = degToRad(curveAngleDeg);
+  const arcLengthMm = arcLength(curveRadiusMm, curveAngleRad);
+
+  // --- Géométrie (mm modèle réduit) : segment droit puis arc tangent. ---
+  const startPoint: Point = { x: 0, y: 0 };
+  const tangentPoint: Point = { x: modelLengthMm, y: 0 };
+  const arcCenter: Point = { x: modelLengthMm, y: curveRadiusMm };
+  const arcStartAngleRad = -Math.PI / 2;
+  const arcEndAngleRad = arcStartAngleRad + curveAngleRad;
+  const arcEndPoint = pointOnCircle(arcCenter, curveRadiusMm, arcEndAngleRad);
+  const arcMidPoint = pointOnCircle(arcCenter, curveRadiusMm, arcStartAngleRad + curveAngleRad / 2);
+
+  const ARC_SAMPLES = 12;
+  const arcSamplePoints: Point[] = Array.from({ length: ARC_SAMPLES + 1 }, (_, i) =>
+    pointOnCircle(arcCenter, curveRadiusMm, arcStartAngleRad + (curveAngleRad * i) / ARC_SAMPLES),
+  );
+  const geometryPoints = [startPoint, tangentPoint, ...arcSamplePoints];
+  const modelMinX = Math.min(...geometryPoints.map((p) => p.x));
+  const modelMaxX = Math.max(...geometryPoints.map((p) => p.x));
+  const modelMinY = Math.min(...geometryPoints.map((p) => p.y));
+  const modelMaxY = Math.max(...geometryPoints.map((p) => p.y));
+  const modelWidth = Math.max(modelMaxX - modelMinX, 1);
+  const modelHeight = Math.max(modelMaxY - modelMinY, 1);
+
+  const effectiveDrawingScale: DrawingScale =
+    drawingScale.mode === 'fit' && !drawingScale.fitTargetMm
+      ? { ...drawingScale, fitTargetMm: FIT_TARGET_MM }
+      : drawingScale;
+  const resolvedScale = resolveDrawingScale(effectiveDrawingScale, {
+    width: modelWidth,
+    height: modelHeight,
+  });
+
+  function toDrawing(p: Point): Point {
+    return {
+      x: modelToDrawing(p.x - modelMinX, resolvedScale),
+      y: modelToDrawing(p.y - modelMinY, resolvedScale),
+    };
+  }
+
+  const dStart = toDrawing(startPoint);
+  const dTangent = toDrawing(tangentPoint);
+  const dArcCenter = toDrawing(arcCenter);
+  const dArcEnd = toDrawing(arcEndPoint);
+  const dArcMid = toDrawing(arcMidPoint);
+  const dRadius = modelToDrawing(curveRadiusMm, resolvedScale);
+  const dRailHeight = modelToDrawing(railHeightMm, resolvedScale);
+  const drawingWidth = modelToDrawing(modelWidth, resolvedScale);
+  const drawingHeight = modelToDrawing(modelHeight, resolvedScale);
+
+  const sizing = suggestDimensionSizing(Math.max(drawingWidth, drawingHeight));
+  const arcLengthDimRadius = dRadius + sizing.gapMm + sizing.arrowSizeMm;
+  const angleDimRadius = arcLengthDimRadius + ANGLE_OFFSET_EXTRA_MM;
+  const lengthCoteOffsetMm = -(sizing.gapMm + sizing.arrowSizeMm);
+
+  const largeArcFlag = curveAngleRad > Math.PI ? 1 : 0;
+  const pathD = `M ${dStart.x} ${dStart.y} L ${dTangent.x} ${dTangent.y} A ${dRadius} ${dRadius} 0 ${largeArcFlag} 1 ${dArcEnd.x} ${dArcEnd.y}`;
+  const centerlineProps = lineStyleToSvgProps({ kind: 'centerline', color: '#333333', widthMm: 0.3 });
+
+  const viewBoxMinX = -DRAWING_MARGIN_MM;
+  const viewBoxMinY = -DRAWING_MARGIN_MM;
+  const viewBoxWidth = drawingWidth + DRAWING_MARGIN_MM * 2;
+  const viewBoxHeight = drawingHeight + DRAWING_MARGIN_MM * 2 + SCALE_BAR_EXTRA_MM;
 
   const resultData: ResultData = useMemo(
     () => ({
       title: t('title'),
       description: t('description'),
+      drawingAlt: t('title'),
       table: {
-        headers: [t('result.realLength'), t('result.scale'), t('result.modelLength')],
-        rows: [[`${realLengthMm.toFixed(1)} mm`, scale, `${modelLengthMm.toFixed(2)} mm`]],
+        headers: [
+          t('result.realLength'),
+          t('result.scale'),
+          t('result.modelLength'),
+          t('result.curveRadius'),
+          t('result.curveAngle'),
+          t('result.arcLength'),
+        ],
+        rows: [
+          [
+            formatMm(realLengthMm),
+            scale,
+            formatMm(modelLengthMm),
+            formatMm(curveRadiusMm),
+            `${curveAngleDeg.toFixed(0)}°`,
+            formatMm(arcLengthMm),
+          ],
+        ],
       },
     }),
-    [t, realLengthMm, scale, modelLengthMm],
+    [t, realLengthMm, scale, modelLengthMm, curveRadiusMm, curveAngleDeg, arcLengthMm],
   );
 
   function handleOpen(project: Project<DemoProjectData>) {
     setRealLengthValue(project.data.realLengthMm);
     setUnit('mm');
     setScale(project.data.scale);
+    setCurveRadiusMm(project.data.curveRadiusMm);
+    setCurveAngleDeg(project.data.curveAngleDeg);
+    setDrawingScale(project.data.drawingScale);
     setActiveProjectId(project.id);
   }
 
   async function handleSave() {
     if (!activeProjectId) return;
-    await updateProject<DemoProjectData>(MODULE_ID, activeProjectId, { realLengthMm, scale });
+    await updateProject<DemoProjectData>(MODULE_ID, activeProjectId, {
+      realLengthMm,
+      scale,
+      curveRadiusMm,
+      curveAngleDeg,
+      drawingScale,
+    });
+  }
+
+  function handleDrawingScaleChange(next: DrawingScale) {
+    setDrawingScale(
+      next.mode === 'fit' && !next.fitTargetMm ? { ...next, fitTargetMm: FIT_TARGET_MM } : next,
+    );
   }
 
   return (
@@ -75,12 +209,34 @@ export function DemoModulePage() {
             onChange={(event) => setRealLengthValue(Number(event.target.value))}
           />
         </label>
+        <label className="rt-field">
+          <span>{t('form.curveRadius')}</span>
+          <input
+            className="rt-input"
+            type="number"
+            min={1}
+            value={curveRadiusMm}
+            onChange={(event) => setCurveRadiusMm(Number(event.target.value))}
+          />
+        </label>
+        <label className="rt-field">
+          <span>{t('form.curveAngle')}</span>
+          <input
+            className="rt-input"
+            type="number"
+            min={0.1}
+            max={359}
+            value={curveAngleDeg}
+            onChange={(event) => setCurveAngleDeg(Number(event.target.value))}
+          />
+        </label>
         <UnitScaleSelector
           onChange={({ unit: nextUnit, scale: nextScale }) => {
             setUnit(nextUnit);
             setScale(nextScale);
           }}
         />
+        <DrawingScaleSelector value={drawingScale} onChange={handleDrawingScaleChange} />
         {activeProjectId && (
           <button type="button" className="rt-button" onClick={() => void handleSave()}>
             {tCommon('actions.save')}
@@ -108,11 +264,45 @@ export function DemoModulePage() {
 
         <svg
           ref={svgRef}
-          viewBox={`0 0 ${Math.max(modelLengthMm, 1)} ${Math.max(railHeightMm, 1)}`}
+          viewBox={`${viewBoxMinX} ${viewBoxMinY} ${viewBoxWidth} ${viewBoxHeight}`}
           width="100%"
-          style={{ maxWidth: 480, height: 'auto', background: 'transparent' }}
+          style={{ maxWidth: 640, height: 'auto', background: 'transparent' }}
         >
-          <rect x={0} y={0} width={modelLengthMm} height={railHeightMm} fill="#1f5f8b" />
+          <path d={pathD} stroke="#1f5f8b" strokeWidth={dRailHeight} strokeLinecap="round" fill="none" />
+          <path d={pathD} {...centerlineProps} fill="none" />
+
+          <LengthCote
+            from={dStart}
+            to={dTangent}
+            offsetMm={lengthCoteOffsetMm}
+            label={formatMm(modelLengthMm)}
+            sizing={sizing}
+          />
+          <RadiusCote
+            center={dArcCenter}
+            pointOnArc={dArcMid}
+            label={`R${curveRadiusMm.toFixed(0)}`}
+            sizing={sizing}
+          />
+          <ArcLengthCote
+            center={dArcCenter}
+            radiusMm={arcLengthDimRadius}
+            startAngleRad={arcStartAngleRad}
+            endAngleRad={arcEndAngleRad}
+            label={formatMm(arcLengthMm)}
+            sizing={sizing}
+          />
+          <AngleCote
+            center={dArcCenter}
+            radiusMm={angleDimRadius}
+            startAngleRad={arcStartAngleRad}
+            endAngleRad={arcEndAngleRad}
+            label={`${curveAngleDeg.toFixed(0)}°`}
+            sizing={sizing}
+          />
+          <LevelCote point={dStart} label={`h = ${formatMm(railHeightMm)}`} sizing={sizing} />
+
+          <ScaleBar resolved={resolvedScale} x={0} y={drawingHeight + DRAWING_MARGIN_MM} />
         </svg>
       </div>
 
@@ -126,7 +316,13 @@ export function DemoModulePage() {
       <ProjectManager<DemoProjectData>
         moduleId={MODULE_ID}
         activeProjectId={activeProjectId}
-        createDefaultData={() => ({ realLengthMm, scale })}
+        createDefaultData={() => ({
+          realLengthMm,
+          scale,
+          curveRadiusMm,
+          curveAngleDeg,
+          drawingScale,
+        })}
         onOpen={handleOpen}
       />
 

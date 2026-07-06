@@ -15,6 +15,12 @@
     "unit": "Unité",
     "scale": "Échelle"
   },
+  "drawing": {
+    "scale": {
+      "label": "Échelle de dessin",
+      "fit": "Ajustée à la page"
+    }
+  },
   "language": {
     "select": "Langue"
   },

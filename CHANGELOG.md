@@ -4,6 +4,29 @@ Toutes les évolutions fonctionnelles notables de la base commune sont document�
 Format de version : majeur.mineur (voir §9 du cahier des charges). Chaque module a son propre
 `CHANGELOG.md` (ex. [packages/module-demo/CHANGELOG.md](packages/module-demo/CHANGELOG.md)).
 
+## 1.0 — 2026-07-06
+
+Ajout d'une librairie de dessin technique dans `packages/commun`, réutilisable par tout
+module :
+
+- **Échelle de dessin** (`drawing/scale.ts`) : notion distincte de l'échelle modèle
+  (`ScaleKey`), pour réduire davantage un dessin trop grand pour la page (ratios fixes
+  1:1 à 1:50, ou mode "fit" calé sur des dimensions de page).
+- **Styles de trait CAD** (`drawing/lineStyle.ts`) : continu, traitillé long/court, trait
+  d'axe, pointillé.
+- **Dimensionnement adaptatif** (`drawing/sizing.ts`) : taille de texte/flèches calculée
+  à partir de la taille du dessin (mm de dessin), jamais de l'échelle.
+- **5 primitives de cote** (`drawing/cotes/`) : longueur, rayon, angle, longueur d'arc,
+  niveau.
+- **Barre d'échelle** (`drawing/ScaleBar.tsx`) et sélecteur d'échelle de dessin
+  (`ui/DrawingScaleSelector.tsx`).
+- **Export Markdown** : le dessin SVG peut désormais être embarqué (PNG base64) dans le
+  fichier exporté.
+
+**Rupture de compatibilité** : `resultToMarkdown` et `exportResultToMarkdownFile`
+(`packages/commun/src/export/markdown.ts`) sont désormais asynchrones (retournent une
+`Promise`).
+
 ## 0.1 — 2026-07-05
 
 Version initiale de la base commune :
