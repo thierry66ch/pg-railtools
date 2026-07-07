@@ -1,5 +1,25 @@
 # Changelog — module-arc
 
+## 1.5 — 2026-07-07
+
+Deux corrections de rendu sur le dessin, signalées avec capture annotée :
+
+- **Correctif générique** (`packages/commun`, `ArcLengthCote`) : le libellé de
+  la cote de longueur d'arc n'avait pas de `dominantBaseline` (contrairement à
+  `LengthCote`), si bien que le texte touchait quasiment sa propre ligne de
+  cote au lieu de s'en écarter. Ajout d'une baseline dépendant du signe de
+  l'offset (miroir de la logique déjà utilisée par `LengthCote`) — bénéficie
+  aussi à `module-demo`, qui utilise la même primitive.
+- Cotes AE/EB de `module-arc` : leur décalage (5 mm) laissait le texte
+  toucher/chevaucher la cote totale A-B juste au-dessus. Réduit à 3 mm pour
+  garder une marge nette entre les deux lignes de cote empilées.
+
+Vérifié dans le navigateur (serveur redémarré à froid), y compris en
+reproduisant le scénario signalé (E à 300 mm, échelle 1:5) : écart net entre
+« 300.0 »/« 700.0 » et la cote totale « 1000.0 » (comparaison de bounding
+boxes), libellé de longueur d'arc clairement sous son arc de cote ; aucune
+régression sur `module-demo`.
+
 ## 1.4 — 2026-07-07
 
 Ajouts au dessin :

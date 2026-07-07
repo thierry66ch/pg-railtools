@@ -59,8 +59,14 @@ const RAIL_STROKE_WIDTH_MM = 1.5;
 const CURSOR_MARKER_RADIUS_MM = 1.5;
 /** Position (fraction de α, entre D et B) de l'ancrage de la cote de rayon. */
 const RADIUS_COTE_ANGLE_FRACTION = 0.7;
-/** Décalage (mm de dessin) des cotes AE/EB, entre la corde et la cote totale A-B. */
-const SUB_COTE_OFFSET_MM = 5;
+/**
+ * Décalage (mm de dessin) des cotes AE/EB, entre la corde et la cote totale A-B (offset
+ * -DEFAULT_COTE_OFFSET_MM = -10). Le texte de ces cotes s'étend lui-même d'environ
+ * textSizeMm*0.4+1 + textSizeMm ≈ 5.2 mm au-delà de leur propre ligne (LengthCote,
+ * dominantBaseline="text-after-edge") : rester nettement en dessous de 10-5.2=4.8 pour
+ * garder de la marge avant la cote totale.
+ */
+const SUB_COTE_OFFSET_MM = 3;
 /** Directions (radians) des étiquettes A/B (horizontales, vers l'extérieur) et C/D (en diagonale, à l'écart des cotes). */
 const LABEL_LEFT_RAD = Math.PI;
 const LABEL_RIGHT_RAD = 0;

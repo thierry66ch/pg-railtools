@@ -71,6 +71,11 @@ export function ArcLengthCote({
         stroke="none"
         fill={svgProps.stroke}
         textAnchor="middle"
+        // Sans ceci, la baseline par défaut ("alphabetic") place le corps du texte en
+        // grande partie *avant* labelPoint (côté ligne de cote), annulant presque tout le
+        // décalage voulu par labelRadius : le libellé touchait quasiment l'arc de cote.
+        // On pousse le texte du côté opposé à la ligne de cote (away = sens de l'offset).
+        dominantBaseline={offset >= 0 ? 'text-before-edge' : 'text-after-edge'}
       >
         {label}
       </text>
