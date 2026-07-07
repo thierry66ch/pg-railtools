@@ -35,12 +35,16 @@ export interface PdfExportOptions {
   cartouche?: PdfCartouche;
   /** Résumé textuel court affiché avant le dessin (ex. contexte du résultat). */
   description?: string;
+  /** Tableau récapitulatif court (ex. grandeurs clés), dessiné avant le dessin. */
+  summaryTable?: ResultTable;
   /** Dessin à placer à l'échelle réelle (1 mm de dessin = 1 mm papier), sans mise à l'échelle. */
   svg?: SVGSVGElement;
-  /** Tableau récapitulatif court (ex. grandeurs clés), dessiné après le dessin, avant `table`. */
-  summaryTable?: ResultTable;
+  /** Tableau court dessiné juste avant `table` (ex. paramètres ayant produit ce tableau). */
+  tableIntro?: ResultTable;
   /** Tableau de données du résultat, dessiné nativement (texte vectoriel). */
   table?: ResultTable;
+  /** Insère un saut de page entre le dessin et `tableIntro`/`table`. */
+  pageBreakBeforeTable?: boolean;
 }
 
 const MARGIN_MM = 10;
@@ -168,6 +172,10 @@ export async function exportElementToPdfFile(
     cursorY = drawDescription(pdf, options.description, MARGIN_MM, cursorY, contentWidth) + 4;
   }
 
+  if (options.summaryTable && options.summaryTable.rows.length > 0) {
+    cursorY = drawTable(pdf, options.summaryTable, MARGIN_MM, cursorY, contentWidth) + 6;
+  }
+
   if (options.svg && svgSize) {
     const blob = await svgToPngBlob(options.svg, 8);
     const dataUrl = await blobToDataUrl(blob);
@@ -181,8 +189,13 @@ export async function exportElementToPdfFile(
     cursorY += svgSize.height + 6;
   }
 
-  if (options.summaryTable && options.summaryTable.rows.length > 0) {
-    cursorY = drawTable(pdf, options.summaryTable, MARGIN_MM, cursorY, contentWidth) + 6;
+  if (options.pageBreakBeforeTable && (options.tableIntro || options.table)) {
+    pdf.addPage();
+    cursorY = MARGIN_MM;
+  }
+
+  if (options.tableIntro && options.tableIntro.rows.length > 0) {
+    cursorY = drawTable(pdf, options.tableIntro, MARGIN_MM, cursorY, contentWidth) + 6;
   }
 
   if (options.table && options.table.rows.length > 0) {

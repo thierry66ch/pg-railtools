@@ -263,24 +263,13 @@ export function ArcModulePage() {
         title: t('title'),
         drawingAlt: t('title'),
         summaryTable: {
-          headers: [
-            t('summary.chord'),
-            t('summary.sagitta'),
-            t('summary.radius'),
-            t('summary.arcLength'),
-            t('summary.intervals'),
-            t('summary.anglePerInterval'),
-          ],
-          rows: [
-            [
-              formatCoteLength(c),
-              formatCoteLength(s),
-              formatCoteLength(r),
-              formatCoteLength(table.totalArcLengthMm),
-              intervals,
-              formatNumber(anglePerIntervalDeg, decimals),
-            ],
-          ],
+          headers: [t('summary.chord'), t('summary.sagitta'), t('summary.radius'), t('summary.arcLength')],
+          rows: [[formatCoteLength(c), formatCoteLength(s), formatCoteLength(r), formatCoteLength(table.totalArcLengthMm)]],
+        },
+        pageBreakBeforeTable: true,
+        tableIntro: {
+          headers: [t('summary.intervals'), t('summary.anglePerInterval')],
+          rows: [[intervals, formatNumber(anglePerIntervalDeg, decimals)]],
         },
         table: {
           headers: [
@@ -356,6 +345,10 @@ export function ArcModulePage() {
   async function handleSave() {
     if (!activeProjectId) return;
     await updateProject<ArcProjectData>(MODULE_ID, activeProjectId, createDefaultData());
+    // ProjectManager garde sa propre liste en mémoire (chargée au montage) : sans ce
+    // remount, rouvrir ce même projet juste après resservirait les anciennes valeurs,
+    // donnant l'impression que "Enregistrer" n'a rien fait (voir pieges-a-eviter.md).
+    setProjectListVersion((v) => v + 1);
   }
 
   return (

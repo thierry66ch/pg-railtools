@@ -36,6 +36,10 @@ export async function resultToMarkdown(
     lines.push(result.description, '');
   }
 
+  if (result.summaryTable && result.summaryTable.rows.length > 0) {
+    lines.push(...tableToMarkdownLines(result.summaryTable), '');
+  }
+
   if (options.svg) {
     const blob = await svgToPngBlob(options.svg, options.scaleFactor ?? 8);
     const dataUrl = await blobToDataUrl(blob);
@@ -43,8 +47,15 @@ export async function resultToMarkdown(
     lines.push(`![${alt}](${dataUrl})`, '');
   }
 
-  if (result.summaryTable && result.summaryTable.rows.length > 0) {
-    lines.push(...tableToMarkdownLines(result.summaryTable), '');
+  // Markdown n'a pas de saut de page natif : `---` (règle horizontale) en tient lieu,
+  // visible dans tout visualiseur, et respecté comme séparateur par les convertisseurs
+  // (ex. pandoc → PDF) qui, eux, savent le traduire en vrai saut de page.
+  if (result.pageBreakBeforeTable && (result.tableIntro || result.table)) {
+    lines.push('---', '');
+  }
+
+  if (result.tableIntro && result.tableIntro.rows.length > 0) {
+    lines.push(...tableToMarkdownLines(result.tableIntro), '');
   }
 
   if (result.table && result.table.rows.length > 0) {

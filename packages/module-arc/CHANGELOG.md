@@ -1,5 +1,21 @@
 # Changelog — module-arc
 
+## 1.3 — 2026-07-07
+
+- **Correctif** : le bouton « Enregistrer » semblait inopérant — la liste de
+  `ProjectManager` n'était pas rafraîchie après une sauvegarde, si bien que
+  rouvrir le même projet resservait les anciennes valeurs (le stockage était
+  pourtant correctement mis à jour). Corrigé en forçant un rafraîchissement de
+  la liste après chaque `Enregistrer`, comme pour l'import d'environnement.
+- Exports PDF/Markdown affinés : le tableau récapitulatif ne contient plus que
+  corde/flèche/rayon/longueur d'arc et repasse en tête de document (avant le
+  dessin) ; nombre d'intervalles et angle par intervalle forment désormais un
+  second petit tableau, placé juste avant le tableau de piquetage. Un saut de
+  page (PDF réel via `pdf.addPage()`, séparateur `---` en Markdown) sépare le
+  dessin de cette section piquetage. Ajout générique dans `packages/commun` :
+  `ResultData.tableIntro` et `pageBreakBeforeTable` — vérifié sans régression
+  sur `module-demo`.
+
 ## 1.2 — 2026-07-07
 
 - Exports PDF/Markdown restructurés : le résumé (corde, flèche, rayon,

@@ -60,7 +60,9 @@ export function ExportButtons({
         format: pdfFormat,
         description: resultData.description,
         summaryTable: resultData.summaryTable,
+        tableIntro: resultData.tableIntro,
         table: resultData.table,
+        pageBreakBeforeTable: resultData.pageBreakBeforeTable,
         svg: getSvgElement?.() ?? undefined,
         cartouche: {
           appName: APP_NAME,
