@@ -128,3 +128,30 @@ qu'il contient bien l'importer `packages/module-<nom>` **et** le lien
 `@railtools/module-<nom>` sous `apps/portail`. Si l'`install` est bloqué dans
 l'environnement, ces deux entrées peuvent être ajoutées à la main en copiant le bloc d'un
 module aux dépendances identiques (valider ensuite en parsant le YAML).
+
+## `RadiusCote` ancré au point de symétrie d'une géométrie centrée : risque de collision de libellé
+
+`RadiusCote` tire un trait de longueur fixe (20 mm de dessin) depuis le point de l'arc vers
+le centre (sans jamais atteindre le centre réel, potentiellement très éloigné — voir
+`RadiusCote.tsx`). Ce trait part toujours **vers le centre**, direction déterminée
+uniquement par la géométrie (le point choisi et le centre), pas par un paramètre.
+
+Pour une géométrie **symétrique** (ex. arc défini par une corde, où le sommet est
+exactement au milieu de la corde), si `pointOnArc` est ce sommet, le trait de la cote de
+rayon remonte **exactement à la verticale du milieu de la corde** — précisément là où le
+libellé d'une `LengthCote` couvrant toute la corde se retrouve centré (le texte d'une
+`LengthCote` est toujours positionné au milieu du segment coté). Les deux libellés
+peuvent alors se chevaucher, en particulier quand la géométrie est peu profonde par
+rapport aux marges fixes (petite flèche, ou échelle de dessin "fit" qui réduit la
+géométrie sans réduire les cotes — voir plus haut "Dimensionnement des cotes"). Le
+chevauchement n'est pas toujours visible sur le premier cas testé (ex. à l'échelle 1:1
+avec une flèche confortable) : il faut re-tester avec une flèche faible et en mode "fit"
+avant de conclure que c'est bon.
+
+Solution appliquée dans `module-arc` : ancrer `pointOnArc` non pas au sommet de symétrie,
+mais à un point décalé sur l'arc (ex. 70 % de la distance angulaire vers une extrémité) —
+le trait de la cote de rayon garde une direction majoritairement verticale mais son
+ancrage x s'éloigne du centre de la corde, évacuant le conflit avec le libellé de la
+`LengthCote`. Vérifier après coup par comparaison de `getBoundingClientRect()` des
+libellés concernés (pas seulement à l'œil sur une capture), y compris à l'échelle "fit"
+et avec une flèche/hauteur réduite.
