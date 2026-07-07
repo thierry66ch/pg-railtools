@@ -22,6 +22,8 @@ export interface ArcProjectData {
   decimals: number;
   /** Afficher la colonne abscisse curviligne s_i dans le tableau d'implantation. */
   showArcLength: boolean;
+  /** Afficher la colonne cumul des angles dans le tableau d'implantation. */
+  showAngleCumul: boolean;
   /** Échelle de dessin choisie pour le SVG. */
   drawingScale: DrawingScale;
 }

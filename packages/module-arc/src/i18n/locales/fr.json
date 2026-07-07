@@ -13,12 +13,14 @@
     "intervals": "Nombre d'intervalles",
     "decimals": "Décimales affichées",
     "showArcLength": "Afficher l'abscisse curviligne s",
+    "showAngleCumul": "Afficher le cumul des angles",
     "cursorPosition": "Position de E — distance AE (mm)"
   },
   "result": {
     "radius": "Rayon R : {value} mm",
     "sagitta": "Flèche f : {value} mm",
-    "cursorOffset": "Écart EF : {value} mm"
+    "cursorOffset": "Écart EF : {value} mm",
+    "anglePerInterval": "Angle par intervalle : {value}°"
   },
   "table": {
     "title": "Tableau d'implantation",
@@ -26,11 +28,13 @@
     "ae": "AE (mm)",
     "eb": "EB (mm)",
     "ef": "EF (mm)",
-    "arcLength": "s (mm)"
+    "arcLength": "s (mm)",
+    "angleCumul": "Angle cumulé (°)"
   },
   "errors": {
     "chord-not-positive": "La corde doit être strictement positive.",
     "sagitta-not-positive": "La flèche doit être strictement positive (une flèche nulle donnerait un rayon infini).",
+    "sagitta-too-large": "La flèche ne peut pas dépasser la moitié de la corde (au-delà, l'arc dépasse un demi-cercle, cas non pris en charge).",
     "radius-not-positive": "Le rayon doit être strictement positif.",
     "radius-too-small": "Le rayon doit être au moins égal à la moitié de la corde (une corde plus longue que le diamètre est géométriquement impossible)."
   },

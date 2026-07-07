@@ -1,5 +1,31 @@
 # Changelog — module-arc
 
+## 1.1 — 2026-07-07
+
+Retours d'usage après la v1.0 :
+
+- Décimales affichées devient un réglage global du module, déplacé en haut de
+  la page (sous le texte descriptif) ; défaut passé de 3 à 1.
+- Résultat principal (rayon ou flèche calculée) affiché en gras.
+- Réorganisation : le tableau d'implantation et son sélecteur de nombre
+  d'intervalles passent sous le dessin (fonction complémentaire qui ne
+  l'influence pas) ; la position de E et l'écart EF restent au-dessus du
+  dessin, non intercalés.
+- Angle par intervalle (déduit du nombre d'intervalles) affiché à côté du
+  champ correspondant.
+- Nouvelle colonne « Angle cumulé » dans le tableau d'implantation, togglable
+  comme l'abscisse curviligne (`showAngleCumul` ajouté à `ArcProjectData`).
+- **Correctif** : validation manquante en mode « corde et flèche → rayon »
+  quand la flèche dépasse la moitié de la corde (au-delà d'un demi-cercle,
+  géométrie non prise en charge par ce module) — provoquait un dessin hors
+  cadre ou, en mode « rayon et corde → flèche », un **crash de l'application**
+  sur certaines combinaisons invalides (accès à une valeur non définie lors de
+  la construction du résumé d'export). Les deux cas sont désormais rejetés
+  avec un message d'erreur clair, sans crash.
+- **Correctif** (`packages/commun`, `NumberInput`) : vider un champ pour
+  retaper une nouvelle valeur committait prématurément un 0 (`Number('')`
+  vaut 0, pas `NaN`), pouvant perturber la saisie en partant d'une valeur à 0.
+
 ## 1.0 — 2026-07-07
 
 Première version fonctionnelle complète du module :

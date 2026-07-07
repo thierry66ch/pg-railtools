@@ -9,7 +9,11 @@ export interface NumberInputProps {
 }
 
 function parseDecimal(text: string): number {
-  return Number(text.trim().replace(',', '.'));
+  const trimmed = text.trim();
+  // `Number('')` vaut 0 (pas NaN) : sans ce garde, vider le champ pour retaper une
+  // valeur committerait un 0 prématurément avant que l'utilisateur ait fini de taper.
+  if (trimmed === '') return NaN;
+  return Number(trimmed.replace(',', '.'));
 }
 
 /**

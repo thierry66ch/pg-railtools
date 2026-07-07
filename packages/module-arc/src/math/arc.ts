@@ -19,6 +19,7 @@
 export type ArcErrorCode =
   | 'chord-not-positive' // c ≤ 0
   | 'sagitta-not-positive' // f ≤ 0 (arc dégénéré en droite)
+  | 'sagitta-too-large' // f > c/2 : dépasse le demi-cercle, non pris en charge
   | 'radius-not-positive' // R ≤ 0
   | 'radius-too-small' // R < c/2 : la corde dépasse le diamètre, impossible
   | 'intervals-too-small' // n < 2
@@ -37,10 +38,16 @@ function err<T>(error: ArcErrorCode): ArcResult<T> {
 /**
  * Fonctionnalité 1 — Rayon R à partir de la corde c et de la flèche f.
  * R = (c² + 4f²) / (8f). Requiert c > 0 et f > 0 (si f = 0 l'arc dégénère en droite).
+ *
+ * Requiert aussi f ≤ c/2 : au-delà, l'arc dépasserait un demi-cercle (configuration
+ * géométrique différente — centre du cercle du même côté que la corde que le sommet de
+ * l'arc — que ce module ne modélise pas). f = c/2 correspond exactement au demi-cercle
+ * (R = c/2), cas limite valide.
  */
 export function radiusFromChordSagitta(chordMm: number, sagittaMm: number): ArcResult<number> {
   if (!(chordMm > 0)) return err('chord-not-positive');
   if (!(sagittaMm > 0)) return err('sagitta-not-positive');
+  if (sagittaMm > chordMm / 2) return err('sagitta-too-large');
   return ok((chordMm * chordMm + 4 * sagittaMm * sagittaMm) / (8 * sagittaMm));
 }
 
