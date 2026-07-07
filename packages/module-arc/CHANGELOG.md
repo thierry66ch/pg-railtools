@@ -1,5 +1,19 @@
 # Changelog — module-arc
 
+## 1.2 — 2026-07-07
+
+- Exports PDF/Markdown restructurés : le résumé (corde, flèche, rayon,
+  longueur d'arc, nombre d'intervalles, **angle par intervalle** — jusqu'ici
+  absent de l'export) est désormais présenté sous forme de tableau plutôt que
+  de texte libre, placé après le dessin et juste avant le tableau
+  d'implantation (au lieu d'avant le dessin). Ajout générique dans
+  `packages/commun` : `ResultData.summaryTable` (rendu par `pdf.ts` et
+  `markdown.ts` entre le dessin et `table`) — vérifié sans régression sur
+  `module-demo`.
+- Sur la page, les cases « Afficher l'abscisse curviligne » et « Afficher le
+  cumul des angles » passent sur leur propre ligne, séparée du champ nombre
+  d'intervalles, pour décompacter l'affichage.
+
 ## 1.1 — 2026-07-07
 
 Retours d'usage après la v1.0 :

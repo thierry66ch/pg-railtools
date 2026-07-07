@@ -33,12 +33,14 @@ export interface PdfCartouche {
 export interface PdfExportOptions {
   format?: PdfPageFormat;
   cartouche?: PdfCartouche;
-  /** Résumé textuel court affiché avant le tableau (ex. valeurs clés du résultat). */
+  /** Résumé textuel court affiché avant le dessin (ex. contexte du résultat). */
   description?: string;
-  /** Tableau de données du résultat, dessiné nativement (texte vectoriel). */
-  table?: ResultTable;
   /** Dessin à placer à l'échelle réelle (1 mm de dessin = 1 mm papier), sans mise à l'échelle. */
   svg?: SVGSVGElement;
+  /** Tableau récapitulatif court (ex. grandeurs clés), dessiné après le dessin, avant `table`. */
+  summaryTable?: ResultTable;
+  /** Tableau de données du résultat, dessiné nativement (texte vectoriel). */
+  table?: ResultTable;
 }
 
 const MARGIN_MM = 10;
@@ -166,10 +168,6 @@ export async function exportElementToPdfFile(
     cursorY = drawDescription(pdf, options.description, MARGIN_MM, cursorY, contentWidth) + 4;
   }
 
-  if (options.table && options.table.rows.length > 0) {
-    cursorY = drawTable(pdf, options.table, MARGIN_MM, cursorY, contentWidth) + 6;
-  }
-
   if (options.svg && svgSize) {
     const blob = await svgToPngBlob(options.svg, 8);
     const dataUrl = await blobToDataUrl(blob);
@@ -180,6 +178,15 @@ export async function exportElementToPdfFile(
     // (pas le bord de l'image, qui inclut cette marge) s'aligne avec le cartouche/tableau.
     const drawingX = MARGIN_MM + svgSize.x;
     pdf.addImage(dataUrl, 'PNG', drawingX, cursorY, svgSize.width, svgSize.height);
+    cursorY += svgSize.height + 6;
+  }
+
+  if (options.summaryTable && options.summaryTable.rows.length > 0) {
+    cursorY = drawTable(pdf, options.summaryTable, MARGIN_MM, cursorY, contentWidth) + 6;
+  }
+
+  if (options.table && options.table.rows.length > 0) {
+    cursorY = drawTable(pdf, options.table, MARGIN_MM, cursorY, contentWidth) + 6;
   }
 
   pdf.save(filename);

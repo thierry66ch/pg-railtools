@@ -11,6 +11,8 @@ export interface ResultTable {
 export interface ResultData {
   title: string;
   description?: string;
+  /** Tableau récapitulatif court (ex. grandeurs clés), rendu après le dessin et avant `table`. */
+  summaryTable?: ResultTable;
   table?: ResultTable;
   notes?: string[];
   /** Texte alternatif du dessin, utilisé si un dessin est embarqué dans l'export Markdown. */

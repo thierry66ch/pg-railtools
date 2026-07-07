@@ -262,13 +262,26 @@ export function ArcModulePage() {
       resultData = {
         title: t('title'),
         drawingAlt: t('title'),
-        description: t('export.summary', {
-          chord: formatCoteLength(c),
-          sagitta: formatCoteLength(s),
-          radius: formatCoteLength(r),
-          arcLength: formatCoteLength(table.totalArcLengthMm),
-          intervals,
-        }),
+        summaryTable: {
+          headers: [
+            t('summary.chord'),
+            t('summary.sagitta'),
+            t('summary.radius'),
+            t('summary.arcLength'),
+            t('summary.intervals'),
+            t('summary.anglePerInterval'),
+          ],
+          rows: [
+            [
+              formatCoteLength(c),
+              formatCoteLength(s),
+              formatCoteLength(r),
+              formatCoteLength(table.totalArcLengthMm),
+              intervals,
+              formatNumber(anglePerIntervalDeg, decimals),
+            ],
+          ],
+        },
         table: {
           headers: [
             t('table.index'),
@@ -518,6 +531,9 @@ export function ArcModulePage() {
             {anglePerIntervalDeg !== undefined && (
               <p>{t('result.anglePerInterval', { value: formatNumber(anglePerIntervalDeg, decimals) })}</p>
             )}
+          </div>
+
+          <div className="rt-toolbar">
             <label className="rt-field">
               <span>{t('form.showArcLength')}</span>
               <input

@@ -59,6 +59,7 @@ export function ExportButtons({
       await exportElementToPdfFile(`${filenameBase}.pdf`, {
         format: pdfFormat,
         description: resultData.description,
+        summaryTable: resultData.summaryTable,
         table: resultData.table,
         svg: getSvgElement?.() ?? undefined,
         cartouche: {

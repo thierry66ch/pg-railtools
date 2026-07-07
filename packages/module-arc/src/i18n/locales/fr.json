@@ -38,7 +38,12 @@
     "radius-not-positive": "Le rayon doit être strictement positif.",
     "radius-too-small": "Le rayon doit être au moins égal à la moitié de la corde (une corde plus longue que le diamètre est géométriquement impossible)."
   },
-  "export": {
-    "summary": "Corde AB = {chord} mm — Flèche f = {sagitta} mm — Rayon R = {radius} mm — Longueur d'arc = {arcLength} mm — {intervals} intervalles"
+  "summary": {
+    "chord": "Corde AB (mm)",
+    "sagitta": "Flèche f (mm)",
+    "radius": "Rayon R (mm)",
+    "arcLength": "Longueur d'arc (mm)",
+    "intervals": "Nombre d'intervalles",
+    "anglePerInterval": "Angle par intervalle (°)"
   }
 }

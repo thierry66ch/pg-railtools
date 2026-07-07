@@ -1,6 +1,15 @@
 import { blobToDataUrl, downloadTextFile } from '../transfer/files';
 import { svgToPngBlob } from './png';
-import type { ResultData } from './types';
+import type { ResultData, ResultTable } from './types';
+
+function tableToMarkdownLines(table: ResultTable): string[] {
+  const { headers, rows } = table;
+  const lines = [`| ${headers.join(' | ')} |`, `| ${headers.map(() => '---').join(' | ')} |`];
+  for (const row of rows) {
+    lines.push(`| ${row.map((cell) => String(cell)).join(' | ')} |`);
+  }
+  return lines;
+}
 
 export interface MarkdownExportOptions {
   svg?: SVGSVGElement;
@@ -34,14 +43,12 @@ export async function resultToMarkdown(
     lines.push(`![${alt}](${dataUrl})`, '');
   }
 
+  if (result.summaryTable && result.summaryTable.rows.length > 0) {
+    lines.push(...tableToMarkdownLines(result.summaryTable), '');
+  }
+
   if (result.table && result.table.rows.length > 0) {
-    const { headers, rows } = result.table;
-    lines.push(`| ${headers.join(' | ')} |`);
-    lines.push(`| ${headers.map(() => '---').join(' | ')} |`);
-    for (const row of rows) {
-      lines.push(`| ${row.map((cell) => String(cell)).join(' | ')} |`);
-    }
-    lines.push('');
+    lines.push(...tableToMarkdownLines(result.table), '');
   }
 
   if (result.notes && result.notes.length > 0) {
