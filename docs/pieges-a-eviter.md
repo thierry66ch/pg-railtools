@@ -221,16 +221,28 @@ const [projectListVersion, setProjectListVersion] = useState(0);
 <EnvironmentTransfer moduleId={MODULE_ID} onImported={() => setProjectListVersion((v) => v + 1)} />
 ```
 
-**Limitation connue, non corrigée** : le bouton "Enregistrer" propre au module (qui appelle
-`updateProject` directement, hors de `ProjectManager`) a le même problème et n'a, lui,
-**aucun** callback équivalent — après un clic sur "Enregistrer", la liste de
+**Piège identique côté bouton "Enregistrer" propre au module** (celui qui appelle
+`updateProject` directement, hors de `ProjectManager`) : lui non plus n'a, par défaut,
+**aucun** callback de rafraîchissement — après un clic sur "Enregistrer", la liste de
 `ProjectManager` reste périmée jusqu'à un rechargement de page ou une autre action
-(renommer/dupliquer/...). C'est un comportement présent à l'identique dans `module-demo` :
-pas un bug introduit par un module particulier, mais une limitation architecturale de
-`ProjectManager` (pas de mécanisme de rafraîchissement externe pour ce cas précis). À
-corriger un jour dans `packages/commun` si ça devient gênant en usage réel (ex. exposer un
-`onSaved`, ou lever l'état de la liste de projets au niveau du module) — pas quelque chose
-à contourner silencieusement module par module.
+(renommer/dupliquer/...), donnant l'impression trompeuse que le bouton ne fonctionne pas
+(alors que le stockage est bien mis à jour — un utilisateur de `module-arc` s'y est fait
+prendre en usage réel). C'était présent à l'identique dans `module-demo` (limitation
+architecturale de `ProjectManager`, pas un bug introduit par un module particulier), mais
+la CORRECTION n'a besoin d'aucun changement dans `packages/commun` : il suffit que le
+`handleSave` du module bump lui aussi `projectListVersion`, exactement comme le fait déjà
+`EnvironmentTransfer.onImported` :
+
+```tsx
+async function handleSave() {
+  if (!activeProjectId) return;
+  await updateProject(MODULE_ID, activeProjectId, createDefaultData());
+  setProjectListVersion((v) => v + 1); // sans ça, rouvrir ce projet reservirait l'ancien état
+}
+```
+
+Appliqué dans `module-arc` (v1.3) ; `module-demo` a toujours le défaut latent (non corrigé,
+car non demandé) — à traiter de la même façon si ça gêne un jour.
 
 À vérifier explicitement : importer un environnement **sans recharger la page** et
 constater que la liste de projets affichée change immédiatement (pas seulement après un
