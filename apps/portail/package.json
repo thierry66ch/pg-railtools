@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@railtools/commun": "workspace:*",
+    "@railtools/module-arc": "workspace:*",
     "@railtools/module-demo": "workspace:*",
     "next": "16.2.10",
     "next-intl": "^4.13.1",
