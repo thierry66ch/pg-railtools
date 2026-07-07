@@ -58,6 +58,7 @@ export function ExportButtons({
       const logoDataUrl = await getLogoDataUrl();
       await exportElementToPdfFile(`${filenameBase}.pdf`, {
         format: pdfFormat,
+        description: resultData.description,
         table: resultData.table,
         svg: getSvgElement?.() ?? undefined,
         cartouche: {

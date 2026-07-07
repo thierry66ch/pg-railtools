@@ -33,6 +33,8 @@ export interface PdfCartouche {
 export interface PdfExportOptions {
   format?: PdfPageFormat;
   cartouche?: PdfCartouche;
+  /** Résumé textuel court affiché avant le tableau (ex. valeurs clés du résultat). */
+  description?: string;
   /** Tableau de données du résultat, dessiné nativement (texte vectoriel). */
   table?: ResultTable;
   /** Dessin à placer à l'échelle réelle (1 mm de dessin = 1 mm papier), sans mise à l'échelle. */
@@ -45,6 +47,8 @@ const TABLE_HEADER_HEIGHT_MM = 8;
 const TABLE_ROW_HEIGHT_MM = 7;
 const TABLE_CELL_PADDING_MM = 1.5;
 const TABLE_FONT_SIZE = 8;
+const DESCRIPTION_FONT_SIZE = 9;
+const DESCRIPTION_LINE_HEIGHT_MM = 4;
 
 function drawCartoucheLogoFallback(pdf: jsPDF, x: number, y: number, logoSize: number): void {
   pdf.setFillColor(31, 95, 139);
@@ -92,6 +96,18 @@ function drawCartouche(pdf: jsPDF, cartouche: PdfCartouche, x: number, y: number
   pdf.line(x, y + CARTOUCHE_HEIGHT_MM, x + width, y + CARTOUCHE_HEIGHT_MM);
 
   return y + CARTOUCHE_HEIGHT_MM;
+}
+
+/** Dessine le résumé textuel (ex. valeurs clés du résultat) avant le tableau. */
+function drawDescription(pdf: jsPDF, description: string, x: number, y: number, width: number): number {
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(DESCRIPTION_FONT_SIZE);
+  pdf.setTextColor(28, 37, 48);
+  const lines = pdf.splitTextToSize(description, width) as string[];
+  lines.forEach((line, i) => {
+    pdf.text(line, x, y + (i + 1) * DESCRIPTION_LINE_HEIGHT_MM);
+  });
+  return y + lines.length * DESCRIPTION_LINE_HEIGHT_MM;
 }
 
 /** Dessine le tableau de résultat en texte vectoriel (pas de capture DOM). */
@@ -144,6 +160,10 @@ export async function exportElementToPdfFile(
   let cursorY = MARGIN_MM;
   if (options.cartouche) {
     cursorY = drawCartouche(pdf, options.cartouche, MARGIN_MM, cursorY, contentWidth) + 4;
+  }
+
+  if (options.description) {
+    cursorY = drawDescription(pdf, options.description, MARGIN_MM, cursorY, contentWidth) + 4;
   }
 
   if (options.table && options.table.rows.length > 0) {

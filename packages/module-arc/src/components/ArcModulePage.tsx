@@ -7,9 +7,12 @@ import {
   DEFAULT_COTE_OFFSET_MM,
   DEFAULT_DRAWING_SCALE,
   DrawingScaleSelector,
+  EnvironmentTransfer,
+  ExportButtons,
   LengthCote,
   LevelCote,
   NumberInput,
+  ProjectManager,
   RadiusCote,
   ResultPageLayout,
   ScaleBar,
@@ -19,8 +22,11 @@ import {
   pointOnCircle,
   resolveDrawingScale,
   suggestDimensionSizing,
+  updateProject,
   type DrawingScale,
   type Point,
+  type Project,
+  type ResultData,
 } from '@railtools/commun';
 import versionInfo from '../../version.json';
 import {
@@ -29,7 +35,9 @@ import {
   radiusFromChordSagitta,
   sagittaFromRadiusChord,
 } from '../math/arc';
-import type { ArcInputMode } from '../types';
+import type { ArcInputMode, ArcProjectData } from '../types';
+
+const MODULE_ID = 'arc';
 
 const DEFAULT_CHORD_MM = 1000;
 const DEFAULT_SAGITTA_MM = 50;
@@ -58,13 +66,19 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
 
+/** Arrondit puis évite l'artefact "-0.000" (zéro négatif issu d'une imprécision flottante). */
+function formatFixed(value: number, decimals: number): string {
+  const fixed = value.toFixed(decimals);
+  return fixed.startsWith('-') && Number(fixed) === 0 ? fixed.slice(1) : fixed;
+}
+
 function formatNumber(value: number, decimals: number): string {
-  return value.toFixed(decimals);
+  return formatFixed(value, decimals);
 }
 
 /** Longueur/rayon affichés sur le dessin : précision fixe, indépendante des décimales du tableau. */
 function formatCoteLength(mm: number): string {
-  return mm.toFixed(1);
+  return formatFixed(mm, 1);
 }
 
 export function ArcModulePage() {
@@ -80,10 +94,18 @@ export function ArcModulePage() {
   const [showArcLength, setShowArcLength] = useState(true);
   const [cursorAeMm, setCursorAeMm] = useState(DEFAULT_CHORD_MM / 2);
   const [drawingScale, setDrawingScale] = useState<DrawingScale>(DEFAULT_DRAWING_SCALE);
+  const [activeProjectId, setActiveProjectId] = useState<string | undefined>();
+  const [activeProjectName, setActiveProjectName] = useState<string | undefined>();
+  // Remonte ProjectManager (via sa `key`) après un import en vrac, pour qu'il relise
+  // sa liste de projets — l'import ne rafraîchit pas son état interne autrement.
+  const [projectListVersion, setProjectListVersion] = useState(0);
   const svgRef = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
-    void getPreferredDrawingScale().then(setDrawingScale);
+    if (!activeProjectId) {
+      void getPreferredDrawingScale().then(setDrawingScale);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const primaryResult =
@@ -121,6 +143,29 @@ export function ArcModulePage() {
     setDrawingScale(
       next.mode === 'fit' && !next.fitTargetMm ? { ...next, fitTargetMm: FIT_TARGET_MM } : next,
     );
+  }
+
+  function createDefaultData(): ArcProjectData {
+    return { inputMode, chordMm, sagittaMm, radiusMm, intervals, decimals, showArcLength, drawingScale };
+  }
+
+  function handleOpen(project: Project<ArcProjectData>) {
+    setInputMode(project.data.inputMode);
+    setChordMm(project.data.chordMm);
+    setSagittaMm(project.data.sagittaMm);
+    setRadiusMm(project.data.radiusMm);
+    setIntervals(project.data.intervals);
+    setDecimals(project.data.decimals);
+    setShowArcLength(project.data.showArcLength);
+    setDrawingScale(project.data.drawingScale);
+    setCursorAeMm(project.data.chordMm / 2);
+    setActiveProjectId(project.id);
+    setActiveProjectName(project.name);
+  }
+
+  async function handleSave() {
+    if (!activeProjectId) return;
+    await updateProject<ArcProjectData>(MODULE_ID, activeProjectId, createDefaultData());
   }
 
   // --- Géométrie du dessin (mm modèle réduit), calculée uniquement si la config est valide. ---
@@ -183,6 +228,36 @@ export function ArcModulePage() {
   const viewBoxWidth = drawingWidth + LEFT_MARGIN_MM + RIGHT_MARGIN_MM;
   const viewBoxHeight = drawingHeight + TOP_MARGIN_MM + BOTTOM_GAP_MM + SCALE_BAR_EXTRA_MM;
 
+  const resultData: ResultData = {
+    title: t('title'),
+    drawingAlt: t('title'),
+    description: t('export.summary', {
+      chord: formatCoteLength(chordMm),
+      sagitta: formatCoteLength(sagittaMmValue),
+      radius: formatCoteLength(radiusMmValue),
+      arcLength: tableResult?.ok ? formatCoteLength(tableResult.value.totalArcLengthMm) : '—',
+      intervals,
+    }),
+    table: tableResult?.ok
+      ? {
+          headers: [
+            t('table.index'),
+            t('table.ae'),
+            t('table.eb'),
+            t('table.ef'),
+            ...(showArcLength ? [t('table.arcLength')] : []),
+          ],
+          rows: tableResult.value.points.map((point) => [
+            point.index,
+            formatNumber(point.aeMm, decimals),
+            formatNumber(point.ebMm, decimals),
+            formatNumber(point.efMm, decimals),
+            ...(showArcLength ? [formatNumber(point.arcLengthMm, decimals)] : []),
+          ]),
+        }
+      : undefined,
+  };
+
   return (
     <ResultPageLayout title={t('title')} description={t('description')} version={versionInfo}>
       <div className="rt-toolbar">
@@ -212,6 +287,11 @@ export function ArcModulePage() {
             <NumberInput value={radiusMm} onChange={setRadiusMm} />
           </label>
         )}
+        {activeProjectId && (
+          <button type="button" className="rt-button" onClick={() => void handleSave()}>
+            {tCommon('actions.save')}
+          </button>
+        )}
       </div>
 
       {!primaryResult.ok && <p className="rt-error">{t(`errors.${primaryResult.error}`)}</p>}
@@ -220,8 +300,8 @@ export function ArcModulePage() {
         <>
           <p>
             {inputMode === 'chordSagitta'
-              ? `${t('result.radius')} : ${formatNumber(effectiveRadiusMm as number, decimals)} mm`
-              : `${t('result.sagitta')} : ${formatNumber(effectiveSagittaMm as number, decimals)} mm`}
+              ? t('result.radius', { value: formatNumber(effectiveRadiusMm as number, decimals) })
+              : t('result.sagitta', { value: formatNumber(effectiveSagittaMm as number, decimals) })}
           </p>
 
           <div className="rt-toolbar">
@@ -249,9 +329,7 @@ export function ArcModulePage() {
               <NumberInput value={clampedCursorAeMm} onChange={handleCursorChange} />
             </label>
             {cursorOffsetMm !== undefined && (
-              <p>
-                {t('result.cursorOffset')} : {formatNumber(cursorOffsetMm, decimals)} mm
-              </p>
+              <p>{t('result.cursorOffset', { value: formatNumber(cursorOffsetMm, decimals) })}</p>
             )}
           </div>
 
@@ -351,8 +429,28 @@ export function ArcModulePage() {
               unitCaption={tCommon('drawing.cotesInUnit', { unit: 'mm' })}
             />
           </svg>
+
+          <ExportButtons
+            filenameBase={`arc-c${Math.round(chordMm)}-r${Math.round(radiusMmValue)}`}
+            resultData={resultData}
+            getSvgElement={() => svgRef.current}
+            projectName={activeProjectName}
+          />
         </>
       )}
+
+      <ProjectManager<ArcProjectData>
+        key={projectListVersion}
+        moduleId={MODULE_ID}
+        activeProjectId={activeProjectId}
+        createDefaultData={createDefaultData}
+        onOpen={handleOpen}
+      />
+
+      <EnvironmentTransfer
+        moduleId={MODULE_ID}
+        onImported={() => setProjectListVersion((v) => v + 1)}
+      />
     </ResultPageLayout>
   );
 }

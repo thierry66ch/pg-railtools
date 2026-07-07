@@ -23,6 +23,10 @@ export async function resultToMarkdown(
   metaLines.push(`**Généré le :** ${(options.date ?? new Date()).toLocaleString('fr-CH')}`);
   lines.push(metaLines.join('  \n'), '');
 
+  if (result.description) {
+    lines.push(result.description, '');
+  }
+
   if (options.svg) {
     const blob = await svgToPngBlob(options.svg, options.scaleFactor ?? 8);
     const dataUrl = await blobToDataUrl(blob);

@@ -16,9 +16,9 @@
     "cursorPosition": "Position de E — distance AE (mm)"
   },
   "result": {
-    "radius": "Rayon R",
-    "sagitta": "Flèche f",
-    "cursorOffset": "Écart EF"
+    "radius": "Rayon R : {value} mm",
+    "sagitta": "Flèche f : {value} mm",
+    "cursorOffset": "Écart EF : {value} mm"
   },
   "table": {
     "title": "Tableau d'implantation",
@@ -33,5 +33,8 @@
     "sagitta-not-positive": "La flèche doit être strictement positive (une flèche nulle donnerait un rayon infini).",
     "radius-not-positive": "Le rayon doit être strictement positif.",
     "radius-too-small": "Le rayon doit être au moins égal à la moitié de la corde (une corde plus longue que le diamètre est géométriquement impossible)."
+  },
+  "export": {
+    "summary": "Corde AB = {chord} mm — Flèche f = {sagitta} mm — Rayon R = {radius} mm — Longueur d'arc = {arcLength} mm — {intervals} intervalles"
   }
 }
