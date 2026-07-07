@@ -69,18 +69,18 @@ Le module est consommé comme **source TypeScript**, sans étape de build sépar
 
 Ne jamais redévelopper ce qui existe déjà dans `@railtools/commun` :
 
-| Besoin | Import depuis `@railtools/commun` |
-|---|---|
-| Géométrie 2D (points, angles, arcs, intersections) | `geometry` (barrel racine) |
-| Unités et échelles (mm/cm/m, Z/N/TT/H0/0/I/G, conversions) | `units` |
-| Dessin technique annoté à l'échelle (si le module produit un dessin SVG) : échelle de dessin, styles de trait CAO, cotes (longueur, rayon, angle, longueur d'arc, niveau), barre d'échelle | `drawing` (barrel — voir §2bis) |
-| Champ numérique tolérant virgule/point (saisie utilisateur) | `ui` (`NumberInput`) — ne pas utiliser `<input type="number">` nu, voir `pieges-a-eviter.md` |
-| Stockage local générique | `commonStorage`, `moduleStorage(moduleId)` |
-| Projets utilisateur (CRUD + export/import individuel) | `projects` (`listProjects`, `createProject`, `updateProject`, `renameProject`, `duplicateProject`, `deleteProject`, `exportProjectToFile`, `importProjectFromFile`) |
-| Export/import en vrac de l'environnement du module | `transfer/bulk` (`exportModuleEnvironment`, `importModuleEnvironment`) |
-| Export PDF / Markdown / PNG à l'échelle | `ui` (`<ExportButtons resultData={...} getSvgElement={...} projectName={...} />` — voir §2ter, gère tout automatiquement) |
-| Composants UI communs | `ui` (`Button`, `VersionBadge`, `LanguageSelector`, `UnitScaleSelector`, `DrawingScaleSelector`, `NumberInput`, `ExportButtons`, `ProjectManager<T>`, `EnvironmentTransfer`, `ResultPageLayout`) |
-| Thème visuel | `import '@railtools/commun/theme/tokens.css'` (déjà importé une fois dans `apps/portail/app/globals.css` — ne pas le réimporter dans le module, réutiliser les classes `.rt-*`) |
+| Besoin                                                                                                                                                                                     | Import depuis `@railtools/commun`                                                                                                                                                                |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Géométrie 2D (points, angles, arcs, intersections)                                                                                                                                         | `geometry` (barrel racine)                                                                                                                                                                       |
+| Unités et échelles (mm/cm/m, Z/N/TT/H0/0/I/G, conversions)                                                                                                                                 | `units`                                                                                                                                                                                          |
+| Dessin technique annoté à l'échelle (si le module produit un dessin SVG) : échelle de dessin, styles de trait CAO, cotes (longueur, rayon, angle, longueur d'arc, niveau), barre d'échelle | `drawing` (barrel — voir §2bis)                                                                                                                                                                  |
+| Champ numérique tolérant virgule/point (saisie utilisateur)                                                                                                                                | `ui` (`NumberInput`) — ne pas utiliser `<input type="number">` nu, voir `pieges-a-eviter.md`                                                                                                     |
+| Stockage local générique                                                                                                                                                                   | `commonStorage`, `moduleStorage(moduleId)`                                                                                                                                                       |
+| Projets utilisateur (CRUD + export/import individuel)                                                                                                                                      | `projects` (`listProjects`, `createProject`, `updateProject`, `renameProject`, `duplicateProject`, `deleteProject`, `exportProjectToFile`, `importProjectFromFile`)                              |
+| Export/import en vrac de l'environnement du module                                                                                                                                         | `transfer/bulk` (`exportModuleEnvironment`, `importModuleEnvironment`)                                                                                                                           |
+| Export PDF / Markdown / PNG à l'échelle                                                                                                                                                    | `ui` (`<ExportButtons resultData={...} getSvgElement={...} projectName={...} />` — voir §2ter, gère tout automatiquement)                                                                        |
+| Composants UI communs                                                                                                                                                                      | `ui` (`Button`, `VersionBadge`, `LanguageSelector`, `UnitScaleSelector`, `DrawingScaleSelector`, `NumberInput`, `ExportButtons`, `ProjectManager<T>`, `EnvironmentTransfer`, `ResultPageLayout`) |
+| Thème visuel                                                                                                                                                                               | `import '@railtools/commun/theme/tokens.css'` (déjà importé une fois dans `apps/portail/app/globals.css` — ne pas le réimporter dans le module, réutiliser les classes `.rt-*`)                  |
 
 Tout appel à ces fonctions se fait avec l'identifiant du module (`moduleId`, ex. `'demo'`)
 en paramètre pour les fonctions liées au stockage/projets — c'est cet identifiant qui
@@ -139,6 +139,7 @@ Un module n'a normalement **jamais besoin d'appeler directement**
 ```
 
 Points importants :
+
 - Le **tableau** (`resultData.table`) est dessiné nativement dans le PDF (texte
   vectoriel jsPDF) — ne pas essayer de le capturer depuis le DOM (voir
   `pieges-a-eviter.md`, section html2canvas).
@@ -163,34 +164,34 @@ Trois points d'intégration dans `apps/portail`, tous illustrés par le module `
    React affiché à côté du titre sur la page d'accueil — voir `module-demo/src/icon.tsx`
    pour un exemple). Ajouter ce manifest dans
    [`apps/portail/lib/moduleRegistry.ts`](../apps/portail/lib/moduleRegistry.ts) :
-
+   
    ```ts
    import { monModuleManifest } from '@railtools/module-<nom>';
-
+   
    export const moduleRegistry: ModuleManifest[] = [demoModuleManifest, monModuleManifest];
    ```
-
+   
    La page d'accueil (`apps/portail/app/page.tsx`) parcourt ce tableau automatiquement —
    aucune autre modification n'est nécessaire pour apparaître sur la page d'accueil.
 
 2. **Route** — créer `apps/portail/app/modules/<nom>/page.tsx` :
-
+   
    ```tsx
    import { MonModulePage } from '@railtools/module-<nom>';
-
+   
    export default function Page() {
      return <MonModulePage />;
    }
    ```
-
+   
    La `route` déclarée dans le manifest doit correspondre exactement à ce chemin.
 
 3. **Traductions** — merger les messages du module dans
    [`apps/portail/i18n/request.ts`](../apps/portail/i18n/request.ts) :
-
+   
    ```ts
    import { monModuleMessages } from '@railtools/module-<nom>';
-
+   
    messages: {
      common: commonMessages[locale],
      portail: portailMessages[locale],
@@ -198,7 +199,7 @@ Trois points d'intégration dans `apps/portail`, tous illustrés par le module `
      monModule: monModuleMessages[locale], // clé = i18nNamespace du manifest
    }
    ```
-
+   
    La clé utilisée ici doit correspondre au `i18nNamespace` du manifest : c'est cette
    clé que la page d'accueil utilise pour aller chercher dynamiquement
    `t(\`${module.i18nNamespace}.title\`)` et `t(\`${module.i18nNamespace}.description\`)`
@@ -206,7 +207,7 @@ Trois points d'intégration dans `apps/portail`, tous illustrés par le module `
 
 4. **transpilePackages** — ajouter le nom du package dans
    [`apps/portail/next.config.ts`](../apps/portail/next.config.ts) :
-
+   
    ```ts
    transpilePackages: ['@railtools/commun', '@railtools/module-demo', '@railtools/module-<nom>'],
    ```
@@ -240,10 +241,16 @@ Voir `scaffold-module.md` §9 pour la checklist complète de conformité avant l
 d'un module. En résumé, avant d'intégrer un module dans le portail :
 
 - [ ] `pnpm --filter @railtools/module-<nom> typecheck` et `lint` passent.
+
 - [ ] Le manifest est ajouté à `moduleRegistry.ts`, la route créée, les messages fusionnés
+  
       dans `i18n/request.ts`, le package ajouté à `transpilePackages`.
+
 - [ ] `pnpm build` (racine) réussit et bump correctement le build du module (vérifier
+  
       `packages/module-<nom>/version.json`).
+
 - [ ] `pnpm dev` — vérifier manuellement : apparition sur la page d'accueil avec texte
+  
       descriptif et version, page du module fonctionnelle, sélecteur de langue,
       export PDF/Markdown/PNG, gestion de projets, export/import en vrac.

@@ -2,6 +2,7 @@ import { getRequestConfig } from 'next-intl/server';
 import { cookies } from 'next/headers';
 import { DEFAULT_LOCALE, LOCALE_COOKIE_NAME, commonMessages, isSupportedLocale } from '@railtools/commun';
 import { demoMessages } from '@railtools/module-demo';
+import { arcMessages } from '@railtools/module-arc';
 import { portailMessages } from './messages';
 
 export default getRequestConfig(async () => {
@@ -16,6 +17,7 @@ export default getRequestConfig(async () => {
       portail: portailMessages[locale],
       // Chaque nouveau module ajoute ici sa propre entrée (voir docs/integration.md).
       moduleDemo: demoMessages[locale],
+      moduleArc: arcMessages[locale],
     },
   };
 });

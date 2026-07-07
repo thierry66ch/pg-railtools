@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "portail",
-      "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["--filter", "portail", "dev"],
+      "runtimeExecutable": "corepack",
+      "runtimeArgs": ["pnpm", "--filter", "portail", "dev"],
       "port": 3000,
       "autoPort": true
     }

@@ -1,0 +1,5 @@
+{
+  "title": "Calculs d'arc",
+  "description": "Calcule le rayon et la flèche d'un arc circulaire à partir de la corde, et génère un tableau d'implantation par écarts perpendiculaires (méthode des ordonnées). Hypothèse : arc de cercle parfait dans un plan horizontal ; ne prend pas en compte le dévers, le profil en long ni les tolérances de chantier.",
+  "placeholder": "Module en cours de construction : le calcul du rayon et de la flèche, le tableau d'implantation et le dessin de l'arc seront ajoutés prochainement."
+}
