@@ -102,3 +102,29 @@ toute saisie numérique utilisateur.
   l'espacement du texte.
 - Pour un fichier réellement volumineux ou binaire (images), utiliser `blob.arrayBuffer()`
   et échantillonner les octets plutôt que de décoder en texte.
+
+## Déclarer le module dans `apps/portail/package.json` (pas seulement l'importer)
+
+`integration.md` §3 liste quatre points d'intégration (manifest/registre, route, i18n,
+`transpilePackages`) mais **omet** une étape indispensable : un package workspace importé
+par `apps/portail` doit aussi être **déclaré comme dépendance** dans
+`apps/portail/package.json`, exactement comme `module-demo` :
+
+```json
+"dependencies": {
+  "@railtools/module-<nom>": "workspace:*"
+}
+```
+
+Sans cette déclaration, ça peut passer **en développement** (Next résout le module via un
+symlink `node_modules/@railtools/module-<nom>` déjà présent, ou via `transpilePackages`),
+mais un **install propre échoue** — en particulier `pnpm install --frozen-lockfile` en
+CI/prod : le lien workspace n'est pas recréé et le `pnpm-lock.yaml` est jugé désynchronisé,
+donc le build de déploiement casse. Le bug est invisible en local et n'apparaît qu'au
+déploiement.
+
+Après avoir ajouté la dépendance, régénérer le `pnpm-lock.yaml` (`pnpm install`) et vérifier
+qu'il contient bien l'importer `packages/module-<nom>` **et** le lien
+`@railtools/module-<nom>` sous `apps/portail`. Si l'`install` est bloqué dans
+l'environnement, ces deux entrées peuvent être ajoutées à la main en copiant le bloc d'un
+module aux dépendances identiques (valider ensuite en parsant le YAML).
