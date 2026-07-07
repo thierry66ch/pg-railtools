@@ -1,5 +1,28 @@
 # Changelog — module-arc
 
+## 1.4 — 2026-07-07
+
+Ajouts au dessin :
+
+- Points A, B, C, D identifiés (petit disque + étiquette). Nouvelle primitive
+  générique dans `packages/commun` : `PointLabel` (disque + texte, sans ligne
+  de rappel ni flèche — plus léger que `LevelCote` pour du simple repérage de
+  points), ajoutée au barrel `drawing`.
+- Cotes horizontales A-E et E-B (en plus de la cote totale A-B existante),
+  décalées entre la corde et cette dernière.
+- Traitillés fins de construction : corde A-B (horizontal) et axe de la
+  flèche C-D (vertical).
+- Le point E (et toutes ses cotes : A-E, E-B, écart EF) ne s'affiche
+  désormais que si E est strictement entre A et B ; valeur par défaut de la
+  position de E ramenée à 0 (E confondu avec A, donc rien à afficher tant que
+  l'utilisateur ne le déplace pas).
+
+Vérifié dans le navigateur (serveur redémarré à froid) : aucun chevauchement
+de libellé (comparaison de `getBoundingClientRect()`) à l'échelle 1:1, en
+mode "fit" et sur un cas de flèche très faible avec curseur actif ; masquage
+correct de E à AE=0 et AE=corde ; exports PDF/Markdown/PNG toujours
+fonctionnels ; aucune régression sur `module-demo`.
+
 ## 1.3 — 2026-07-07
 
 - **Correctif** : le bouton « Enregistrer » semblait inopérant — la liste de

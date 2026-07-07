@@ -4,3 +4,4 @@ export * from './RadiusCote';
 export * from './AngleCote';
 export * from './ArcLengthCote';
 export * from './LevelCote';
+export * from './PointLabel';

@@ -12,6 +12,7 @@ import {
   LengthCote,
   LevelCote,
   NumberInput,
+  PointLabel,
   ProjectManager,
   RadiusCote,
   ResultPageLayout,
@@ -58,6 +59,13 @@ const RAIL_STROKE_WIDTH_MM = 1.5;
 const CURSOR_MARKER_RADIUS_MM = 1.5;
 /** Position (fraction de α, entre D et B) de l'ancrage de la cote de rayon. */
 const RADIUS_COTE_ANGLE_FRACTION = 0.7;
+/** Décalage (mm de dessin) des cotes AE/EB, entre la corde et la cote totale A-B. */
+const SUB_COTE_OFFSET_MM = 5;
+/** Directions (radians) des étiquettes A/B (horizontales, vers l'extérieur) et C/D (en diagonale, à l'écart des cotes). */
+const LABEL_LEFT_RAD = Math.PI;
+const LABEL_RIGHT_RAD = 0;
+const LABEL_UP_LEFT_RAD = Math.PI + Math.PI / 4;
+const LABEL_DOWN_LEFT_RAD = Math.PI - Math.PI / 4;
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
@@ -199,7 +207,7 @@ export function ArcModulePage() {
   const [decimals, setDecimals] = useState(DEFAULT_DECIMALS);
   const [showArcLength, setShowArcLength] = useState(true);
   const [showAngleCumul, setShowAngleCumul] = useState(true);
-  const [cursorAeMm, setCursorAeMm] = useState(DEFAULT_CHORD_MM / 2);
+  const [cursorAeMm, setCursorAeMm] = useState(0);
   const [drawingScale, setDrawingScale] = useState<DrawingScale>(DEFAULT_DRAWING_SCALE);
   const [activeProjectId, setActiveProjectId] = useState<string | undefined>();
   const [activeProjectName, setActiveProjectName] = useState<string | undefined>();
@@ -232,6 +240,9 @@ export function ArcModulePage() {
     : undefined;
 
   const clampedCursorAeMm = clamp(cursorAeMm, 0, chordMm);
+  // N'affiche E et ses cotes que si E est strictement entre A et B (sinon rien de plus
+  // à montrer que la corde elle-même) — E démarre par défaut en A (AE=0), donc masqué.
+  const showCursorAnnotations = clampedCursorAeMm > 0 && clampedCursorAeMm < chordMm;
 
   let cursorOffsetMm: number | undefined;
   let drawing: DrawingGeometry | undefined;
@@ -337,7 +348,7 @@ export function ArcModulePage() {
     setShowArcLength(project.data.showArcLength);
     setShowAngleCumul(project.data.showAngleCumul);
     setDrawingScale(project.data.drawingScale);
-    setCursorAeMm(project.data.chordMm / 2);
+    setCursorAeMm(0);
     setActiveProjectId(project.id);
     setActiveProjectName(project.name);
   }
@@ -438,6 +449,22 @@ export function ArcModulePage() {
               fill="none"
             />
 
+            {/* Lignes de construction : corde A-B et axe de la flèche C-D. */}
+            <line
+              x1={drawing.dPointA.x}
+              y1={drawing.dPointA.y}
+              x2={drawing.dPointB.x}
+              y2={drawing.dPointB.y}
+              {...lineStyleToSvgProps({ kind: 'dashedShort', color: '#999999', widthMm: 0.2 })}
+            />
+            <line
+              x1={drawing.dPointC.x}
+              y1={drawing.dPointC.y}
+              x2={drawing.dPointD.x}
+              y2={drawing.dPointD.y}
+              {...lineStyleToSvgProps({ kind: 'dashedShort', color: '#999999', widthMm: 0.2 })}
+            />
+
             <LengthCote
               from={drawing.dPointA}
               to={drawing.dPointB}
@@ -452,6 +479,30 @@ export function ArcModulePage() {
               label={formatCoteLength(drawing.sagittaMm)}
               sizing={suggestDimensionSizing()}
             />
+            {showCursorAnnotations && (
+              <>
+                <LengthCote
+                  from={drawing.dPointA}
+                  to={drawing.dCursorE}
+                  offsetMm={-SUB_COTE_OFFSET_MM}
+                  label={formatCoteLength(clampedCursorAeMm)}
+                  sizing={suggestDimensionSizing()}
+                />
+                <LengthCote
+                  from={drawing.dCursorE}
+                  to={drawing.dPointB}
+                  offsetMm={-SUB_COTE_OFFSET_MM}
+                  label={formatCoteLength(drawing.chordMm - clampedCursorAeMm)}
+                  sizing={suggestDimensionSizing()}
+                />
+              </>
+            )}
+
+            <PointLabel point={drawing.dPointA} label="A" directionRad={LABEL_LEFT_RAD} />
+            <PointLabel point={drawing.dPointB} label="B" directionRad={LABEL_RIGHT_RAD} />
+            <PointLabel point={drawing.dPointC} label="C" directionRad={LABEL_UP_LEFT_RAD} />
+            <PointLabel point={drawing.dPointD} label="D" directionRad={LABEL_DOWN_LEFT_RAD} />
+
             <RadiusCote
               center={drawing.dCenter}
               pointOnArc={drawing.dRadiusAnchor}
@@ -470,7 +521,7 @@ export function ArcModulePage() {
               />
             )}
 
-            {cursorOffsetMm !== undefined && (
+            {showCursorAnnotations && cursorOffsetMm !== undefined && (
               <>
                 <line
                   x1={drawing.dCursorE.x}
