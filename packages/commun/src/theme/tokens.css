@@ -176,6 +176,11 @@ a {
   color: var(--rt-color-text-muted);
 }
 
+.rt-error {
+  color: var(--rt-color-danger);
+  font-size: 0.9rem;
+}
+
 .rt-badge {
   display: inline-flex;
   align-items: center;

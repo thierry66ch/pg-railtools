@@ -1,5 +1,37 @@
 {
   "title": "Calculs d'arc",
   "description": "Calcule le rayon et la flèche d'un arc circulaire à partir de la corde, et génère un tableau d'implantation par écarts perpendiculaires (méthode des ordonnées). Hypothèse : arc de cercle parfait dans un plan horizontal ; ne prend pas en compte le dévers, le profil en long ni les tolérances de chantier.",
-  "placeholder": "Module en cours de construction : le calcul du rayon et de la flèche, le tableau d'implantation et le dessin de l'arc seront ajoutés prochainement."
+  "mode": {
+    "label": "Méthode de calcul",
+    "chordSagitta": "Corde et flèche → rayon",
+    "radiusChord": "Rayon et corde → flèche"
+  },
+  "form": {
+    "chord": "Corde AB (mm)",
+    "sagitta": "Flèche CD (mm)",
+    "radius": "Rayon R (mm)",
+    "intervals": "Nombre d'intervalles",
+    "decimals": "Décimales affichées",
+    "showArcLength": "Afficher l'abscisse curviligne s",
+    "cursorPosition": "Position de E — distance AE (mm)"
+  },
+  "result": {
+    "radius": "Rayon R",
+    "sagitta": "Flèche f",
+    "cursorOffset": "Écart EF"
+  },
+  "table": {
+    "title": "Tableau d'implantation",
+    "index": "Point",
+    "ae": "AE (mm)",
+    "eb": "EB (mm)",
+    "ef": "EF (mm)",
+    "arcLength": "s (mm)"
+  },
+  "errors": {
+    "chord-not-positive": "La corde doit être strictement positive.",
+    "sagitta-not-positive": "La flèche doit être strictement positive (une flèche nulle donnerait un rayon infini).",
+    "radius-not-positive": "Le rayon doit être strictement positif.",
+    "radius-too-small": "Le rayon doit être au moins égal à la moitié de la corde (une corde plus longue que le diamètre est géométriquement impossible)."
+  }
 }
