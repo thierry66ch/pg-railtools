@@ -247,3 +247,35 @@ car non demandé) — à traiter de la même façon si ça gêne un jour.
 À vérifier explicitement : importer un environnement **sans recharger la page** et
 constater que la liste de projets affichée change immédiatement (pas seulement après un
 rechargement, qui masquerait le bug).
+
+## `ArcLengthCote` sans `dominantBaseline` : le libellé touche sa propre ligne de cote
+
+Bug réel signalé par capture d'écran annotée. `LengthCote` fixe explicitement
+`dominantBaseline="text-after-edge"` sur son `<text>`, ce qui pousse le corps du texte à
+s'écarter de sa ligne de cote (dans le sens de l'offset). `ArcLengthCote` calcule le même
+genre de décalage pour la position du texte (`labelRadius = dimRadius +
+Math.sign(offset) * (textSizeMm*0.4+1)`) mais **sans** poser de `dominantBaseline` — avec
+la baseline par défaut du navigateur ("alphabetic"), le corps visible du texte reste
+majoritairement du côté de la ligne de cote au lieu de s'en éloigner, annulant une bonne
+partie du décalage voulu : le libellé de longueur d'arc touchait quasiment son arc de cote.
+
+Correctif : `dominantBaseline={offset >= 0 ? 'text-before-edge' : 'text-after-edge'}` —
+la baseline correcte dépend du signe de l'offset (l'inverse de la convention fixe de
+`LengthCote`, car `ArcLengthCote` est presque toujours utilisée avec un offset positif,
+c.-à-d. la cote à l'extérieur/en dessous de l'arc, l'opposé du cas habituel de
+`LengthCote`). Vérifier avec `getBoundingClientRect()` du texte vs le tracé de la cote,
+pas seulement à l'œil sur une capture à une seule échelle.
+
+## Cotes empilées (plusieurs `LengthCote` parallèles à des offsets différents)
+
+Piège découvert en ajoutant une cote de détail (AE/EB) sous une cote totale existante
+(A-B) : le texte d'une `LengthCote` s'étend d'environ `textSizeMm*0.4+1 + textSizeMm`
+(≈ 5.2 mm pour la taille par défaut) **au-delà** de sa propre ligne, dans le sens de
+l'offset — pas seulement le petit décalage `textSizeMm*0.4+1` qu'on pourrait croire en
+lisant le code superficiellement (ce décalage positionne le POINT d'ancrage du texte, pas
+son bord visible ; `dominantBaseline="text-after-edge"` fait ensuite déborder tout le
+corps du texte encore plus loin). Deux lignes de cote parallèles empilées doivent donc
+être espacées d'au moins ~6 mm pour laisser un peu de marge, sans quoi le texte de la cote
+la plus proche de la géométrie chevauche la ligne de la cote suivante. Vérifier avec
+`getBoundingClientRect()` des libellés concernés (comme pour la collision `RadiusCote`
+documentée plus haut), pas seulement sur le premier cas testé.
