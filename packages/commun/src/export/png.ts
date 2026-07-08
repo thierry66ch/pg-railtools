@@ -24,6 +24,25 @@ export function getSvgMmSize(svg: SVGSVGElement): {
   return { x: bbox.x, y: bbox.y, width: bbox.width, height: bbox.height };
 }
 
+/**
+ * Bounding box réel (mm de dessin) du contenu effectivement rendu dans un SVG, dans le même
+ * repère que son `viewBox` — contrairement à `getSvgMmSize` (qui renvoie le `viewBox`
+ * déclaré, dont la marge interne fixe, ex. réservée aux cotes, dépasse souvent ce qui est
+ * réellement dessiné). Sert à aligner le bord du contenu réel (pas la marge réservée) avec
+ * une marge de page à l'export : utiliser `viewBox.x`/`viewBox.y` pour ce calcul suppose
+ * que le contenu utilise toute la marge réservée, ce qui n'est vrai que dans le pire cas et
+ * pousse sinon le contenu réel au-delà de la marge de page voulue (voir pieges-a-eviter.md).
+ */
+export function getSvgContentBBoxMm(svg: SVGSVGElement): {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+} {
+  const bbox = svg.getBBox();
+  return { x: bbox.x, y: bbox.y, width: bbox.width, height: bbox.height };
+}
+
 export async function svgToPngBlob(svg: SVGSVGElement, scaleFactor = 4): Promise<Blob> {
   const { width, height } = getSvgMmSize(svg);
   if (width <= 0 || height <= 0) {

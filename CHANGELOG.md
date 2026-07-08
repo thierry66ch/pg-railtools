@@ -4,6 +4,23 @@ Toutes les évolutions fonctionnelles notables de la base commune sont document�
 Format de version : majeur.mineur (voir §9 du cahier des charges). Chaque module a son propre
 `CHANGELOG.md` (ex. [packages/module-demo/CHANGELOG.md](packages/module-demo/CHANGELOG.md)).
 
+## 1.9 — 2026-07-09
+
+Correctifs export PDF :
+
+- **Bordure supérieure des tableaux** manquante (`drawTable`) : ligne de bordure haute
+  ajoutée avant l'en-tête, comme les autres bordures déjà dessinées.
+- **Dessin aligné à gauche hors marge d'impression** : `exportElementToPdfFile` alignait le
+  bord gauche du dessin en supposant que le contenu (cotes incluses) occupait toute la
+  marge interne réservée du `viewBox` (`svgSize.x`) — vrai seulement dans le pire cas. Pour
+  une géométrie dont une cote dépasse peu cette marge réservée, le contenu réel se
+  retrouvait décalé au-delà de la marge de page voulue (jusqu'à hors-page, tronqué à
+  l'impression). Nouvelle fonction `getSvgContentBBoxMm()` (`export/png.ts`, basée sur
+  `SVGSVGElement.getBBox()`) pour aligner le bord gauche **réel** du contenu rendu (pas le
+  `viewBox` déclaré) avec la marge de page. Vérifié avec corde=200/flèche=100 (cas où la
+  cote déborde peu la marge réservée) : ancien calcul plaçait le contenu à x≈-0.68 mm
+  (hors page), nouveau calcul le place exactement à x=10 mm (MARGIN_MM).
+
 ## 1.8 — 2026-07-09
 
 Retouches suite aux retours sur la refonte esthétique v1.7 :

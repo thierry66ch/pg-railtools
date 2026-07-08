@@ -288,6 +288,27 @@ entre le trait et la valeur). L'extension totale au-delà de la ligne est donc d
 recalculer/reverifier ce nombre avant de resserrer encore l'espacement entre cotes
 parallèles ailleurs.
 
+## Aligner un dessin SVG avec une marge de page : utiliser le contenu réel, pas le `viewBox`
+
+Complète le piège plus haut (« Aligner un dessin SVG (avec marge interne) dans un export
+PDF/PNG »). La correction initiale (`drawingX = MARGIN_MM + viewBox.x`) supposait que le
+contenu réellement dessiné (cotes comprises) occupait **toute** la marge interne réservée
+du `viewBox` (ex. `LEFT_MARGIN_MM = 20` dans `module-arc`) — vrai seulement dans le pire
+cas. Dès qu'une cote ne déborde que partiellement cette marge réservée (cas courant), le
+calcul déplace l'image de la marge **entière**, poussant le contenu réel au-delà de
+`MARGIN_MM`, potentiellement jusqu'à une position négative (hors page, silencieusement
+tronqué par `pdf.addImage` — pas d'erreur, juste un dessin coupé à l'impression).
+
+Correctif : mesurer le bord réel du contenu avec `SVGSVGElement.getBBox()` (nouvelle
+fonction `getSvgContentBBoxMm()`, `export/png.ts`) plutôt que de se fier au `viewBox`
+déclaré, et aligner CE bord (pas celui du `viewBox`) sur `MARGIN_MM` :
+`drawingX = MARGIN_MM - (contentBBox.x - viewBox.x)`. Repéré en comparant le calcul pour
+une géométrie où la cote ne déborde que d'environ 9 mm sur une marge réservée de 20 mm :
+l'ancien calcul plaçait le contenu réel à x≈-0.7 mm (hors page), le nouveau exactement à
+x=10 mm. Vérifier avec `svg.getBBox()` (mm de dessin, dans le même repère que le
+`viewBox`) plutôt qu'une capture visuelle — l'écart peut être trop petit pour sauter aux
+yeux sur un cas simple, mais suffisant pour tronquer un trait fin à l'impression.
+
 ## Transition CSS globale sur `*` : glitches de capture pendant le scroll
 
 Appliquer une transition (`transition: background-color, ...`) au sélecteur universel `*`

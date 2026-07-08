@@ -8,7 +8,7 @@
 
 import type { jsPDF } from 'jspdf';
 import { blobToDataUrl } from '../transfer/files';
-import { getSvgMmSize, svgToPngBlob } from './png';
+import { getSvgContentBBoxMm, getSvgMmSize, svgToPngBlob } from './png';
 import type { ResultTable } from './types';
 
 export type PdfPageFormat = 'a4-landscape' | 'a4-portrait' | 'a3-landscape' | 'a3-portrait';
@@ -125,6 +125,7 @@ function drawTable(pdf: jsPDF, table: ResultTable, x: number, y: number, width: 
   pdf.setDrawColor(216, 221, 227);
   pdf.setLineWidth(0.2);
   pdf.setTextColor(28, 37, 48);
+  pdf.line(x, cursorY, x + width, cursorY);
 
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(TABLE_FONT_SIZE);
@@ -182,9 +183,14 @@ export async function exportElementToPdfFile(
     // Échelle réelle : 1 mm de dessin = 1 mm papier, aucune mise à l'échelle automatique.
     // Si le dessin dépasse la page (ou est trop petit), c'est à l'utilisateur de choisir
     // une échelle de dessin adaptée et de refaire l'export.
-    // `svgSize.x` compense la marge interne du viewBox du dessin, pour que son contenu
-    // (pas le bord de l'image, qui inclut cette marge) s'aligne avec le cartouche/tableau.
-    const drawingX = MARGIN_MM + svgSize.x;
+    // Aligne le bord GAUCHE RÉEL du contenu (pas le viewBox, dont la marge interne réservée
+    // aux cotes dépasse souvent ce qui est effectivement dessiné) avec le cartouche/tableau :
+    // utiliser `svgSize.x` (viewBox.x) directement suppose le pire cas (contenu collé au bord
+    // du viewBox) et pousse sinon le contenu réel au-delà de MARGIN_MM, dans la marge
+    // d'impression — repéré sur un dessin où une cote dépassait de la page (voir
+    // pieges-a-eviter.md).
+    const contentBBox = getSvgContentBBoxMm(options.svg);
+    const drawingX = MARGIN_MM - (contentBBox.x - svgSize.x);
     pdf.addImage(dataUrl, 'PNG', drawingX, cursorY, svgSize.width, svgSize.height);
     cursorY += svgSize.height + 6;
   }
