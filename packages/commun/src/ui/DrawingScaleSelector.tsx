@@ -16,9 +16,10 @@ export interface DrawingScaleSelectorProps {
   /** Mode contrôlé : si fourni, le composant n'utilise pas la préférence globale. */
   value?: DrawingScale;
   onChange?: (value: DrawingScale) => void;
+  className?: string;
 }
 
-export function DrawingScaleSelector({ value, onChange }: DrawingScaleSelectorProps) {
+export function DrawingScaleSelector({ value, onChange, className = 'rt-field' }: DrawingScaleSelectorProps) {
   const t = useTranslations('common');
   const [internal, setInternal] = useState<DrawingScale>(DEFAULT_DRAWING_SCALE);
   const current = value ?? internal;
@@ -48,7 +49,7 @@ export function DrawingScaleSelector({ value, onChange }: DrawingScaleSelectorPr
   const selectValue = current.mode === 'fit' ? FIT_OPTION : String(current.ratio ?? 1);
 
   return (
-    <label className="rt-field">
+    <label className={className}>
       <span>{t('drawing.scale.label')}</span>
       <select
         className="rt-select"

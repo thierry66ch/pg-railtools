@@ -371,7 +371,7 @@ export function ArcModulePage() {
   return (
     <ResultPageLayout title={t('title')} description={t('description')} version={versionInfo}>
       <div className="rt-toolbar">
-        <label className="rt-field">
+        <label className="rt-field rt-field--inline">
           <span>{t('form.decimals')}</span>
           <NumberInput value={decimals} onChange={handleDecimalsChange} />
         </label>
@@ -414,23 +414,30 @@ export function ArcModulePage() {
       {!primaryResult.ok && <p className="rt-error">{t(`errors.${primaryResult.error}`)}</p>}
 
       {geometryInputs && (
-        <p>
-          <strong>
-            {inputMode === 'chordSagitta'
-              ? t('result.radius', { value: formatNumber(geometryInputs.radiusMm, decimals) })
-              : t('result.sagitta', { value: formatNumber(geometryInputs.sagittaMm, decimals) })}
-          </strong>
+        <p
+          style={{
+            margin: 0,
+            fontSize: '1.15rem',
+            fontWeight: 600,
+            color: 'var(--rt-color-primary)',
+          }}
+        >
+          {inputMode === 'chordSagitta'
+            ? t('result.radius', { value: formatNumber(geometryInputs.radiusMm, decimals) })
+            : t('result.sagitta', { value: formatNumber(geometryInputs.sagittaMm, decimals) })}
         </p>
       )}
 
       {geometryInputs && (
         <div className="rt-toolbar">
-          <label className="rt-field">
+          <label className="rt-field rt-field--inline">
             <span>{t('form.cursorPosition')}</span>
             <NumberInput value={clampedCursorAeMm} onChange={handleCursorChange} />
           </label>
           {cursorOffsetMm !== undefined && (
-            <p>{t('result.cursorOffset', { value: formatNumber(cursorOffsetMm, decimals) })}</p>
+            <p style={{ margin: 0, color: 'var(--rt-color-text-muted)' }}>
+              {t('result.cursorOffset', { value: formatNumber(cursorOffsetMm, decimals) })}
+            </p>
           )}
         </div>
       )}
@@ -438,7 +445,11 @@ export function ArcModulePage() {
       {drawing && (
         <>
           <div className="rt-toolbar">
-            <DrawingScaleSelector value={drawingScale} onChange={handleDrawingScaleChange} />
+            <DrawingScaleSelector
+              value={drawingScale}
+              onChange={handleDrawingScaleChange}
+              className="rt-field rt-field--inline"
+            />
           </div>
 
           <svg
@@ -573,18 +584,20 @@ export function ArcModulePage() {
             />
           )}
 
-          <div className="rt-toolbar">
-            <label className="rt-field">
+          <div className="rt-toolbar" style={{ justifyContent: 'space-between' }}>
+            <label className="rt-field rt-field--inline">
               <span>{t('form.intervals')}</span>
               <NumberInput value={intervals} onChange={handleIntervalsChange} />
             </label>
             {anglePerIntervalDeg !== undefined && (
-              <p>{t('result.anglePerInterval', { value: formatNumber(anglePerIntervalDeg, decimals) })}</p>
+              <p style={{ margin: 0, color: 'var(--rt-color-text-muted)' }}>
+                {t('result.anglePerInterval', { value: formatNumber(anglePerIntervalDeg, decimals) })}
+              </p>
             )}
           </div>
 
-          <div className="rt-toolbar">
-            <label className="rt-field">
+          <div className="rt-check-group">
+            <label className="rt-field rt-field--check">
               <span>{t('form.showArcLength')}</span>
               <input
                 type="checkbox"
@@ -592,7 +605,7 @@ export function ArcModulePage() {
                 onChange={(event) => setShowArcLength(event.target.checked)}
               />
             </label>
-            <label className="rt-field">
+            <label className="rt-field rt-field--check">
               <span>{t('form.showAngleCumul')}</span>
               <input
                 type="checkbox"

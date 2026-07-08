@@ -8,7 +8,7 @@ export function PortailFooter() {
   return (
     <footer className="rt-toolbar rt-footer">
       <span>{t('footer.baseCommuneLabel')}</span>
-      <VersionBadge version={baseCommuneVersion.version} build={baseCommuneVersion.build} />
+      <VersionBadge version={baseCommuneVersion.version} build={baseCommuneVersion.build} subtle />
     </footer>
   );
 }

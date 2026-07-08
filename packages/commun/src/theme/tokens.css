@@ -4,31 +4,62 @@
  */
 
 :root {
-  --rt-color-bg: #f7f8fa;
+  --rt-color-bg: #eef1f6;
   --rt-color-surface: #ffffff;
-  --rt-color-border: #d8dde3;
-  --rt-color-text: #1c2530;
-  --rt-color-text-muted: #5b6672;
+  --rt-color-surface-alt: #f4f6fa;
+  --rt-color-border: #dde3ea;
+  --rt-color-border-strong: #c7cfd9;
+  --rt-color-text: #17212e;
+  --rt-color-text-muted: #64707d;
+  --rt-color-text-faint: #98a2ae;
   --rt-color-primary: #1f5f8b;
   --rt-color-primary-hover: #184a6d;
+  --rt-color-primary-soft: #e7f0f7;
   --rt-color-primary-contrast: #ffffff;
   --rt-color-danger: #b3261e;
+  --rt-color-danger-soft: #fbeae9;
 
-  --rt-radius: 6px;
+  --rt-radius-sm: 6px;
+  --rt-radius: 10px;
+  --rt-radius-lg: 16px;
+
   --rt-spacing-xs: 4px;
   --rt-spacing-sm: 8px;
   --rt-spacing-md: 16px;
   --rt-spacing-lg: 24px;
   --rt-spacing-xl: 40px;
 
+  --rt-shadow-sm: 0 1px 2px rgba(23, 33, 46, 0.06);
+  --rt-shadow-md: 0 6px 20px rgba(23, 33, 46, 0.08);
+  --rt-shadow-lg: 0 16px 40px rgba(23, 33, 46, 0.14);
+
+  --rt-transition: 150ms ease;
+
   --rt-font-sans:
-    system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    var(--rt-font-inter, 'Inter'), system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial,
+    sans-serif;
+}
+
+* {
+  transition:
+    background-color var(--rt-transition),
+    border-color var(--rt-transition),
+    box-shadow var(--rt-transition),
+    color var(--rt-transition),
+    transform var(--rt-transition);
 }
 
 body {
   background: var(--rt-color-bg);
   color: var(--rt-color-text);
   font-family: var(--rt-font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  letter-spacing: -0.01em;
 }
 
 a {
@@ -40,18 +71,25 @@ a {
   align-items: center;
   gap: var(--rt-spacing-xs);
   padding: var(--rt-spacing-sm) var(--rt-spacing-md);
-  border-radius: var(--rt-radius);
+  border-radius: var(--rt-radius-sm);
   border: 1px solid var(--rt-color-primary);
   background: var(--rt-color-primary);
   color: var(--rt-color-primary-contrast);
   font-family: var(--rt-font-sans);
   font-size: 0.9rem;
+  font-weight: 500;
   cursor: pointer;
+  box-shadow: var(--rt-shadow-sm);
 }
 
 .rt-button:hover {
   background: var(--rt-color-primary-hover);
   border-color: var(--rt-color-primary-hover);
+  box-shadow: var(--rt-shadow-md);
+}
+
+.rt-button:active {
+  transform: translateY(1px);
 }
 
 .rt-button:focus-visible {
@@ -62,17 +100,30 @@ a {
 .rt-button--secondary {
   background: var(--rt-color-surface);
   color: var(--rt-color-primary);
+  box-shadow: none;
+}
+
+.rt-button--secondary:hover {
+  background: var(--rt-color-primary-soft);
+  box-shadow: none;
 }
 
 .rt-button--danger {
   background: var(--rt-color-surface);
   color: var(--rt-color-danger);
   border-color: var(--rt-color-danger);
+  box-shadow: none;
+}
+
+.rt-button--danger:hover {
+  background: var(--rt-color-danger-soft);
+  box-shadow: none;
 }
 
 .rt-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .rt-icon-button {
@@ -82,7 +133,7 @@ a {
   width: 2.25rem;
   height: 2.25rem;
   padding: 0;
-  border-radius: var(--rt-radius);
+  border-radius: var(--rt-radius-sm);
   border: 1px solid var(--rt-color-border);
   background: var(--rt-color-surface);
   color: var(--rt-color-primary);
@@ -90,8 +141,12 @@ a {
 }
 
 .rt-icon-button:hover {
-  background: var(--rt-color-bg);
+  background: var(--rt-color-primary-soft);
   border-color: var(--rt-color-primary);
+}
+
+.rt-icon-button:active {
+  transform: translateY(1px);
 }
 
 .rt-icon-button:focus-visible {
@@ -112,11 +167,12 @@ a {
 
 .rt-icon-button--danger {
   color: var(--rt-color-danger);
-  border-color: var(--rt-color-danger);
+  border-color: var(--rt-color-border);
 }
 
 .rt-icon-button--danger:hover {
-  background: color-mix(in srgb, var(--rt-color-danger) 8%, white);
+  background: var(--rt-color-danger-soft);
+  border-color: var(--rt-color-danger);
 }
 
 .rt-icon-button:disabled {
@@ -130,11 +186,12 @@ a {
   padding: var(--rt-spacing-lg);
   max-width: 32rem;
   width: 90vw;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--rt-shadow-lg);
 }
 
 .rt-dialog::backdrop {
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(15, 23, 33, 0.45);
+  backdrop-filter: blur(2px);
 }
 
 .rt-dialog-content {
@@ -145,24 +202,32 @@ a {
   background: var(--rt-color-surface);
   border: 1px solid var(--rt-color-border);
   border-radius: var(--rt-radius);
-  padding: var(--rt-spacing-md);
+  box-shadow: var(--rt-shadow-sm);
+  padding: var(--rt-spacing-lg);
 }
 
 .rt-select,
 .rt-input {
   padding: var(--rt-spacing-xs) var(--rt-spacing-sm);
-  border-radius: var(--rt-radius);
+  border-radius: var(--rt-radius-sm);
   border: 1px solid var(--rt-color-border);
   background: var(--rt-color-surface);
   color: var(--rt-color-text);
   font-family: var(--rt-font-sans);
   font-size: 0.9rem;
+  height: 2.25rem;
+}
+
+.rt-select:hover,
+.rt-input:hover {
+  border-color: var(--rt-color-border-strong);
 }
 
 .rt-select:focus-visible,
 .rt-input:focus-visible {
-  outline: 2px solid var(--rt-color-primary);
-  outline-offset: 1px;
+  outline: none;
+  border-color: var(--rt-color-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--rt-color-primary) 20%, transparent);
 }
 
 .rt-field {
@@ -171,9 +236,52 @@ a {
   gap: var(--rt-spacing-xs);
 }
 
-.rt-field label {
-  font-size: 0.8rem;
+.rt-field label,
+.rt-field > span:first-child {
+  font-size: 0.78rem;
+  font-weight: 500;
   color: var(--rt-color-text-muted);
+}
+
+/* Champ isolé sur sa propre ligne : libellé et champ côte à côte plutôt qu'empilés. */
+.rt-field--inline {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--rt-spacing-sm);
+}
+
+.rt-field--inline > span:first-child {
+  white-space: nowrap;
+}
+
+.rt-field--check {
+  flex-direction: row-reverse;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--rt-spacing-sm);
+}
+
+.rt-field--check span:first-child {
+  font-size: 0.9rem;
+  color: var(--rt-color-text);
+}
+
+.rt-field--check input[type='checkbox'] {
+  width: 1.05rem;
+  height: 1.05rem;
+  accent-color: var(--rt-color-primary);
+  cursor: pointer;
+}
+
+/* Regroupe des rt-field--check dans un liseré léger pour les distinguer d'options isolées. */
+.rt-check-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--rt-spacing-lg);
+  padding: var(--rt-spacing-sm) var(--rt-spacing-md);
+  background: var(--rt-color-surface-alt);
+  border: 1px solid var(--rt-color-border);
+  border-radius: var(--rt-radius-sm);
 }
 
 .rt-error {
@@ -191,6 +299,14 @@ a {
   font-size: 0.75rem;
 }
 
+/* Version discrète : simple texte estompé, sans pastille visuelle. */
+.rt-badge--subtle {
+  padding: 0;
+  background: none;
+  color: var(--rt-color-text-faint);
+  font-size: 0.72rem;
+}
+
 .rt-toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -198,11 +314,38 @@ a {
   align-items: center;
 }
 
+/* Rythme vertical entre groupes logiques d'un formulaire. */
+.rt-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--rt-spacing-sm);
+  padding-top: var(--rt-spacing-md);
+  border-top: 1px solid var(--rt-color-border);
+}
+
+.rt-section:first-child {
+  padding-top: 0;
+  border-top: none;
+}
+
+.rt-section-title {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--rt-color-text-faint);
+}
+
 .rt-header {
   justify-content: space-between;
   padding: var(--rt-spacing-md) var(--rt-spacing-lg);
   background: var(--rt-color-surface);
   border-bottom: 1px solid var(--rt-color-border);
+  box-shadow: var(--rt-shadow-sm);
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .rt-brand {
@@ -210,16 +353,124 @@ a {
   align-items: center;
   gap: var(--rt-spacing-sm);
   font-weight: 700;
+  font-size: 1.05rem;
   color: var(--rt-color-primary);
   text-decoration: none;
 }
 
+.rt-header nav a {
+  color: var(--rt-color-text-muted);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.rt-header nav a:hover {
+  color: var(--rt-color-primary);
+}
+
 .rt-footer {
   justify-content: center;
-  padding: var(--rt-spacing-md) var(--rt-spacing-lg);
-  background: var(--rt-color-surface);
+  padding: var(--rt-spacing-sm) var(--rt-spacing-lg);
+  background: transparent;
   border-top: 1px solid var(--rt-color-border);
+  color: var(--rt-color-text-faint);
+  font-size: 0.78rem;
+}
+
+.rt-project-manager {
+  display: flex;
+  flex-direction: column;
+  gap: var(--rt-spacing-sm);
+  padding: var(--rt-spacing-md);
+}
+
+.rt-project-manager__empty {
+  margin: 0;
   color: var(--rt-color-text-muted);
+  font-size: 0.9rem;
+}
+
+.rt-project-list {
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--rt-color-border);
+}
+
+.rt-project-list__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--rt-spacing-sm);
+  padding: var(--rt-spacing-xs) var(--rt-spacing-xs);
+  border-bottom: 1px solid var(--rt-color-border);
+}
+
+.rt-project-list__item:hover {
+  background: var(--rt-color-surface-alt);
+}
+
+.rt-project-list__item[aria-current='true'] {
+  background: var(--rt-color-primary-soft);
+}
+
+.rt-project-list__name {
+  font-size: 0.9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Carte de module cliquable (page d'accueil) : toute la carte est un lien. */
+.rt-module-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--rt-spacing-sm);
+  background: var(--rt-color-surface);
+  border: 1px solid var(--rt-color-border);
+  border-radius: var(--rt-radius);
+  box-shadow: var(--rt-shadow-sm);
+  padding: var(--rt-spacing-md);
+  text-decoration: none;
+  color: inherit;
+}
+
+.rt-module-card:hover {
+  box-shadow: var(--rt-shadow-md);
+  border-color: var(--rt-color-primary);
+  transform: translateY(-2px);
+}
+
+.rt-module-card__header {
+  display: flex;
+  align-items: center;
+  gap: var(--rt-spacing-sm);
+}
+
+.rt-module-card__icon {
+  display: inline-flex;
+  color: var(--rt-color-primary);
+}
+
+.rt-module-card__title {
+  flex: 1;
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.rt-module-card__info {
+  display: inline-flex;
+}
+
+.rt-module-card__description {
+  margin: 0;
+  color: var(--rt-color-text-muted);
+  font-size: 0.88rem;
+  flex: 1;
 }
 
 .rt-main {

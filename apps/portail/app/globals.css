@@ -19,6 +19,20 @@ body {
 table {
   border-collapse: collapse;
   width: 100%;
+  border: 1px solid var(--rt-color-border);
+  border-radius: var(--rt-radius-sm);
+  overflow: hidden;
+}
+
+caption {
+  caption-side: top;
+  text-align: left;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--rt-color-text-faint);
+  margin-bottom: var(--rt-spacing-sm);
 }
 
 th,
@@ -26,4 +40,15 @@ td {
   border: 1px solid var(--rt-color-border);
   padding: var(--rt-spacing-xs) var(--rt-spacing-sm);
   text-align: left;
+}
+
+th {
+  background: var(--rt-color-surface-alt);
+  color: var(--rt-color-text-muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+tbody tr:hover {
+  background: var(--rt-color-surface-alt);
 }

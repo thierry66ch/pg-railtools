@@ -4,6 +4,29 @@ Toutes les évolutions fonctionnelles notables de la base commune sont document�
 Format de version : majeur.mineur (voir §9 du cahier des charges). Chaque module a son propre
 `CHANGELOG.md` (ex. [packages/module-demo/CHANGELOG.md](packages/module-demo/CHANGELOG.md)).
 
+## 1.7 — 2026-07-08
+
+Refonte esthétique (sans impact fonctionnel) :
+
+- **Jetons de thème** (`theme/tokens.css`) : palette légèrement enrichie (surface alt,
+  bordure forte, texte "faint"), rayons de coin agrandis, ombres portées (`--rt-shadow-*`),
+  transitions douces, police Inter (via `next/font/google`, avec repli système). Nouvelles
+  classes utilitaires : `.rt-field--inline` (libellé à côté du champ pour un champ isolé sur
+  sa ligne, plutôt qu'empilé au-dessus), `.rt-field--check`/`.rt-check-group` (cases à cocher
+  visuellement distinguées), `.rt-section`/`.rt-section-title`, `.rt-badge--subtle` (version
+  discrète, sans pastille), `.rt-module-card` (carte de module cliquable).
+- **Page d'accueil** : liste de modules remplacée par une grille de cartes cliquables (toute
+  la carte est un lien vers le module ; le bouton "Ouvrir" a disparu) ; numéro de
+  version/build affiché discrètement dans un coin de chaque carte.
+- **`ProjectManager`** : liste de projets compactée (lignes plus denses, surbrillance au
+  survol/actif) et marges internes réduites.
+- **`ResultPageLayout`** : rythme vertical uniforme entre sections via `gap` flexbox, version
+  affichée discrètement en pied de page.
+- **`module-arc`** : champs isolés sur leur ligne (décimales, position du curseur E, échelle
+  de dessin, nombre d'intervalles) alignés à côté de leur libellé plutôt qu'au-dessus ; cases
+  "afficher l'abscisse curviligne"/"afficher le cumul des angles" regroupées dans un liseré
+  dédié ; résultat du rayon/flèche mis en évidence.
+
 ## 1.6 — 2026-07-06
 
 Rafraîchissement cosmétique (sans impact fonctionnel) :

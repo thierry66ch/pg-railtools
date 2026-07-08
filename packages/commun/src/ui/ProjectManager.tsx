@@ -75,8 +75,8 @@ export function ProjectManager<T>({
   }
 
   return (
-    <div className="rt-card">
-      <h3>{t('projects.title')}</h3>
+    <div className="rt-card rt-project-manager">
+      <h3 className="rt-section-title">{t('projects.title')}</h3>
 
       <div className="rt-toolbar">
         <input
@@ -110,12 +110,16 @@ export function ProjectManager<T>({
       </div>
 
       {projects.length === 0 ? (
-        <p>{t('projects.empty')}</p>
+        <p className="rt-project-manager__empty">{t('projects.empty')}</p>
       ) : (
-        <ul>
+        <ul className="rt-project-list">
           {projects.map((project) => (
-            <li key={project.id} aria-current={project.id === activeProjectId}>
-              <span>{project.name}</span>
+            <li
+              key={project.id}
+              className="rt-project-list__item"
+              aria-current={project.id === activeProjectId}
+            >
+              <span className="rt-project-list__name">{project.name}</span>
               <div className="rt-toolbar">
                 <IconButton label={t('projects.open')} icon={<IconFolderOpen />} onClick={() => onOpen(project)} />
                 <IconButton

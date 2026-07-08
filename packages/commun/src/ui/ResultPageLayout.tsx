@@ -18,15 +18,22 @@ export function ResultPageLayout({
   actions,
 }: ResultPageLayoutProps) {
   return (
-    <div className="rt-card">
-      <header>
-        <h1>{title}</h1>
-        {description && <p>{description}</p>}
+    <div className="rt-card" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--rt-spacing-lg)' }}>
+      <header style={{ display: 'flex', flexDirection: 'column', gap: 'var(--rt-spacing-xs)' }}>
+        <h1 style={{ margin: 0 }}>{title}</h1>
+        {description && (
+          <p style={{ margin: 0, color: 'var(--rt-color-text-muted)' }}>{description}</p>
+        )}
         {actions && <div className="rt-toolbar">{actions}</div>}
       </header>
-      <div>{children}</div>
-      <footer className="rt-toolbar">
-        <VersionBadge version={version.version} build={version.build} />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--rt-spacing-lg)' }}>
+        {children}
+      </div>
+      <footer
+        className="rt-toolbar"
+        style={{ paddingTop: 'var(--rt-spacing-md)', borderTop: '1px solid var(--rt-color-border)' }}
+      >
+        <VersionBadge version={version.version} build={version.build} subtle />
       </footer>
     </div>
   );
