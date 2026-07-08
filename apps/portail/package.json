@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "node ../../scripts/bump-build.mjs ../../version.json",
+    "prebuild": "node ../../scripts/bump-build.mjs ../../version.json ../../packages/module-demo/version.json ../../packages/module-arc/version.json",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",

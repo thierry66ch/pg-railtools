@@ -129,6 +129,35 @@ qu'il contient bien l'importer `packages/module-<nom>` **et** le lien
 l'environnement, ces deux entrées peuvent être ajoutées à la main en copiant le bloc d'un
 module aux dépendances identiques (valider ensuite en parsant le YAML).
 
+## Le `build` d'un module ne s'incrémente pas tout seul en déploiement réel
+
+Le `version.json` d'un module (`{ "version": "majeur.mineur", "build": n }`) a un script
+`prebuild` (`node ../../scripts/bump-build.mjs`) censé l'incrémenter « à chaque `next
+build` ». C'est vrai **seulement si on lance ce build précis** (ex. `pnpm -r build` ou
+`pnpm --filter @railtools/module-<nom> build` en local). Or un module est consommé comme
+**source TypeScript** par le portail, sans étape de build séparée (`transpilePackages`,
+voir `docs/integration.md` §1) : un déploiement réel (Vercel) ne build **qu'`apps/portail`**
+— le `prebuild` propre au package du module n'est donc jamais exécuté en production.
+Constaté concrètement sur `module-arc` : son `build` était resté à `0` après plusieurs
+déploiements (`packages/module-arc/version.json`), pendant que le `build` racine de la
+base commune (bumpé par le `prebuild` d'`apps/portail`) avançait normalement.
+
+Correctif : le `prebuild` d'`apps/portail` (`apps/portail/package.json`) bump désormais
+explicitement le `version.json` racine **et** celui de chaque module actif :
+
+```json
+"prebuild": "node ../../scripts/bump-build.mjs ../../version.json ../../packages/module-demo/version.json ../../packages/module-arc/version.json"
+```
+
+(`scripts/bump-build.mjs` accepte maintenant plusieurs chemins en argument, bumpés
+indépendamment.) **Ajouter le `version.json` d'un nouveau module à cette liste fait
+partie de l'intégration au portail** (`docs/integration.md` §3.5) — l'oublier laisse son
+build figé à `0` indéfiniment, sans erreur ni avertissement visible. Vérifier après coup
+en lançant le `prebuild` à la main (`node ../../scripts/bump-build.mjs <chemins...>`
+depuis `apps/portail`) et en relisant les `version.json` concernés — ne pas se fier à un
+`pnpm -r build` local pour valider ce point précis, puisque celui-ci bump aussi le
+`prebuild` propre du module (masquant que ce chemin ne s'exécute jamais en prod).
+
 ## `RadiusCote` ancré au point de symétrie d'une géométrie centrée : risque de collision de libellé
 
 `RadiusCote` tire un trait de longueur fixe (20 mm de dessin) depuis le point de l'arc vers

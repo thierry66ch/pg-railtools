@@ -212,6 +212,19 @@ Trois points d'intégration dans `apps/portail`, tous illustrés par le module `
    transpilePackages: ['@railtools/commun', '@railtools/module-demo', '@railtools/module-<nom>'],
    ```
 
+5. **Bump du build en déploiement** — ajouter le chemin du `version.json` du module au
+   script `prebuild` d'[`apps/portail/package.json`](../apps/portail/package.json) :
+   
+   ```json
+   "prebuild": "node ../../scripts/bump-build.mjs ../../version.json ../../packages/module-demo/version.json ../../packages/module-<nom>/version.json"
+   ```
+   
+   **Indispensable** : le module est consommé comme source TypeScript (§1), son propre
+   script `build`/`prebuild` n'est donc **jamais** exécuté par un déploiement réel (Vercel
+   ne build qu'`apps/portail`). Sans cette ligne, le `build` de `packages/module-<nom>/
+   version.json` reste figé à `0` indéfiniment, même après des dizaines de déploiements —
+   voir §4 ci-dessous et `pieges-a-eviter.md`.
+
 Aucune autre modification du portail n'est nécessaire : il ignore le détail métier du
 module et se contente de l'afficher/router.
 
@@ -219,12 +232,19 @@ module et se contente de l'afficher/router.
 
 - Le module a son propre `version.json` (`{ "version": "majeur.mineur", "build": n }`),
   indépendant de la base commune et des autres modules.
-- Le script racine `scripts/bump-build.mjs` incrémente le `build` à chaque exécution du
-  script `prebuild` du package (déclenché automatiquement avant `pnpm build` /
-  `pnpm -r build`, via le hook npm standard `prebuild` → `build`). Le `version`
-  (majeur.mineur) n'est **jamais** modifié automatiquement : il se change à la main dans
-  `version.json` lors d'une évolution fonctionnelle, en même temps qu'une entrée est
-  ajoutée au `CHANGELOG.md` du module.
+- Le script racine `scripts/bump-build.mjs` incrémente le `build` d'un ou plusieurs
+  `version.json` passés en argument. Le `version` (majeur.mineur) n'est **jamais** modifié
+  automatiquement : il se change à la main dans `version.json` lors d'une évolution
+  fonctionnelle, en même temps qu'une entrée est ajoutée au `CHANGELOG.md` du module.
+- **Le `build` du module ne s'incrémente PAS tout seul à chaque déploiement.** Le module
+  étant consommé comme source TypeScript (§1), son propre script `prebuild` (déclenché
+  avant `pnpm build`/`pnpm -r build`) n'est exécuté que si quelqu'un lance explicitement
+  `pnpm -r build` ou `pnpm --filter @railtools/module-<nom> build` en local — jamais par
+  un déploiement Vercel réel, qui ne build qu'`apps/portail`. C'est pourquoi le `prebuild`
+  d'`apps/portail` bump *aussi* explicitement le `version.json` de chaque module actif
+  (voir §3.5) : c'est le **seul** mécanisme qui incrémente réellement le build d'un module
+  en production. Oublier d'y ajouter un nouveau module laisse son build figé à `0`
+  indéfiniment (piège réel, voir `pieges-a-eviter.md`).
 - Incrémenter le **mineur** pour une évolution sans rupture, le **majeur** pour un
   changement significatif ou une rupture de compatibilité (ex. migration de structure de
   projet).

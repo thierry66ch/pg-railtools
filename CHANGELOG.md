@@ -4,6 +4,19 @@ Toutes les évolutions fonctionnelles notables de la base commune sont document�
 Format de version : majeur.mineur (voir §9 du cahier des charges). Chaque module a son propre
 `CHANGELOG.md` (ex. [packages/module-demo/CHANGELOG.md](packages/module-demo/CHANGELOG.md)).
 
+## 1.10 — 2026-07-09
+
+Correctif infra (versionnage des modules) :
+
+- **Le `build` d'un module restait figé à `0` en production** : les modules sont consommés
+  comme source TypeScript par le portail (pas de build séparé), donc le `prebuild` propre
+  au package d'un module ne s'exécute jamais lors d'un vrai déploiement Vercel (qui ne
+  build qu'`apps/portail`) — constaté sur `packages/module-arc/version.json`, resté à
+  `build: 0` après plusieurs déploiements réels. Le `prebuild` d'`apps/portail` bump
+  désormais explicitement le `version.json` racine **et** celui de chaque module actif
+  (`scripts/bump-build.mjs` accepte plusieurs chemins). Documenté dans
+  `docs/integration.md` (nouvelle étape d'intégration §3.5) et `docs/pieges-a-eviter.md`.
+
 ## 1.9 — 2026-07-09
 
 Correctifs export PDF :
