@@ -98,7 +98,7 @@ export function ExportButtons({
   }
 
   return (
-    <div className="rt-toolbar">
+    <div className="rt-toolbar" style={{ alignItems: 'flex-end' }}>
       <label className="rt-field">
         <span>{t('export.pdfFormat')}</span>
         <select

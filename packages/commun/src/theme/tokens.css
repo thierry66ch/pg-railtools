@@ -40,7 +40,14 @@
     sans-serif;
 }
 
-* {
+.rt-button,
+.rt-icon-button,
+.rt-select,
+.rt-input,
+.rt-card,
+.rt-module-card,
+.rt-project-list__item,
+a {
   transition:
     background-color var(--rt-transition),
     border-color var(--rt-transition),
@@ -471,6 +478,10 @@ a {
   color: var(--rt-color-text-muted);
   font-size: 0.88rem;
   flex: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .rt-main {

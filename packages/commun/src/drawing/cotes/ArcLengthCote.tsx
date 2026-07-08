@@ -41,7 +41,7 @@ export function ArcLengthCote({
   const dimEnd = pointOnCircle(center, dimRadius, endAngleRad);
   const midAngle = startAngleRad + sweep / 2;
   // Écarte le texte du trait de cote courbé (au-delà du simple rayon de cote).
-  const labelRadius = dimRadius + Math.sign(offset) * (resolvedSizing.textSizeMm * 0.4 + 1);
+  const labelRadius = dimRadius + Math.sign(offset) * (resolvedSizing.textSizeMm * 0.2 + 0.5);
   const labelPoint = pointOnCircle(center, labelRadius, midAngle);
 
   const startArrowDir = tangentDirection(startAngleRad) + Math.PI;

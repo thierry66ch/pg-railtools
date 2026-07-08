@@ -4,6 +4,21 @@ Toutes les évolutions fonctionnelles notables de la base commune sont document�
 Format de version : majeur.mineur (voir §9 du cahier des charges). Chaque module a son propre
 `CHANGELOG.md` (ex. [packages/module-demo/CHANGELOG.md](packages/module-demo/CHANGELOG.md)).
 
+## 1.8 — 2026-07-09
+
+Retouches suite aux retours sur la refonte esthétique v1.7 :
+
+- **Page d'accueil** : la description de chaque carte de module est tronquée à ~20 mots
+  suivis de "…" (le texte complet reste accessible via le bouton "?").
+- **Cotes de longueur/arc** (`LengthCote`, `ArcLengthCote`) : distance entre le trait de
+  cote et le texte réduite de moitié (`textSizeMm*0.2+0.5` au lieu de `textSizeMm*0.4+1`).
+  Revérifié avec une géométrie exigeante (corde 200 mm, flèche 50 mm, curseur E à 40 mm) :
+  tous les libellés restent du bon côté de leur trait, sans chevauchement.
+- **Export PDF** : nouvelle icône dédiée (document avec libellé "PDF"), plus distinctive
+  que l'icône générique précédente partagée avec l'export Markdown.
+- **`ExportButtons`** : le sélecteur de format PDF et les 3 boutons d'export sont désormais
+  alignés sur leur bord inférieur (`align-items: flex-end`).
+
 ## 1.7 — 2026-07-08
 
 Refonte esthétique (sans impact fonctionnel) :

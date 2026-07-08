@@ -84,9 +84,35 @@ export function IconTrash({ size = 18 }: IconProps) {
 
 export function IconFilePdf({ size = 18 }: IconProps) {
   return (
-    <svg width={size} height={size} {...commonProps}>
-      <path d="M6 2h9l5 5v15a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z" />
-      <path d="M15 2v5h5" />
+    <svg width={size} height={size} viewBox="0 0 24 24">
+      <path
+        d="M6 2h9l5 5v15a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M15 2v5h5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <text
+        x="12.5"
+        y="19"
+        textAnchor="middle"
+        fontSize="7.5"
+        fontWeight="700"
+        fontFamily="Arial, Helvetica, sans-serif"
+        fill="currentColor"
+        stroke="none"
+      >
+        PDF
+      </text>
     </svg>
   );
 }

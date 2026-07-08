@@ -29,7 +29,7 @@ export function LengthCote({ from, to, offsetMm, label, style, sizing }: LengthC
   const angleDeg = radToDeg(dirRad);
   const mid: Point = { x: (dimFrom.x + dimTo.x) / 2, y: (dimFrom.y + dimTo.y) / 2 };
   // Écarte le texte du trait de cote (au-delà du simple `dominantBaseline`).
-  const textPoint = offsetPoint(mid, from, to, Math.sign(offset) * (resolvedSizing.textSizeMm * 0.4 + 1));
+  const textPoint = offsetPoint(mid, from, to, Math.sign(offset) * (resolvedSizing.textSizeMm * 0.2 + 0.5));
 
   return (
     <g {...svgProps} fill="none" fontFamily="Arial, Helvetica, sans-serif">

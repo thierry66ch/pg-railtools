@@ -5,6 +5,14 @@ import { useTranslations } from 'next-intl';
 import { InfoButton, VersionBadge } from '@railtools/commun';
 import { moduleRegistry } from '../lib/moduleRegistry';
 
+const DESCRIPTION_WORD_LIMIT = 20;
+
+function truncateWords(text: string, limit: number): string {
+  const words = text.trim().split(/\s+/);
+  if (words.length <= limit) return text;
+  return `${words.slice(0, limit).join(' ')}…`;
+}
+
 export default function HomePage() {
   const t = useTranslations();
 
@@ -49,7 +57,7 @@ export default function HomePage() {
                   </span>
                 </div>
                 <p className="rt-module-card__description">
-                  {t(`${module.i18nNamespace}.description`)}
+                  {truncateWords(t(`${module.i18nNamespace}.description`), DESCRIPTION_WORD_LIMIT)}
                 </p>
                 <VersionBadge version={module.version.version} build={module.version.build} subtle />
               </Link>
