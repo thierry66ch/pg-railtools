@@ -279,3 +279,27 @@ corps du texte encore plus loin). Deux lignes de cote parallèles empilées doiv
 la plus proche de la géométrie chevauche la ligne de la cote suivante. Vérifier avec
 `getBoundingClientRect()` des libellés concernés (comme pour la collision `RadiusCote`
 documentée plus haut), pas seulement sur le premier cas testé.
+
+**Mise à jour (v1.8)** : le décalage d'ancrage du texte (`LengthCote`/`ArcLengthCote`) est
+passé de `textSizeMm*0.4+1` à `textSizeMm*0.2+0.5` (retour utilisateur : gap trop grand
+entre le trait et la valeur). L'extension totale au-delà de la ligne est donc désormais
+`textSizeMm*0.2+0.5 + textSizeMm ≈ 4.1 mm` (au lieu de ≈ 5.2 mm) — les cotes empilées de
+`module-arc` (`SUB_COTE_OFFSET_MM = 3`) restent valides avec cette marge réduite, mais
+recalculer/reverifier ce nombre avant de resserrer encore l'espacement entre cotes
+parallèles ailleurs.
+
+## Transition CSS globale sur `*` : glitches de capture pendant le scroll
+
+Appliquer une transition (`transition: background-color, ...`) au sélecteur universel `*`
+pour adoucir les survols/focus (tokens.css) a semblé anodin, mais a provoqué des captures
+d'écran vides ou avec l'en-tête `position: sticky` dupliqué au milieu de la page — reproduit
+via l'outil de preview (`preview_screenshot`) après un `scrollTo`/`scrollIntoView` à une
+position non nulle, alors que le rendu réel (vérifié via `getBoundingClientRect()`) était
+correct. Root cause probable : la transition sur `*` retarde/complexifie le repaint de
+**tous** les éléments (y compris ceux non concernés par un hover/focus), ce qui interagit
+mal avec la capture pendant un scroll juste effectué. Correctif : ne transitionner que les
+éléments réellement interactifs (`.rt-button`, `.rt-icon-button`, `.rt-select`, `.rt-input`,
+`.rt-card`, `.rt-module-card`, `.rt-project-list__item`, `a`) plutôt que `*`. Si une capture
+d'écran semble vide ou incohérente après un scroll programmatique, ne pas conclure trop vite
+à un bug applicatif : vérifier d'abord l'état réel du DOM (`getBoundingClientRect()`,
+`window.scrollY`) avant de creuser le CSS.
