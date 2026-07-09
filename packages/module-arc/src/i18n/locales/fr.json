@@ -4,21 +4,26 @@
   "mode": {
     "label": "Méthode de calcul",
     "chordSagitta": "Corde et flèche → rayon",
-    "radiusChord": "Rayon et corde → flèche"
+    "radiusChord": "Rayon et corde → flèche",
+    "radiusAngle": "Rayon et angle au centre → flèche et corde"
   },
   "form": {
     "chord": "Corde AB (mm)",
     "sagitta": "Flèche CD (mm)",
     "radius": "Rayon R (mm)",
+    "centralAngle": "Angle au centre (°)",
     "intervals": "Nombre d'intervalles",
     "decimals": "Décimales affichées",
     "showArcLength": "Afficher l'abscisse curviligne s",
     "showAngleCumul": "Afficher le cumul des angles",
+    "showCentralAngleCote": "Représenter l'angle au centre sur le dessin",
     "cursorPosition": "Position de E — distance AE (mm)"
   },
   "result": {
     "radius": "Rayon R : {value} mm",
     "sagitta": "Flèche f : {value} mm",
+    "chordAndSagitta": "Corde AB : {chord} mm — Flèche f : {sagitta} mm",
+    "centralAngle": "Angle au centre : {value}°",
     "cursorOffset": "Écart EF : {value} mm",
     "anglePerInterval": "Angle par intervalle : {value}°"
   },
@@ -36,13 +41,16 @@
     "sagitta-not-positive": "La flèche doit être strictement positive (une flèche nulle donnerait un rayon infini).",
     "sagitta-too-large": "La flèche ne peut pas dépasser la moitié de la corde (au-delà, l'arc dépasse un demi-cercle, cas non pris en charge).",
     "radius-not-positive": "Le rayon doit être strictement positif.",
-    "radius-too-small": "Le rayon doit être au moins égal à la moitié de la corde (une corde plus longue que le diamètre est géométriquement impossible)."
+    "radius-too-small": "Le rayon doit être au moins égal à la moitié de la corde (une corde plus longue que le diamètre est géométriquement impossible).",
+    "angle-not-positive": "L'angle au centre doit être strictement positif.",
+    "angle-too-large": "L'angle au centre ne peut pas dépasser 180° (au-delà, l'arc dépasse un demi-cercle, cas non pris en charge)."
   },
   "summary": {
     "chord": "Corde AB (mm)",
     "sagitta": "Flèche f (mm)",
     "radius": "Rayon R (mm)",
     "arcLength": "Longueur d'arc (mm)",
+    "centralAngle": "Angle au centre (°)",
     "intervals": "Nombre d'intervalles",
     "anglePerInterval": "Angle par intervalle (°)"
   }

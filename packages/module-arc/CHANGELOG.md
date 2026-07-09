@@ -1,5 +1,23 @@
 # Changelog — module-arc
 
+## 1.6 — 2026-07-09
+
+Nouvelle méthode de calcul et affichage de l'angle au centre :
+
+- 3e méthode de calcul : **rayon + angle au centre → flèche et corde**
+  (`chordSagittaFromRadiusAngle`), à côté des deux méthodes existantes.
+- L'angle au centre (calculé ou saisi) est désormais affiché à côté du
+  résultat principal, quelle que soit la méthode.
+- Nouvelle option de dessin (case à cocher, désactivée par défaut) :
+  représente l'angle au centre sur le SVG — **entre les deux tangentes** (au
+  point d'intersection T) si l'angle plein est < 135°, **au centre réel**
+  du cercle sinon. Seuil choisi car R diverge pour les petits angles (arc peu
+  courbé) alors que la distance de T diverge pour les grands angles
+  (tangentes parallèles à 180°) : chaque représentation reste compacte
+  exactement là où l'autre exploserait. Case décochée par défaut : aucun
+  changement de cadrage/échelle du dessin existant.
+- Colonne angle au centre ajoutée au résumé d'export PDF/Markdown.
+
 ## 1.5 — 2026-07-07
 
 Deux corrections de rendu sur le dessin, signalées avec capture annotée :

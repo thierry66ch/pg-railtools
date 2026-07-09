@@ -22,6 +22,8 @@ export type ArcErrorCode =
   | 'sagitta-too-large' // f > c/2 : dépasse le demi-cercle, non pris en charge
   | 'radius-not-positive' // R ≤ 0
   | 'radius-too-small' // R < c/2 : la corde dépasse le diamètre, impossible
+  | 'angle-not-positive' // angle au centre ≤ 0
+  | 'angle-too-large' // angle au centre > π : dépasse le demi-cercle, non pris en charge
   | 'intervals-too-small' // n < 2
   | 'intervals-not-integer'; // n non entier
 
@@ -61,6 +63,34 @@ export function sagittaFromRadiusChord(radiusMm: number, chordMm: number): ArcRe
   const half = chordMm / 2;
   if (radiusMm < half) return err('radius-too-small');
   return ok(radiusMm - Math.sqrt(radiusMm * radiusMm - half * half));
+}
+
+/**
+ * Fonctionnalité 3 — Corde c et flèche f à partir du rayon R et de l'angle au centre
+ * (angle plein, en radians). c = 2·R·sin(angle/2) ; f = R·(1 − cos(angle/2)).
+ * Requiert R > 0 et 0 < angle ≤ π (angle = π correspond au demi-cercle, cas limite valide).
+ */
+export function chordSagittaFromRadiusAngle(
+  radiusMm: number,
+  angleRad: number,
+): ArcResult<{ chordMm: number; sagittaMm: number }> {
+  if (!(radiusMm > 0)) return err('radius-not-positive');
+  if (!(angleRad > 0)) return err('angle-not-positive');
+  if (angleRad > Math.PI) return err('angle-too-large');
+  const half = angleRad / 2;
+  return ok({
+    chordMm: 2 * radiusMm * Math.sin(half),
+    sagittaMm: radiusMm * (1 - Math.cos(half)),
+  });
+}
+
+/**
+ * Angle au centre (angle plein, en radians) pour un rayon R et une corde c donnés :
+ * 2·asin((c/2)/R). Fonction volontairement non validante (appelée uniquement sur une
+ * configuration (R, c) déjà validée par ailleurs), à l'image de `localOffset`.
+ */
+export function centralAngleFromRadiusChord(radiusMm: number, chordMm: number): number {
+  return 2 * Math.asin(chordMm / (2 * radiusMm));
 }
 
 /** Un point d'implantation de l'arc (une ligne du tableau). */

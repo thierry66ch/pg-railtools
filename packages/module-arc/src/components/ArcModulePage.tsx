@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
+  AngleCote,
   ArcLengthCote,
   DEFAULT_COTE_OFFSET_MM,
   DEFAULT_DRAWING_SCALE,
@@ -17,13 +18,16 @@ import {
   RadiusCote,
   ResultPageLayout,
   ScaleBar,
+  degToRad,
   getPreferredDrawingScale,
+  lineIntersection,
   lineStyleToSvgProps,
   modelToDrawing,
   pointOnCircle,
   radToDeg,
   resolveDrawingScale,
   suggestDimensionSizing,
+  tangentDirection,
   updateProject,
   type DrawingScale,
   type Point,
@@ -32,7 +36,15 @@ import {
   type ResultData,
 } from '@railtools/commun';
 import versionInfo from '../../version.json';
-import { computeImplantation, localOffset, radiusFromChordSagitta, sagittaFromRadiusChord } from '../math/arc';
+import {
+  centralAngleFromRadiusChord,
+  chordSagittaFromRadiusAngle,
+  computeImplantation,
+  localOffset,
+  radiusFromChordSagitta,
+  sagittaFromRadiusChord,
+  type ArcErrorCode,
+} from '../math/arc';
 import type { ArcInputMode, ArcProjectData } from '../types';
 
 const MODULE_ID = 'arc';
@@ -40,10 +52,22 @@ const MODULE_ID = 'arc';
 const DEFAULT_CHORD_MM = 1000;
 const DEFAULT_SAGITTA_MM = 50;
 const DEFAULT_RADIUS_MM = 2500;
+const DEFAULT_CENTRAL_ANGLE_DEG = 30;
 const DEFAULT_INTERVALS = 10;
 const DEFAULT_DECIMALS = 1;
 const MIN_INTERVALS = 2;
 const MAX_DECIMALS = 6;
+/**
+ * Seuil (angle au centre plein, en degrés) sous lequel la cote d'angle est représentée
+ * entre les tangentes (point T proche) plutôt qu'au centre (R proche pour les grands
+ * angles, mais tend vers l'infini pour les petits — cf. RadiusCote qui ne trace jamais
+ * jusqu'au centre réel). Au-delà de ce seuil c'est l'inverse : T s'éloigne à l'infini
+ * (tangentes parallèles à 180°) alors que R reste modeste. Chaque représentation reste
+ * donc compacte exactement dans la plage où l'autre exploserait.
+ */
+const CENTRAL_ANGLE_TANGENT_THRESHOLD_DEG = 135;
+/** Rayon fixe (mm de dessin) de la cote d'angle tracée entre les tangentes, en T. */
+const TANGENT_ANGLE_COTE_RADIUS_MM = 15;
 
 /** Dimensions cible (mm de dessin) utilisées par le mode d'échelle de dessin "fit". */
 const FIT_TARGET_MM = { width: 260, height: 180 };
@@ -113,6 +137,19 @@ interface DrawingGeometry {
   resolvedScale: ResolvedDrawingScale;
   totalArcLengthMm: number;
   viewBox: { minX: number; minY: number; width: number; height: number };
+  /** Angle au centre plein (°), utile pour l'étiquette de la cote d'angle. */
+  centralAngleDeg: number;
+  /**
+   * Cote d'angle optionnelle (absente si non demandée) : entre les tangentes (centrée en
+   * T, angle < seuil) ou au centre réel du cercle (angle ≥ seuil).
+   */
+  angleCote?: {
+    mode: 'tangent' | 'center';
+    center: Point;
+    radiusMm: number;
+    startAngleRad: number;
+    endAngleRad: number;
+  };
 }
 
 /**
@@ -129,16 +166,48 @@ function buildDrawingGeometry(
   alphaRad: number,
   drawingScale: DrawingScale,
   geometryPoints: Point[],
+  showCentralAngleCote: boolean,
 ): DrawingGeometry {
   const angleAtA = Math.PI / 2 + alphaRad;
   const angleAtB = Math.PI / 2 - alphaRad;
   const angleAtD = Math.PI / 2;
   const arcCenterModel: Point = { x: chordMm / 2, y: -(radiusMm - sagittaMm) };
+  const centralAngleDeg = radToDeg(angleAtA - angleAtB);
 
-  const modelMinX = Math.min(...geometryPoints.map((p) => p.x));
-  const modelMaxX = Math.max(...geometryPoints.map((p) => p.x));
-  const modelMinY = Math.min(...geometryPoints.map((p) => p.y));
-  const modelMaxY = Math.max(...geometryPoints.map((p) => p.y));
+  // Cote d'angle : décide entre les 2 représentations et, pour la variante "entre
+  // tangentes", localise T (intersection des tangentes en A et B) en espace modèle —
+  // avant le calcul de la boîte englobante, pour que T y soit inclus si besoin.
+  let angleCoteModelCenter: Point | null = null;
+  let angleCoteResolvedMode: 'tangent' | 'center' | 'none' = 'none';
+  if (showCentralAngleCote) {
+    if (centralAngleDeg < CENTRAL_ANGLE_TANGENT_THRESHOLD_DEG) {
+      const modelPointA = pointOnCircle(arcCenterModel, radiusMm, angleAtA);
+      const modelPointB = pointOnCircle(arcCenterModel, radiusMm, angleAtB);
+      const dirA = tangentDirection(angleAtA);
+      const dirB = tangentDirection(angleAtB);
+      const t = lineIntersection(
+        modelPointA,
+        pointOnCircle(modelPointA, 1, dirA),
+        modelPointB,
+        pointOnCircle(modelPointB, 1, dirB),
+      );
+      if (t) {
+        angleCoteModelCenter = t;
+        angleCoteResolvedMode = 'tangent';
+      }
+    } else {
+      angleCoteResolvedMode = 'center';
+    }
+  }
+
+  const boundsPoints =
+    angleCoteResolvedMode === 'tangent' && angleCoteModelCenter
+      ? [...geometryPoints, angleCoteModelCenter]
+      : geometryPoints;
+  const modelMinX = Math.min(...boundsPoints.map((p) => p.x));
+  const modelMaxX = Math.max(...boundsPoints.map((p) => p.x));
+  const modelMinY = Math.min(...boundsPoints.map((p) => p.y));
+  const modelMaxY = Math.max(...boundsPoints.map((p) => p.y));
   const modelWidth = Math.max(modelMaxX - modelMinX, 1);
   const modelHeight = Math.max(modelMaxY - modelMinY, 1);
 
@@ -173,6 +242,27 @@ function buildDrawingGeometry(
 
   const pathD = `M ${dPointA.x} ${dPointA.y} A ${dRadius} ${dRadius} 0 0 0 ${dPointB.x} ${dPointB.y}`;
 
+  const angleCote: DrawingGeometry['angleCote'] =
+    angleCoteResolvedMode === 'tangent' && angleCoteModelCenter
+      ? {
+          mode: 'tangent',
+          center: toDrawing(angleCoteModelCenter),
+          radiusMm: TANGENT_ANGLE_COTE_RADIUS_MM,
+          startAngleRad: angleAtB - Math.PI / 2,
+          endAngleRad: angleAtA - Math.PI / 2,
+        }
+      : angleCoteResolvedMode === 'center'
+        ? {
+            mode: 'center',
+            center: dCenter,
+            // Rayon nettement en retrait de l'arc (RadiusCote occupe déjà la bande des
+            // 20 derniers mm avant l'arc) ; plancher à mi-rayon pour rester positif.
+            radiusMm: Math.max(dRadius - 3 * DEFAULT_COTE_OFFSET_MM, dRadius * 0.5),
+            startAngleRad: angleAtB,
+            endAngleRad: angleAtA,
+          }
+        : undefined;
+
   return {
     chordMm,
     sagittaMm,
@@ -192,6 +282,8 @@ function buildDrawingGeometry(
     drawingHeight,
     resolvedScale,
     totalArcLengthMm: 2 * radiusMm * alphaRad,
+    centralAngleDeg,
+    angleCote,
     viewBox: {
       minX: -LEFT_MARGIN_MM,
       minY: -TOP_MARGIN_MM,
@@ -209,10 +301,12 @@ export function ArcModulePage() {
   const [chordMm, setChordMm] = useState(DEFAULT_CHORD_MM);
   const [sagittaMm, setSagittaMm] = useState(DEFAULT_SAGITTA_MM);
   const [radiusMm, setRadiusMm] = useState(DEFAULT_RADIUS_MM);
+  const [centralAngleDeg, setCentralAngleDeg] = useState(DEFAULT_CENTRAL_ANGLE_DEG);
   const [intervals, setIntervals] = useState(DEFAULT_INTERVALS);
   const [decimals, setDecimals] = useState(DEFAULT_DECIMALS);
   const [showArcLength, setShowArcLength] = useState(true);
   const [showAngleCumul, setShowAngleCumul] = useState(true);
+  const [showCentralAngleCote, setShowCentralAngleCote] = useState(false);
   const [cursorAeMm, setCursorAeMm] = useState(0);
   const [drawingScale, setDrawingScale] = useState<DrawingScale>(DEFAULT_DRAWING_SCALE);
   const [activeProjectId, setActiveProjectId] = useState<string | undefined>();
@@ -229,20 +323,35 @@ export function ArcModulePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const primaryResult =
-    inputMode === 'chordSagitta'
-      ? radiusFromChordSagitta(chordMm, sagittaMm)
-      : sagittaFromRadiusChord(radiusMm, chordMm);
+  // Triplet (R, c, f) cohérent, calculé une seule fois par mode — `undefined` tant que la
+  // config est invalide, ce qui empêche structurellement (au niveau des types) tout accès
+  // à une grandeur non définie plus bas (c'est cette confusion qui causait un crash réel
+  // avant). Branché par mode plutôt que via un résultat "primaire" partagé au type ambigu
+  // (nombre selon 2 modes, paire {chord,sagitta} selon le 3e).
+  let geometryInputs: { chordMm: number; radiusMm: number; sagittaMm: number } | undefined;
+  let inputError: ArcErrorCode | undefined;
 
-  // Triplet (R, c, f) cohérent, calculé une seule fois — `undefined` tant que la config
-  // est invalide, ce qui empêche structurellement (au niveau des types) tout accès à une
-  // grandeur non définie plus bas (c'est cette confusion qui causait un crash réel avant).
-  const geometryInputs = primaryResult.ok
-    ? {
-        chordMm,
-        radiusMm: inputMode === 'chordSagitta' ? primaryResult.value : radiusMm,
-        sagittaMm: inputMode === 'chordSagitta' ? sagittaMm : primaryResult.value,
-      }
+  if (inputMode === 'chordSagitta') {
+    const result = radiusFromChordSagitta(chordMm, sagittaMm);
+    if (result.ok) geometryInputs = { chordMm, sagittaMm, radiusMm: result.value };
+    else inputError = result.error;
+  } else if (inputMode === 'radiusChord') {
+    const result = sagittaFromRadiusChord(radiusMm, chordMm);
+    if (result.ok) geometryInputs = { chordMm, sagittaMm: result.value, radiusMm };
+    else inputError = result.error;
+  } else {
+    const result = chordSagittaFromRadiusAngle(radiusMm, degToRad(centralAngleDeg));
+    if (result.ok) {
+      geometryInputs = { chordMm: result.value.chordMm, sagittaMm: result.value.sagittaMm, radiusMm };
+    } else {
+      inputError = result.error;
+    }
+  }
+
+  const centralAngleRad = geometryInputs
+    ? inputMode === 'radiusAngle'
+      ? degToRad(centralAngleDeg)
+      : centralAngleFromRadiusChord(geometryInputs.radiusMm, geometryInputs.chordMm)
     : undefined;
 
   const clampedCursorAeMm = clamp(cursorAeMm, 0, chordMm);
@@ -274,14 +383,29 @@ export function ArcModulePage() {
         table.alphaRad,
         drawingScale,
         geometryPoints,
+        showCentralAngleCote,
       );
 
       resultData = {
         title: t('title'),
         drawingAlt: t('title'),
         summaryTable: {
-          headers: [t('summary.chord'), t('summary.sagitta'), t('summary.radius'), t('summary.arcLength')],
-          rows: [[formatCoteLength(c), formatCoteLength(s), formatCoteLength(r), formatCoteLength(table.totalArcLengthMm)]],
+          headers: [
+            t('summary.chord'),
+            t('summary.sagitta'),
+            t('summary.radius'),
+            t('summary.arcLength'),
+            t('summary.centralAngle'),
+          ],
+          rows: [
+            [
+              formatCoteLength(c),
+              formatCoteLength(s),
+              formatCoteLength(r),
+              formatCoteLength(table.totalArcLengthMm),
+              formatNumber(radToDeg(2 * table.alphaRad), decimals),
+            ],
+          ],
         },
         pageBreakBeforeTable: true,
         tableIntro: {
@@ -336,10 +460,12 @@ export function ArcModulePage() {
       chordMm,
       sagittaMm,
       radiusMm,
+      centralAngleDeg,
       intervals,
       decimals,
       showArcLength,
       showAngleCumul,
+      showCentralAngleCote,
       drawingScale,
     };
   }
@@ -349,10 +475,12 @@ export function ArcModulePage() {
     setChordMm(project.data.chordMm);
     setSagittaMm(project.data.sagittaMm);
     setRadiusMm(project.data.radiusMm);
+    setCentralAngleDeg(project.data.centralAngleDeg);
     setIntervals(project.data.intervals);
     setDecimals(project.data.decimals);
     setShowArcLength(project.data.showArcLength);
     setShowAngleCumul(project.data.showAngleCumul);
+    setShowCentralAngleCote(project.data.showCentralAngleCote);
     setDrawingScale(project.data.drawingScale);
     setCursorAeMm(0);
     setActiveProjectId(project.id);
@@ -387,22 +515,38 @@ export function ArcModulePage() {
           >
             <option value="chordSagitta">{t('mode.chordSagitta')}</option>
             <option value="radiusChord">{t('mode.radiusChord')}</option>
+            <option value="radiusAngle">{t('mode.radiusAngle')}</option>
           </select>
         </label>
-        <label className="rt-field">
-          <span>{t('form.chord')}</span>
-          <NumberInput value={chordMm} onChange={setChordMm} />
-        </label>
-        {inputMode === 'chordSagitta' ? (
+        {inputMode !== 'radiusAngle' && (
+          <label className="rt-field">
+            <span>{t('form.chord')}</span>
+            <NumberInput value={chordMm} onChange={setChordMm} />
+          </label>
+        )}
+        {inputMode === 'chordSagitta' && (
           <label className="rt-field">
             <span>{t('form.sagitta')}</span>
             <NumberInput value={sagittaMm} onChange={setSagittaMm} />
           </label>
-        ) : (
+        )}
+        {inputMode === 'radiusChord' && (
           <label className="rt-field">
             <span>{t('form.radius')}</span>
             <NumberInput value={radiusMm} onChange={setRadiusMm} />
           </label>
+        )}
+        {inputMode === 'radiusAngle' && (
+          <>
+            <label className="rt-field">
+              <span>{t('form.radius')}</span>
+              <NumberInput value={radiusMm} onChange={setRadiusMm} />
+            </label>
+            <label className="rt-field">
+              <span>{t('form.centralAngle')}</span>
+              <NumberInput value={centralAngleDeg} onChange={setCentralAngleDeg} />
+            </label>
+          </>
         )}
         {activeProjectId && (
           <button type="button" className="rt-button" onClick={() => void handleSave()}>
@@ -411,9 +555,9 @@ export function ArcModulePage() {
         )}
       </div>
 
-      {!primaryResult.ok && <p className="rt-error">{t(`errors.${primaryResult.error}`)}</p>}
+      {inputError && <p className="rt-error">{t(`errors.${inputError}`)}</p>}
 
-      {geometryInputs && (
+      {geometryInputs && centralAngleRad !== undefined && (
         <p
           style={{
             margin: 0,
@@ -424,7 +568,14 @@ export function ArcModulePage() {
         >
           {inputMode === 'chordSagitta'
             ? t('result.radius', { value: formatNumber(geometryInputs.radiusMm, decimals) })
-            : t('result.sagitta', { value: formatNumber(geometryInputs.sagittaMm, decimals) })}
+            : inputMode === 'radiusChord'
+              ? t('result.sagitta', { value: formatNumber(geometryInputs.sagittaMm, decimals) })
+              : t('result.chordAndSagitta', {
+                  chord: formatNumber(geometryInputs.chordMm, decimals),
+                  sagitta: formatNumber(geometryInputs.sagittaMm, decimals),
+                })}
+          {' — '}
+          {t('result.centralAngle', { value: formatNumber(radToDeg(centralAngleRad), decimals) })}
         </p>
       )}
 
@@ -538,6 +689,37 @@ export function ArcModulePage() {
               />
             )}
 
+            {drawing.angleCote && (
+              <>
+                {drawing.angleCote.mode === 'tangent' && (
+                  <>
+                    <line
+                      x1={drawing.angleCote.center.x}
+                      y1={drawing.angleCote.center.y}
+                      x2={drawing.dPointA.x}
+                      y2={drawing.dPointA.y}
+                      {...lineStyleToSvgProps({ kind: 'dashedShort', color: '#999999', widthMm: 0.2 })}
+                    />
+                    <line
+                      x1={drawing.angleCote.center.x}
+                      y1={drawing.angleCote.center.y}
+                      x2={drawing.dPointB.x}
+                      y2={drawing.dPointB.y}
+                      {...lineStyleToSvgProps({ kind: 'dashedShort', color: '#999999', widthMm: 0.2 })}
+                    />
+                  </>
+                )}
+                <AngleCote
+                  center={drawing.angleCote.center}
+                  radiusMm={drawing.angleCote.radiusMm}
+                  startAngleRad={drawing.angleCote.startAngleRad}
+                  endAngleRad={drawing.angleCote.endAngleRad}
+                  label={`${formatNumber(drawing.centralAngleDeg, decimals)}°`}
+                  sizing={suggestDimensionSizing()}
+                />
+              </>
+            )}
+
             {showCursorAnnotations && cursorOffsetMm !== undefined && (
               <>
                 <line
@@ -611,6 +793,14 @@ export function ArcModulePage() {
                 type="checkbox"
                 checked={showAngleCumul}
                 onChange={(event) => setShowAngleCumul(event.target.checked)}
+              />
+            </label>
+            <label className="rt-field rt-field--check">
+              <span>{t('form.showCentralAngleCote')}</span>
+              <input
+                type="checkbox"
+                checked={showCentralAngleCote}
+                onChange={(event) => setShowCentralAngleCote(event.target.checked)}
               />
             </label>
           </div>
