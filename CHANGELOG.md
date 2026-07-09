@@ -4,6 +4,23 @@ Toutes les évolutions fonctionnelles notables de la base commune sont document�
 Format de version : majeur.mineur (voir §9 du cahier des charges). Chaque module a son propre
 `CHANGELOG.md` (ex. [packages/module-demo/CHANGELOG.md](packages/module-demo/CHANGELOG.md)).
 
+## 1.11 — 2026-07-09
+
+- **Numéro de build calculé, plus jamais "remis à zéro"** : `scripts/bump-build.mjs` ne lit
+  plus/n'incrémente plus un compteur stocké dans `version.json` (fragile : un build Vercel
+  est éphémère, rien ne recommittait la valeur incrémentée dans Git, donc chaque
+  déploiement repartait de la même base figée — impression trompeuse de "reset à 0 ou 1" à
+  chaque push). Le `build` est désormais **calculé** à partir de l'heure de build (minutes
+  écoulées depuis une référence fixe) : aucun état à persister, donc rien à perdre entre
+  deux déploiements. Voir `docs/integration.md` §4 et `docs/pieges-a-eviter.md`.
+- **Nouveau composant partagé** (`packages/commun`) : `DrawingLightbox`, boîte de dialogue
+  plein écran avec zoom (molette/pincement) et pan (glisser-déposer) pour afficher en grand
+  n'importe quel dessin SVG de module — voir `packages/module-arc/CHANGELOG.md` (v1.8) pour
+  son premier usage.
+- **Correctif** (`AngleCote`) : libellé sans `dominantBaseline`, chevauchait sa propre ligne
+  de cote dès que le centre de l'angle n'était pas au-dessus du dessin ; traits courts
+  ajoutés à chaque extrémité de l'arc, comme `ArcLengthCote`.
+
 ## 1.10 — 2026-07-09
 
 Correctif infra (versionnage des modules) :

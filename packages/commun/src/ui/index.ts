@@ -7,6 +7,7 @@ export * from './LanguageSelector';
 export * from './UnitScaleSelector';
 export * from './NumberInput';
 export * from './DrawingScaleSelector';
+export * from './DrawingLightbox';
 export * from './ExportButtons';
 export * from './ProjectManager';
 export * from './EnvironmentTransfer';

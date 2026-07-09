@@ -158,6 +158,36 @@ depuis `apps/portail`) et en relisant les `version.json` concernés — ne pas s
 `pnpm -r build` local pour valider ce point précis, puisque celui-ci bump aussi le
 `prebuild` propre du module (masquant que ce chemin ne s'exécute jamais en prod).
 
+## Un compteur de build "lire N, écrire N+1" ne peut pas survivre à un build Vercel éphémère
+
+Suite du piège précédent : même une fois le `prebuild` d'`apps/portail` corrigé pour lister
+tous les `version.json`, un défaut plus profond restait — retour utilisateur en usage réel
+(« le build semble remis à 0 ou 1 à chaque push »). Cause : `bump-build.mjs` lisait le
+`build` courant dans le fichier et écrivait `+1`, mais ce fichier est réécrit **pendant** le
+build Vercel, dans un système de fichiers **éphémère** (détruit après le déploiement) — rien
+ne committe cette valeur incrémentée dans le dépôt Git. Résultat : chaque nouveau
+déploiement repart de la valeur figée dans Git (celle du dernier commit humain, rarement
+modifiée manuellement) et calcule à nouveau `+1` à partir de là — au lieu d'un compteur
+strictement croissant à travers les déploiements, on obtient une valeur qui oscille autour
+de la même petite base à chaque push, donnant l'impression trompeuse d'un "reset".
+
+Ce piège est **invisible en local** : lancer `pnpm -r build` (ou tester le `prebuild` à la
+main comme suggéré ci-dessus) modifie le fichier local, qui reste alors présent pour le
+prochain test local — masquant complètement que ce même fichier ne survivrait pas à un
+vrai build Vercel (environnement jetable, sans écriture vers Git). Seul un historique de
+plusieurs déploiements réels (ou un raisonnement explicite sur ce que Vercel committe
+réellement — rien) permet de repérer le problème.
+
+Correctif : ne plus lire/incrémenter un état persistant du tout. `bump-build.mjs` calcule
+désormais le `build` à partir de l'heure de build (minutes écoulées depuis une constante de
+référence fixe, `BUILD_EPOCH_MS`) — un nombre qui n'a besoin d'aucune mémoire d'un build à
+l'autre, donc rien à perdre entre deux déploiements, donc jamais de retour en arrière. Un
+compteur en fichier ne peut être fiable dans ce genre de pipeline QUE s'il est recommitté
+dans Git après chaque build (mécanisme type "bot commit" — volontairement pas choisi ici :
+complexité et risque de boucle de déploiement disproportionnés pour un simple numéro
+cosmétique) ; sinon, préférer un calcul sans état (temps écoulé, nombre de commits Git via
+`VERCEL_GIT_COMMIT_SHA`/historique, etc.) à un compteur qui a l'air persistant sans l'être.
+
 ## `RadiusCote` ancré au point de symétrie d'une géométrie centrée : risque de collision de libellé
 
 `RadiusCote` tire un trait de longueur fixe (20 mm de dessin) depuis le point de l'arc vers
@@ -353,3 +383,41 @@ mal avec la capture pendant un scroll juste effectué. Correctif : ne transition
 d'écran semble vide ou incohérente après un scroll programmatique, ne pas conclure trop vite
 à un bug applicatif : vérifier d'abord l'état réel du DOM (`getBoundingClientRect()`,
 `window.scrollY`) avant de creuser le CSS.
+
+## Ne jamais mettre `display` dans la règle de base d'un `<dialog>` custom
+
+Bug réel introduit en ajoutant `DrawingLightbox` (popup zoom/pan plein écran) : la règle
+`.rt-lightbox { ...; display: flex; flex-direction: column; }` écrasait la règle UA par
+défaut `dialog:not([open]) { display: none }`, puisqu'un sélecteur de classe explicite a
+une spécificité égale ou supérieure et vient après dans la cascade. Résultat : le contenu
+du dialogue (toolbar zoom + dessin agrandi) restait visible et cliquable en permanence,
+même **avant** tout appel à `showModal()` — repéré uniquement en lisant `dialog.open` en
+JS (`false`) alors que le contenu apparaissait bel et bien dans une capture d'écran, preuve
+que ce n'est PAS l'attribut `open` qui pilotait l'affichage. `.rt-dialog` (utilisé par
+`InfoButton`) n'a pas ce défaut car il ne définit jamais `display` du tout, laissant la
+règle UA faire son travail.
+
+Correctif : ne jamais poser `display` (ni `visibility`) dans la règle de base d'une classe
+appliquée à un `<dialog>` — la réserver exclusivement au sélecteur `[open]`
+(`.rt-lightbox[open] { display: flex; ... }`). Vérifier après coup avec
+`document.querySelector('dialog').open` **et** une capture/inspection visuelle avant tout
+clic sur le bouton d'ouverture, pas seulement après (un dialogue qui s'affiche par erreur
+dès le montage du composant peut facilement passer inaperçu si on ne teste que le chemin
+"ouvrir puis vérifier").
+
+## `preview_click` (clic simulé par coordonnées) peu fiable sur certains éléments en session Claude Code
+
+Rencontré à plusieurs reprises en testant `module-arc` : un `preview_click` sur une case à
+cocher ou un bouton icône rapporte "Successfully clicked" mais l'état React ne change pas
+(checkbox toujours `checked: false`, zoom d'un dessin toujours à `scale(1)` après plusieurs
+clics), sans erreur visible. Cause probable : clic simulé par coordonnées d'écran qui peut
+manquer sa cible réelle (élément recouvert, décalage de layout, timing) sans le signaler.
+
+Contournement fiable : déclencher l'événement directement en JS via l'outil d'évaluation,
+et **dispatcher un vrai `MouseEvent('click', { bubbles: true, cancelable: true })`** plutôt
+que d'appeler `.click()` — les deux fonctionnent généralement, mais `dispatchEvent` s'est
+montré plus systématiquement fiable ici. Attention aussi à la lecture immédiate d'un style
+mis à jour par React juste après avoir déclenché un clic dans le **même** appel : la mise à
+jour du DOM peut ne pas être encore committée au moment de la lecture synchrone qui suit —
+relire l'état dans un appel séparé (ou après un `setTimeout`/`await`) avant de conclure que
+le clic n'a rien fait.

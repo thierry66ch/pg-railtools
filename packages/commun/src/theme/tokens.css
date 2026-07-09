@@ -484,6 +484,67 @@ a {
   overflow: hidden;
 }
 
+.rt-lightbox {
+  border: none;
+  border-radius: var(--rt-radius);
+  padding: 0;
+  width: 95vw;
+  height: 95vh;
+  max-width: none;
+  max-height: none;
+  box-shadow: var(--rt-shadow-lg);
+  overflow: hidden;
+}
+
+/* `dialog` n'est affiché que via l'attribut `open` (piloté par showModal()/close()) : ne
+   JAMAIS mettre `display` dans la règle de base `.rt-lightbox` ci-dessus, ça écraserait la
+   règle UA par défaut `dialog:not([open]) { display: none }` et laisserait le contenu du
+   dialogue visible (et cliquable) en permanence, même fermé. */
+.rt-lightbox[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.rt-lightbox::backdrop {
+  background: rgba(15, 23, 33, 0.6);
+  backdrop-filter: blur(2px);
+}
+
+.rt-lightbox-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--rt-spacing-sm);
+  padding: var(--rt-spacing-sm);
+  border-bottom: 1px solid var(--rt-color-border);
+  background: var(--rt-color-surface-alt);
+}
+
+.rt-lightbox-viewport {
+  flex: 1;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+  background: var(--rt-color-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rt-lightbox-viewport:active {
+  cursor: grabbing;
+}
+
+.rt-lightbox-content {
+  transform-origin: center center;
+  will-change: transform;
+}
+
+.rt-lightbox-content svg {
+  max-width: none !important;
+  width: min(90vw, 800px) !important;
+  height: auto !important;
+}
+
 .rt-main {
   flex: 1;
   padding: var(--rt-spacing-lg);

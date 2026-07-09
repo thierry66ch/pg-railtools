@@ -138,6 +138,56 @@ export function IconImage({ size = 18 }: IconProps) {
   );
 }
 
+export function IconExpand({ size = 18 }: IconProps) {
+  return (
+    <svg width={size} height={size} {...commonProps}>
+      <path d="M8 3H3v5" />
+      <path d="M16 3h5v5" />
+      <path d="M21 16v5h-5" />
+      <path d="M3 16v5h5" />
+    </svg>
+  );
+}
+
+export function IconZoomIn({ size = 18 }: IconProps) {
+  return (
+    <svg width={size} height={size} {...commonProps}>
+      <circle cx="10" cy="10" r="7" />
+      <line x1="21" y1="21" x2="15.5" y2="15.5" />
+      <line x1="10" y1="7" x2="10" y2="13" />
+      <line x1="7" y1="10" x2="13" y2="10" />
+    </svg>
+  );
+}
+
+export function IconZoomOut({ size = 18 }: IconProps) {
+  return (
+    <svg width={size} height={size} {...commonProps}>
+      <circle cx="10" cy="10" r="7" />
+      <line x1="21" y1="21" x2="15.5" y2="15.5" />
+      <line x1="7" y1="10" x2="13" y2="10" />
+    </svg>
+  );
+}
+
+export function IconRefresh({ size = 18 }: IconProps) {
+  return (
+    <svg width={size} height={size} {...commonProps}>
+      <path d="M21 12a9 9 0 1 1-2.64-6.36" />
+      <path d="M21 4v5h-5" />
+    </svg>
+  );
+}
+
+export function IconClose({ size = 18 }: IconProps) {
+  return (
+    <svg width={size} height={size} {...commonProps}>
+      <line x1="5" y1="5" x2="19" y2="19" />
+      <line x1="19" y1="5" x2="5" y2="19" />
+    </svg>
+  );
+}
+
 export function IconQuestion({ size = 18 }: IconProps) {
   return (
     <svg width={size} height={size} {...commonProps}>

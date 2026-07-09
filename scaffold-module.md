@@ -88,8 +88,8 @@ l'export PDF/Markdown en général).
 - Ce module a son propre numéro de version **majeur.mineur**, indépendant de celui de la base commune et des autres modules :
   - mineur incrémenté pour une évolution fonctionnelle sans rupture,
   - majeur incrémenté pour un changement significatif ou une rupture de compatibilité (ex. changement de structure d'un projet nécessitant une migration).
-- Chaque build de ce module est numéroté systématiquement (compteur indépendant du numéro de version).
-- **Ce compteur ne s'incrémente pas tout seul en production** : le module est consommé comme source TypeScript par le portail (pas de build séparé), donc seul le `prebuild` d'`apps/portail` — qui doit lister explicitement le `version.json` de ce module — le fait avancer à chaque déploiement réel. Voir `docs/integration.md` §3.5/§4 pour le câblage exact ; sans cette déclaration, le build reste figé à `0` indéfiniment.
+- Chaque build de ce module est numéroté systématiquement (numéro indépendant du numéro de version, calculé à partir de l'heure de build — pas un compteur relu/incrémenté, pour rester correct même si le fichier n'est jamais recommitté après un déploiement Vercel, voir `docs/integration.md` §4).
+- **Ce numéro ne se met pas à jour tout seul en production** : le module est consommé comme source TypeScript par le portail (pas de build séparé), donc seul le `prebuild` d'`apps/portail` — qui doit lister explicitement le `version.json` de ce module — le fait avancer à chaque déploiement réel. Voir `docs/integration.md` §3.5/§4 pour le câblage exact ; sans cette déclaration, le build reste figé à sa valeur initiale indéfiniment.
 - Un `CHANGELOG.md` propre au module documente chaque changement de version, avec une description des modifications fonctionnelles apportées.
 - Le numéro de version (et idéalement le build) est affiché dans l'interface du module via le composant commun prévu à cet effet.
 

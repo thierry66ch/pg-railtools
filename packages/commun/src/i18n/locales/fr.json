@@ -21,7 +21,11 @@
       "label": "Échelle de dessin",
       "fit": "Ajustée à la page"
     },
-    "cotesInUnit": "Cotes en {unit}"
+    "cotesInUnit": "Cotes en {unit}",
+    "enlarge": "Agrandir le dessin",
+    "zoomIn": "Zoomer",
+    "zoomOut": "Dézoomer",
+    "resetZoom": "Réinitialiser le zoom"
   },
   "export": {
     "pdfFormat": "Format PDF"

@@ -1,5 +1,24 @@
 # Changelog — module-arc
 
+## 1.8 — 2026-07-09
+
+Retours d'usage sur la v1.7 (cote d'angle + vue agrandie du dessin) :
+
+- **Correctif générique** (`packages/commun`, `AngleCote`) : le libellé n'avait pas de
+  `dominantBaseline` (contrairement à `LengthCote`/`ArcLengthCote`), donc le texte
+  chevauchait sa propre ligne de cote dès que le centre de l'angle ne se trouvait pas
+  au-dessus du dessin (ne fonctionnait « par chance » que dans un cas précis). Corrigé avec
+  `dominantBaseline="middle"` (direction-agnostique, comme `PointLabel`) et un décalage
+  radial élargi (`textSizeMm + gapMm*2`) — garantit un dégagement fixe (5 mm) entre le
+  texte et l'arc de cote, quel que soit l'angle du libellé autour du cercle.
+- **Ajout générique** (`packages/commun`, `AngleCote`) : traits courts marquant chaque
+  extrémité de l'arc de cote, comme `ArcLengthCote`.
+- **Nouveau** : bouton « Agrandir le dessin » à côté du sélecteur d'échelle, ouvrant le
+  dessin dans une boîte de dialogue plein écran avec zoom (molette/pincement trackpad,
+  boutons +/−) et déplacement (glisser-déposer). Nouveau composant générique
+  `DrawingLightbox` dans `packages/commun`, réutilisable par tout module affichant un
+  dessin SVG.
+
 ## 1.7 — 2026-07-09
 
 Deux ajustements sur la v1.6, signalés après relecture du rendu :

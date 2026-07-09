@@ -12,9 +12,13 @@ export interface AngleCoteProps extends CoteBaseProps {
   label: string;
 }
 
+/** Demi-longueur (mm de dessin) des traits courts marquant chaque extrémité de l'arc. */
+const TICK_HALF_LENGTH_MM = 1.5;
+
 /**
- * Cote d'angle : arc + une flèche à chaque extrémité + texte. Ne redessine pas les deux
- * rayons — c'est à l'appelant de les tracer comme géométrie normale s'il le souhaite.
+ * Cote d'angle : arc + une flèche à chaque extrémité + un trait court traversant l'arc à
+ * chaque extrémité (repère visuel, comme `ArcLengthCote`) + texte. Ne redessine pas les
+ * deux rayons — c'est à l'appelant de les tracer comme géométrie normale s'il le souhaite.
  */
 export function AngleCote({
   center,
@@ -38,16 +42,32 @@ export function AngleCote({
   // Décalé du milieu exact de l'arc (souvent occupé par une cote de rayon centrée) et
   // rapproché de l'arc pour rester lisible sans trop s'écarter.
   const labelAngle = midAngle - sweep * 0.2;
-  const labelPoint = pointOnCircle(center, radiusMm + resolvedSizing.textSizeMm * 0.5, labelAngle);
+  // Décalage radial (au-delà de l'arc) + petite marge (gapMm) avant le texte, comme les
+  // autres cotes. `dominantBaseline="middle"` centre le texte SUR ce point quelle que soit
+  // sa position autour du cercle (contrairement à la baseline par défaut "alphabetic", qui
+  // laisse la moitié du texte du côté de l'arc — d'où le chevauchement avec la ligne de
+  // cote dès que le libellé n'est pas au-dessus du dessin, cf. pieges-a-eviter.md).
+  const labelPoint = pointOnCircle(
+    center,
+    radiusMm + resolvedSizing.textSizeMm + resolvedSizing.gapMm * 2,
+    labelAngle,
+  );
 
   const startArrowDir = tangentDirection(startAngleRad) + Math.PI;
   const endArrowDir = tangentDirection(endAngleRad);
+
+  const startTickFrom = pointOnCircle(center, radiusMm - TICK_HALF_LENGTH_MM, startAngleRad);
+  const startTickTo = pointOnCircle(center, radiusMm + TICK_HALF_LENGTH_MM, startAngleRad);
+  const endTickFrom = pointOnCircle(center, radiusMm - TICK_HALF_LENGTH_MM, endAngleRad);
+  const endTickTo = pointOnCircle(center, radiusMm + TICK_HALF_LENGTH_MM, endAngleRad);
 
   return (
     <g {...svgProps} fill="none" fontFamily="Arial, Helvetica, sans-serif">
       <path
         d={`M ${startPoint.x} ${startPoint.y} A ${radiusMm} ${radiusMm} 0 ${largeArcFlag} 1 ${endPoint.x} ${endPoint.y}`}
       />
+      <line x1={startTickFrom.x} y1={startTickFrom.y} x2={startTickTo.x} y2={startTickTo.y} />
+      <line x1={endTickFrom.x} y1={endTickFrom.y} x2={endTickTo.x} y2={endTickTo.y} />
       <polygon
         points={arrowHeadPoints(startPoint, startArrowDir, resolvedSizing.arrowSizeMm)}
         fill={svgProps.stroke}
@@ -65,6 +85,7 @@ export function AngleCote({
         stroke="none"
         fill={svgProps.stroke}
         textAnchor="middle"
+        dominantBaseline="middle"
       >
         {label}
       </text>

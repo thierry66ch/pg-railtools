@@ -232,19 +232,24 @@ module et se contente de l'afficher/router.
 
 - Le module a son propre `version.json` (`{ "version": "majeur.mineur", "build": n }`),
   indépendant de la base commune et des autres modules.
-- Le script racine `scripts/bump-build.mjs` incrémente le `build` d'un ou plusieurs
-  `version.json` passés en argument. Le `version` (majeur.mineur) n'est **jamais** modifié
-  automatiquement : il se change à la main dans `version.json` lors d'une évolution
-  fonctionnelle, en même temps qu'une entrée est ajoutée au `CHANGELOG.md` du module.
-- **Le `build` du module ne s'incrémente PAS tout seul à chaque déploiement.** Le module
-  étant consommé comme source TypeScript (§1), son propre script `prebuild` (déclenché
-  avant `pnpm build`/`pnpm -r build`) n'est exécuté que si quelqu'un lance explicitement
-  `pnpm -r build` ou `pnpm --filter @railtools/module-<nom> build` en local — jamais par
-  un déploiement Vercel réel, qui ne build qu'`apps/portail`. C'est pourquoi le `prebuild`
-  d'`apps/portail` bump *aussi* explicitement le `version.json` de chaque module actif
-  (voir §3.5) : c'est le **seul** mécanisme qui incrémente réellement le build d'un module
-  en production. Oublier d'y ajouter un nouveau module laisse son build figé à `0`
-  indéfiniment (piège réel, voir `pieges-a-eviter.md`).
+- Le script racine `scripts/bump-build.mjs` **calcule** le `build` d'un ou plusieurs
+  `version.json` passés en argument, à partir de l'heure de build (minutes écoulées depuis
+  une date de référence fixe) — ce n'est PAS un compteur relu puis incrémenté depuis le
+  fichier. Le `version` (majeur.mineur) n'est **jamais** modifié automatiquement : il se
+  change à la main dans `version.json` lors d'une évolution fonctionnelle, en même temps
+  qu'une entrée est ajoutée au `CHANGELOG.md` du module.
+- **Pourquoi un calcul plutôt qu'un compteur persistant** : un déploiement Vercel ne build
+  QUE `apps/portail` (le module est consommé comme source TypeScript, §1) — le
+  `version.json` réécrit par `prebuild` vit dans un système de fichiers **éphémère**, rien
+  ne le committe dans Git. Un compteur "lire N, écrire N+1" repartirait donc de la même
+  valeur figée dans Git à chaque déploiement, ce qui donnait l'impression que le build
+  « revenait à 0 ou 1 » à chaque push (piège réel, voir `pieges-a-eviter.md`). Un nombre
+  dérivé du temps n'a besoin d'aucun état persistant : rien à perdre entre deux builds,
+  donc jamais de retour en arrière.
+- Le `prebuild` d'`apps/portail` doit lister explicitement le `version.json` de chaque
+  module actif (voir §3.5) : c'est le **seul** endroit qui s'exécute réellement à chaque
+  déploiement. Oublier d'y ajouter un nouveau module laisse son build figé à sa valeur
+  initiale indéfiniment.
 - Incrémenter le **mineur** pour une évolution sans rupture, le **majeur** pour un
   changement significatif ou une rupture de compatibilité (ex. migration de structure de
   projet).

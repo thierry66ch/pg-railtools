@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode, type Ref } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   AngleCote,
   ArcLengthCote,
   DEFAULT_COTE_OFFSET_MM,
   DEFAULT_DRAWING_SCALE,
+  DrawingLightbox,
   DrawingScaleSelector,
   EnvironmentTransfer,
   ExportButtons,
@@ -496,6 +497,153 @@ export function ArcModulePage() {
     setProjectListVersion((v) => v + 1);
   }
 
+  /**
+   * Rendu du dessin SVG, factorisé pour être affiché deux fois : une fois sur la page
+   * (avec `svgRef`, utilisé par l'export), une fois — sans ref, purement visuel — dans
+   * `DrawingLightbox` (vue agrandie avec zoom/pan).
+   */
+  function renderDrawing(g: DrawingGeometry, ref?: Ref<SVGSVGElement>): ReactNode {
+    return (
+      <svg
+        ref={ref}
+        viewBox={`${g.viewBox.minX} ${g.viewBox.minY} ${g.viewBox.width} ${g.viewBox.height}`}
+        width="100%"
+        style={{ maxWidth: 640, height: 'auto', background: 'transparent' }}
+      >
+        <path d={g.pathD} stroke="#1f5f8b" strokeWidth={RAIL_STROKE_WIDTH_MM} strokeLinecap="round" fill="none" />
+
+        {/* Lignes de construction : corde A-B et axe de la flèche C-D. */}
+        <line
+          x1={g.dPointA.x}
+          y1={g.dPointA.y}
+          x2={g.dPointB.x}
+          y2={g.dPointB.y}
+          {...lineStyleToSvgProps({ kind: 'dashedShort', color: '#999999', widthMm: 0.2 })}
+        />
+        <line
+          x1={g.dPointC.x}
+          y1={g.dPointC.y}
+          x2={g.dPointD.x}
+          y2={g.dPointD.y}
+          {...lineStyleToSvgProps({ kind: 'dashedShort', color: '#999999', widthMm: 0.2 })}
+        />
+
+        <LengthCote
+          from={g.dPointA}
+          to={g.dPointB}
+          offsetMm={-DEFAULT_COTE_OFFSET_MM}
+          label={formatCoteLength(g.chordMm)}
+          sizing={suggestDimensionSizing()}
+        />
+        <LengthCote
+          from={g.dPointC}
+          to={g.dPointD}
+          offsetMm={-DEFAULT_COTE_OFFSET_MM}
+          label={formatCoteLength(g.sagittaMm)}
+          sizing={suggestDimensionSizing()}
+        />
+        {showCursorAnnotations && (
+          <>
+            <LengthCote
+              from={g.dPointA}
+              to={g.dCursorE}
+              offsetMm={-SUB_COTE_OFFSET_MM}
+              label={formatCoteLength(clampedCursorAeMm)}
+              sizing={suggestDimensionSizing()}
+            />
+            <LengthCote
+              from={g.dCursorE}
+              to={g.dPointB}
+              offsetMm={-SUB_COTE_OFFSET_MM}
+              label={formatCoteLength(g.chordMm - clampedCursorAeMm)}
+              sizing={suggestDimensionSizing()}
+            />
+          </>
+        )}
+
+        <PointLabel point={g.dPointA} label="A" directionRad={LABEL_LEFT_RAD} />
+        <PointLabel point={g.dPointB} label="B" directionRad={LABEL_RIGHT_RAD} />
+        <PointLabel point={g.dPointC} label="C" directionRad={LABEL_UP_LEFT_RAD} />
+        <PointLabel point={g.dPointD} label="D" directionRad={LABEL_DOWN_LEFT_RAD} />
+
+        <RadiusCote
+          center={g.dCenter}
+          pointOnArc={g.dRadiusAnchor}
+          label={`R${formatCoteLength(g.radiusMm)}`}
+          sizing={suggestDimensionSizing()}
+        />
+        {resultData?.table && (
+          <ArcLengthCote
+            center={g.dCenter}
+            radiusMm={g.dRadius}
+            startAngleRad={g.angleAtB}
+            endAngleRad={g.angleAtA}
+            offsetMm={DEFAULT_COTE_OFFSET_MM}
+            label={formatCoteLength(g.totalArcLengthMm)}
+            sizing={suggestDimensionSizing()}
+          />
+        )}
+
+        {g.angleCote && (
+          <>
+            {g.angleCote.mode === 'tangent' && (
+              <>
+                <line
+                  x1={g.angleCote.center.x}
+                  y1={g.angleCote.center.y}
+                  x2={g.dPointA.x}
+                  y2={g.dPointA.y}
+                  {...lineStyleToSvgProps({ kind: 'dashedShort', color: '#999999', widthMm: 0.2 })}
+                />
+                <line
+                  x1={g.angleCote.center.x}
+                  y1={g.angleCote.center.y}
+                  x2={g.dPointB.x}
+                  y2={g.dPointB.y}
+                  {...lineStyleToSvgProps({ kind: 'dashedShort', color: '#999999', widthMm: 0.2 })}
+                />
+              </>
+            )}
+            <AngleCote
+              center={g.angleCote.center}
+              radiusMm={g.angleCote.radiusMm}
+              startAngleRad={g.angleCote.startAngleRad}
+              endAngleRad={g.angleCote.endAngleRad}
+              label={`${formatNumber(g.centralAngleDeg, decimals)}°`}
+              sizing={suggestDimensionSizing()}
+            />
+          </>
+        )}
+
+        {showCursorAnnotations && cursorOffsetMm !== undefined && (
+          <>
+            <line
+              x1={g.dCursorE.x}
+              y1={g.dCursorE.y}
+              x2={g.dCursorF.x}
+              y2={g.dCursorF.y}
+              {...lineStyleToSvgProps({ kind: 'dashedShort', color: '#333333', widthMm: 0.3 })}
+            />
+            <circle cx={g.dCursorE.x} cy={g.dCursorE.y} r={CURSOR_MARKER_RADIUS_MM} fill="#333333" />
+            <circle cx={g.dCursorF.x} cy={g.dCursorF.y} r={CURSOR_MARKER_RADIUS_MM} fill="#b3261e" />
+            <LevelCote
+              point={g.dCursorF}
+              label={`EF = ${formatCoteLength(cursorOffsetMm)}`}
+              sizing={suggestDimensionSizing()}
+            />
+          </>
+        )}
+
+        <ScaleBar
+          resolved={g.resolvedScale}
+          x={0}
+          y={g.drawingHeight + BOTTOM_GAP_MM}
+          unitCaption={tCommon('drawing.cotesInUnit', { unit: 'mm' })}
+        />
+      </svg>
+    );
+  }
+
   return (
     <ResultPageLayout title={t('title')} description={t('description')} version={versionInfo}>
       <div className="rt-toolbar">
@@ -613,161 +761,18 @@ export function ArcModulePage() {
                 onChange={(event) => setShowCentralAngleCote(event.target.checked)}
               />
             </label>
+            <DrawingLightbox
+              label={tCommon('drawing.enlarge')}
+              closeLabel={tCommon('actions.close')}
+              zoomInLabel={tCommon('drawing.zoomIn')}
+              zoomOutLabel={tCommon('drawing.zoomOut')}
+              resetLabel={tCommon('drawing.resetZoom')}
+            >
+              {renderDrawing(drawing)}
+            </DrawingLightbox>
           </div>
 
-          <svg
-            ref={svgRef}
-            viewBox={`${drawing.viewBox.minX} ${drawing.viewBox.minY} ${drawing.viewBox.width} ${drawing.viewBox.height}`}
-            width="100%"
-            style={{ maxWidth: 640, height: 'auto', background: 'transparent' }}
-          >
-            <path
-              d={drawing.pathD}
-              stroke="#1f5f8b"
-              strokeWidth={RAIL_STROKE_WIDTH_MM}
-              strokeLinecap="round"
-              fill="none"
-            />
-
-            {/* Lignes de construction : corde A-B et axe de la flèche C-D. */}
-            <line
-              x1={drawing.dPointA.x}
-              y1={drawing.dPointA.y}
-              x2={drawing.dPointB.x}
-              y2={drawing.dPointB.y}
-              {...lineStyleToSvgProps({ kind: 'dashedShort', color: '#999999', widthMm: 0.2 })}
-            />
-            <line
-              x1={drawing.dPointC.x}
-              y1={drawing.dPointC.y}
-              x2={drawing.dPointD.x}
-              y2={drawing.dPointD.y}
-              {...lineStyleToSvgProps({ kind: 'dashedShort', color: '#999999', widthMm: 0.2 })}
-            />
-
-            <LengthCote
-              from={drawing.dPointA}
-              to={drawing.dPointB}
-              offsetMm={-DEFAULT_COTE_OFFSET_MM}
-              label={formatCoteLength(drawing.chordMm)}
-              sizing={suggestDimensionSizing()}
-            />
-            <LengthCote
-              from={drawing.dPointC}
-              to={drawing.dPointD}
-              offsetMm={-DEFAULT_COTE_OFFSET_MM}
-              label={formatCoteLength(drawing.sagittaMm)}
-              sizing={suggestDimensionSizing()}
-            />
-            {showCursorAnnotations && (
-              <>
-                <LengthCote
-                  from={drawing.dPointA}
-                  to={drawing.dCursorE}
-                  offsetMm={-SUB_COTE_OFFSET_MM}
-                  label={formatCoteLength(clampedCursorAeMm)}
-                  sizing={suggestDimensionSizing()}
-                />
-                <LengthCote
-                  from={drawing.dCursorE}
-                  to={drawing.dPointB}
-                  offsetMm={-SUB_COTE_OFFSET_MM}
-                  label={formatCoteLength(drawing.chordMm - clampedCursorAeMm)}
-                  sizing={suggestDimensionSizing()}
-                />
-              </>
-            )}
-
-            <PointLabel point={drawing.dPointA} label="A" directionRad={LABEL_LEFT_RAD} />
-            <PointLabel point={drawing.dPointB} label="B" directionRad={LABEL_RIGHT_RAD} />
-            <PointLabel point={drawing.dPointC} label="C" directionRad={LABEL_UP_LEFT_RAD} />
-            <PointLabel point={drawing.dPointD} label="D" directionRad={LABEL_DOWN_LEFT_RAD} />
-
-            <RadiusCote
-              center={drawing.dCenter}
-              pointOnArc={drawing.dRadiusAnchor}
-              label={`R${formatCoteLength(drawing.radiusMm)}`}
-              sizing={suggestDimensionSizing()}
-            />
-            {resultData?.table && (
-              <ArcLengthCote
-                center={drawing.dCenter}
-                radiusMm={drawing.dRadius}
-                startAngleRad={drawing.angleAtB}
-                endAngleRad={drawing.angleAtA}
-                offsetMm={DEFAULT_COTE_OFFSET_MM}
-                label={formatCoteLength(drawing.totalArcLengthMm)}
-                sizing={suggestDimensionSizing()}
-              />
-            )}
-
-            {drawing.angleCote && (
-              <>
-                {drawing.angleCote.mode === 'tangent' && (
-                  <>
-                    <line
-                      x1={drawing.angleCote.center.x}
-                      y1={drawing.angleCote.center.y}
-                      x2={drawing.dPointA.x}
-                      y2={drawing.dPointA.y}
-                      {...lineStyleToSvgProps({ kind: 'dashedShort', color: '#999999', widthMm: 0.2 })}
-                    />
-                    <line
-                      x1={drawing.angleCote.center.x}
-                      y1={drawing.angleCote.center.y}
-                      x2={drawing.dPointB.x}
-                      y2={drawing.dPointB.y}
-                      {...lineStyleToSvgProps({ kind: 'dashedShort', color: '#999999', widthMm: 0.2 })}
-                    />
-                  </>
-                )}
-                <AngleCote
-                  center={drawing.angleCote.center}
-                  radiusMm={drawing.angleCote.radiusMm}
-                  startAngleRad={drawing.angleCote.startAngleRad}
-                  endAngleRad={drawing.angleCote.endAngleRad}
-                  label={`${formatNumber(drawing.centralAngleDeg, decimals)}°`}
-                  sizing={suggestDimensionSizing()}
-                />
-              </>
-            )}
-
-            {showCursorAnnotations && cursorOffsetMm !== undefined && (
-              <>
-                <line
-                  x1={drawing.dCursorE.x}
-                  y1={drawing.dCursorE.y}
-                  x2={drawing.dCursorF.x}
-                  y2={drawing.dCursorF.y}
-                  {...lineStyleToSvgProps({ kind: 'dashedShort', color: '#333333', widthMm: 0.3 })}
-                />
-                <circle
-                  cx={drawing.dCursorE.x}
-                  cy={drawing.dCursorE.y}
-                  r={CURSOR_MARKER_RADIUS_MM}
-                  fill="#333333"
-                />
-                <circle
-                  cx={drawing.dCursorF.x}
-                  cy={drawing.dCursorF.y}
-                  r={CURSOR_MARKER_RADIUS_MM}
-                  fill="#b3261e"
-                />
-                <LevelCote
-                  point={drawing.dCursorF}
-                  label={`EF = ${formatCoteLength(cursorOffsetMm)}`}
-                  sizing={suggestDimensionSizing()}
-                />
-              </>
-            )}
-
-            <ScaleBar
-              resolved={drawing.resolvedScale}
-              x={0}
-              y={drawing.drawingHeight + BOTTOM_GAP_MM}
-              unitCaption={tCommon('drawing.cotesInUnit', { unit: 'mm' })}
-            />
-          </svg>
+          {renderDrawing(drawing, svgRef)}
 
           {resultData && (
             <ExportButtons
