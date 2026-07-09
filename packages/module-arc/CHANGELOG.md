@@ -1,5 +1,17 @@
 # Changelog — module-arc
 
+## 1.7 — 2026-07-09
+
+Deux ajustements sur la v1.6, signalés après relecture du rendu :
+
+- Mode « rayon + angle au centre » : le résultat n'affiche plus l'angle au
+  centre (déjà donné en saisie), seulement corde et flèche calculées — cohérent
+  avec les 2 autres méthodes qui n'affichent que leur(s) valeur(s) déduite(s).
+- Case « Représenter l'angle au centre sur le dessin » déplacée : elle
+  n'avait pas sa place parmi les options du tableau d'implantation. Regroupée
+  avec le sélecteur d'échelle de dessin dans une boîte `.rt-check-group` (même
+  style que le groupe d'options du tableau).
+
 ## 1.6 — 2026-07-09
 
 Nouvelle méthode de calcul et affichage de l'angle au centre :

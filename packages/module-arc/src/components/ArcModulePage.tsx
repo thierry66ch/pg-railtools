@@ -574,8 +574,12 @@ export function ArcModulePage() {
                   chord: formatNumber(geometryInputs.chordMm, decimals),
                   sagitta: formatNumber(geometryInputs.sagittaMm, decimals),
                 })}
-          {' — '}
-          {t('result.centralAngle', { value: formatNumber(radToDeg(centralAngleRad), decimals) })}
+          {inputMode !== 'radiusAngle' && (
+            <>
+              {' — '}
+              {t('result.centralAngle', { value: formatNumber(radToDeg(centralAngleRad), decimals) })}
+            </>
+          )}
         </p>
       )}
 
@@ -595,12 +599,20 @@ export function ArcModulePage() {
 
       {drawing && (
         <>
-          <div className="rt-toolbar">
+          <div className="rt-check-group">
             <DrawingScaleSelector
               value={drawingScale}
               onChange={handleDrawingScaleChange}
               className="rt-field rt-field--inline"
             />
+            <label className="rt-field rt-field--check">
+              <span>{t('form.showCentralAngleCote')}</span>
+              <input
+                type="checkbox"
+                checked={showCentralAngleCote}
+                onChange={(event) => setShowCentralAngleCote(event.target.checked)}
+              />
+            </label>
           </div>
 
           <svg
@@ -793,14 +805,6 @@ export function ArcModulePage() {
                 type="checkbox"
                 checked={showAngleCumul}
                 onChange={(event) => setShowAngleCumul(event.target.checked)}
-              />
-            </label>
-            <label className="rt-field rt-field--check">
-              <span>{t('form.showCentralAngleCote')}</span>
-              <input
-                type="checkbox"
-                checked={showCentralAngleCote}
-                onChange={(event) => setShowCentralAngleCote(event.target.checked)}
               />
             </label>
           </div>
