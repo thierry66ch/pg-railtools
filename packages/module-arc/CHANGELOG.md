@@ -1,5 +1,12 @@
 # Changelog — module-arc
 
+## 1.9 — 2026-07-10
+
+Retouche cosmétique : la ligne "Nombre d'intervalles" avait un `justifyContent:
+'space-between'` isolé qui créait un grand vide face à "Angle par intervalle", au lieu du
+regroupement serré déjà utilisé pour "Position de E" / "Écart EF" juste au-dessus — retiré
+pour rester cohérent.
+
 ## 1.8 — 2026-07-09
 
 Retours d'usage sur la v1.7 (cote d'angle + vue agrandie du dessin) :

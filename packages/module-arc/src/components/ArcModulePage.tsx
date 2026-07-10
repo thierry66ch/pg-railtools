@@ -783,7 +783,7 @@ export function ArcModulePage() {
             />
           )}
 
-          <div className="rt-toolbar" style={{ justifyContent: 'space-between' }}>
+          <div className="rt-toolbar">
             <label className="rt-field rt-field--inline">
               <span>{t('form.intervals')}</span>
               <NumberInput value={intervals} onChange={handleIntervalsChange} />
