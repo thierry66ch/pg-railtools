@@ -6,11 +6,12 @@ import { NumberInput, ResultPageLayout, type DrawingScale } from '@railtools/com
 import versionInfo from '../../version.json';
 import type { CalcStepMm, TrackElementLibraryItem, TrackSegment, VehicleLibraryItem, VehicleSpec } from '../types';
 import { computeChanfrein } from '../math/vehicle';
-import { validateTrack } from '../math/track';
+import { maxSRear, validateTrack } from '../math/track';
 import { VehicleLibraryPanel } from './VehicleLibraryPanel';
 import { TrackElementLibraryPanel } from './TrackElementLibraryPanel';
 import { TrackSegmentEditor } from './TrackSegmentEditor';
 import { DrawingView } from './DrawingView';
+import { AnimationControls } from './AnimationControls';
 
 const DEFAULT_DRAWING_SCALE: DrawingScale = { mode: 'fixed', ratio: 1 };
 
@@ -200,17 +201,25 @@ export function EmpriseLateraleModulePage() {
       </div>
 
       {vehicleResult.ok && trackResult.ok && (
-        <DrawingView
-          vehicle={vehicle}
-          ltaperMm={vehicleResult.value.ltaperMm}
-          track={track}
-          calcStepMm={calcStepMm}
-          sRearMm={sRearMm}
-          marginMm={marginMm}
-          drawingScale={drawingScale}
-          onDrawingScaleChange={setDrawingScale}
-          svgRef={svgRef}
-        />
+        <>
+          <AnimationControls
+            sRearMm={Math.min(sRearMm, maxSRear(trackResult.value.totalLengthMm, vehicle.empattementMm))}
+            sRearMaxMm={maxSRear(trackResult.value.totalLengthMm, vehicle.empattementMm)}
+            calcStepMm={calcStepMm}
+            onChange={setSRearMm}
+          />
+          <DrawingView
+            vehicle={vehicle}
+            ltaperMm={vehicleResult.value.ltaperMm}
+            track={track}
+            calcStepMm={calcStepMm}
+            sRearMm={sRearMm}
+            marginMm={marginMm}
+            drawingScale={drawingScale}
+            onDrawingScaleChange={setDrawingScale}
+            svgRef={svgRef}
+          />
+        </>
       )}
 
       <VehicleLibraryPanel onUseInProject={handleUseVehicle} />

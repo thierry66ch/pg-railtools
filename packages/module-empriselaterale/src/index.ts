@@ -7,4 +7,5 @@ export * from './components/VehicleLibraryPanel';
 export * from './components/TrackElementLibraryPanel';
 export * from './components/TrackSegmentEditor';
 export * from './components/DrawingView';
+export * from './components/AnimationControls';
 export * from './components/EmpriseLateraleModulePage';

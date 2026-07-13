@@ -51,6 +51,14 @@
   "drawing": {
     "title": "Dessin"
   },
+  "animation": {
+    "title": "Animation",
+    "play": "Lecture",
+    "stop": "Stop",
+    "stepBack": "Pas arrière",
+    "stepForward": "Pas avant",
+    "position": "Position (s = {value} mm)"
+  },
   "errors": {
     "longueur-non-positive": "La longueur de la caisse doit être strictement positive.",
     "largeur-max-non-positive": "La largeur max de la caisse doit être strictement positive.",
