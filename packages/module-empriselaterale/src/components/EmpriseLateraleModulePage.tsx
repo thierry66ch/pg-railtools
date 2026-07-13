@@ -58,7 +58,6 @@ function defaultVehicle(): VehicleSpec {
 
 export function EmpriseLateraleModulePage() {
   const t = useTranslations('moduleEmpriseLaterale');
-  const tCommon = useTranslations('common');
 
   const [vehicle, setVehicle] = useState<VehicleSpec>(defaultVehicle());
   const [track, setTrack] = useState<TrackSegment[]>([{ type: 'line', lengthMm: 400 }]);
@@ -203,6 +202,15 @@ export function EmpriseLateraleModulePage() {
 
   return (
     <ResultPageLayout title={t('title')} description={t('description')} version={versionInfo}>
+      {activeProjectId && (
+        <div className="rt-toolbar" style={{ justifyContent: 'space-between' }}>
+          <span>{t('project.active', { name: activeProjectName ?? '' })}</span>
+          <button type="button" className="rt-button" onClick={() => void handleSave()}>
+            {t('project.save')}
+          </button>
+        </div>
+      )}
+
       <div className="rt-section">
         <h3 className="rt-section-title">{t('vehicle.title')}</h3>
         {vehicleLibraryItems.length > 0 && (
@@ -270,11 +278,6 @@ export function EmpriseLateraleModulePage() {
             <span>{t('summary.chanfreinLength')}</span>
             <NumberInput value={chanfreinHypotenuseMm} onChange={handleChanfreinHypotenuseChange} />
           </label>
-          {activeProjectId && (
-            <button type="button" className="rt-button" onClick={() => void handleSave()}>
-              {tCommon('actions.save')}
-            </button>
-          )}
         </div>
         {!vehicleResult.ok && <p className="rt-error">{t(`errors.${vehicleResult.error}`)}</p>}
       </div>

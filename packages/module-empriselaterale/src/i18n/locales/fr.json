@@ -55,6 +55,10 @@
   "drawing": {
     "title": "Dessin"
   },
+  "project": {
+    "active": "Projet ouvert : {name}",
+    "save": "Enregistrer les modifications du projet"
+  },
   "table": {
     "segmentIndex": "Segment",
     "segmentDescription": "Description"
