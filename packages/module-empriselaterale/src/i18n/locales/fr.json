@@ -1,11 +1,68 @@
 {
   "title": "Emprise latérale",
   "description": "Calcule et visualise l'emprise latérale balayée par un véhicule ferroviaire (caisse guidée par deux essieux/bogies) le long d'un tracé composé de droites et de courbes, afin de vérifier les dégagements nécessaires en courbe.",
+  "vehicle": {
+    "title": "Véhicule",
+    "fields": {
+      "name": "Nom",
+      "length": "Longueur caisse (mm)",
+      "widthMax": "Largeur max (mm)",
+      "widthEnd": "Largeur extrémité (mm)",
+      "angle": "Angle de biais (°)",
+      "wheelbase": "Empattement (mm)"
+    }
+  },
+  "track": {
+    "title": "Tracé",
+    "addSegment": "Ajouter un segment"
+  },
   "trackSegment": {
+    "title": "Segment {index}",
+    "moveUp": "Monter",
+    "moveDown": "Descendre",
+    "remove": "Supprimer",
     "type": {
       "line": "Droit",
       "curve": "Courbe"
+    },
+    "direction": {
+      "left": "À gauche",
+      "right": "À droite"
+    },
+    "fields": {
+      "type": "Type",
+      "length": "Longueur (mm)",
+      "radius": "Rayon (mm)",
+      "angle": "Angle (°)",
+      "direction": "Sens"
     }
+  },
+  "display": {
+    "title": "Affichage",
+    "calcStep": "Pas de calcul",
+    "margin": "Marge de dessin (mm)"
+  },
+  "summary": {
+    "title": "Résumé",
+    "chanfreinLength": "Longueur du chanfrein",
+    "trackLength": "Longueur du tracé",
+    "segmentCount": "Nombre de segments"
+  },
+  "errors": {
+    "longueur-non-positive": "La longueur de la caisse doit être strictement positive.",
+    "largeur-max-non-positive": "La largeur max de la caisse doit être strictement positive.",
+    "largeur-extremite-non-positive": "La largeur d'extrémité de la caisse doit être strictement positive.",
+    "angle-hors-plage": "L'angle de biais doit être compris entre 0° et 90°.",
+    "empattement-non-positif": "L'empattement doit être strictement positif.",
+    "largeur-extremite-superieure": "La largeur d'extrémité ne peut pas dépasser la largeur max.",
+    "chanfrein-angle-nul-largeurs-incoherentes": "Avec un angle de biais de 0°, la largeur d'extrémité doit être égale à la largeur max (pas de chanfrein).",
+    "chanfrein-trop-long": "Le chanfrein calculé dépasse le milieu de la caisse : augmentez l'angle de biais ou la longueur de la caisse.",
+    "empattement-superieur-longueur": "L'empattement ne peut pas dépasser la longueur de la caisse.",
+    "aucun-segment": "Le tracé doit contenir au moins un segment.",
+    "segment-longueur-non-positive": "Un segment droit doit avoir une longueur strictement positive.",
+    "segment-rayon-non-positif": "Un segment courbe doit avoir un rayon strictement positif.",
+    "segment-angle-non-positif": "Un segment courbe doit avoir un angle strictement positif.",
+    "empattement-superieur-longueur-trace": "L'empattement du véhicule ne peut pas dépasser la longueur totale du tracé."
   },
   "library": {
     "useInProject": "Utiliser dans le projet",
