@@ -20,7 +20,15 @@ import {
   type LocalPoint,
   type VehiclePose,
 } from '../math/vehicle';
-import { computeTrackSamples, maxSRear, pointOnTrackAtS, poseAtSRear, trackLength, type TrackPose } from '../math/track';
+import {
+  computeTrackSamples,
+  maxSRear,
+  pointOnTrackAtS,
+  poseAtSRear,
+  segmentBoundaries,
+  trackLength,
+  type TrackPose,
+} from '../math/track';
 
 const COLORS: Record<'AVG' | 'AVD' | 'MG' | 'MD' | 'ARG' | 'ARD', string> = {
   AVG: '#e53935',
@@ -41,6 +49,22 @@ const LEGEND_ROW_HEIGHT_MM = 5;
 const LEGEND_ITEM_SPACING_MM = 20;
 const LEGEND_SWATCH_LENGTH_MM = 6;
 const LEGEND_FONT_SIZE_MM = 3;
+
+// Épaisseurs de trait "de base" (mm de dessin, à l'échelle 1:1) — atténuées par
+// `strokeScaleFactor` aux échelles de dessin plus réduites (ratio > 1), pour que les
+// traits restent proportionnés à un dessin devenu plus petit plutôt que de l'écraser.
+const BASE_AXIS_WIDTH_MM = 0.6;
+const BASE_ENVELOPE_WIDTH_MM = 0.8;
+const BASE_SILHOUETTE_WIDTH_MM = 1;
+const BASE_AXLE_WIDTH_MM = 0.5;
+const BASE_CENTERLINE_WIDTH_MM = 0.3;
+const BASE_JUNCTION_WIDTH_MM = 0.5;
+/** Plancher du facteur d'échelle des traits, pour qu'ils restent visibles même à 1:50. */
+const MIN_STROKE_SCALE_FACTOR = 0.35;
+
+function strokeScaleFactor(ratio: number): number {
+  return Math.max(MIN_STROKE_SCALE_FACTOR, 1 / Math.sqrt(ratio));
+}
 
 function vehiclePoseFromTrack(pose: TrackPose): VehiclePose {
   return {
@@ -130,7 +154,25 @@ export function DrawingView({
       currentVehiclePose,
     );
 
-    const allPoints: Point[] = [...axisPoints, ...Object.values(envelopePoints).flat(), ...silhouettePoints];
+    // Jonctions entre segments de tracé : trait transversal (perpendiculaire à la
+    // tangente), long d'un tiers de la largeur max du véhicule, centré sur chaque
+    // extrémité de segment (y compris les deux bouts du tracé).
+    const halfJunctionMarkMm = vehicle.largeurCaisseMaxMm / 6;
+    const junctionMarks: [Point, Point][] = segmentBoundaries(track).map((s) => {
+      const { point, thetaRad } = pointOnTrackAtS(track, Math.min(Math.max(s, 0), totalLengthMm));
+      const n = { x: -Math.sin(thetaRad), y: Math.cos(thetaRad) };
+      return [
+        { x: point.x - n.x * halfJunctionMarkMm, y: point.y - n.y * halfJunctionMarkMm },
+        { x: point.x + n.x * halfJunctionMarkMm, y: point.y + n.y * halfJunctionMarkMm },
+      ];
+    });
+
+    const allPoints: Point[] = [
+      ...axisPoints,
+      ...Object.values(envelopePoints).flat(),
+      ...silhouettePoints,
+      ...junctionMarks.flat(),
+    ];
     const rawMinX = Math.min(...allPoints.map((p) => p.x));
     const rawMaxX = Math.max(...allPoints.map((p) => p.x));
     const rawMinY = Math.min(...allPoints.map((p) => p.y));
@@ -159,6 +201,7 @@ export function DrawingView({
     const drawingWidth = modelToDrawing(modelWidth, resolvedScale);
     const drawingHeight = modelToDrawing(modelHeight, resolvedScale);
     const legendY = drawingHeight + SCALE_BAR_Y_GAP_MM + SCALE_BAR_BOTTOM_SPACE_MM + LEGEND_GAP_MM + LEGEND_ROW_HEIGHT_MM / 2;
+    const factor = strokeScaleFactor(resolvedScale.ratio);
 
     return {
       dAxisPoints: axisPoints.map(toDrawing),
@@ -170,6 +213,15 @@ export function DrawingView({
       dCenterCross: [toDrawing(centerCrossA), toDrawing(centerCrossB)] as [Point, Point],
       dRearAxle: [toDrawing(rearAxleA), toDrawing(rearAxleB)] as [Point, Point],
       dFrontAxle: [toDrawing(frontAxleA), toDrawing(frontAxleB)] as [Point, Point],
+      dJunctionMarks: junctionMarks.map(([a, b]) => [toDrawing(a), toDrawing(b)] as [Point, Point]),
+      strokeWidths: {
+        axis: BASE_AXIS_WIDTH_MM * factor,
+        envelope: BASE_ENVELOPE_WIDTH_MM * factor,
+        silhouette: BASE_SILHOUETTE_WIDTH_MM * factor,
+        axle: BASE_AXLE_WIDTH_MM * factor,
+        centerline: BASE_CENTERLINE_WIDTH_MM * factor,
+        junction: BASE_JUNCTION_WIDTH_MM * factor,
+      },
       resolvedScale,
       drawingWidth,
       drawingHeight,
@@ -190,26 +242,38 @@ export function DrawingView({
         width="100%"
         style={{ maxWidth: 720, height: 'auto', background: 'transparent' }}
       >
+        {/* Axe de la voie, en trait d'axe (norme CAO : tiret long / tiret court). */}
         <polyline
           points={geometry.dAxisPoints.map((p) => `${p.x},${p.y}`).join(' ')}
           fill="none"
-          stroke="#1f5f8b"
-          strokeWidth={1.2}
+          {...lineStyleToSvgProps({ kind: 'centerline', color: '#1f5f8b', widthMm: geometry.strokeWidths.axis })}
         />
+        {/* Jonctions entre segments de tracé (y compris les deux bouts du tracé). */}
+        {geometry.dJunctionMarks.map(([a, b], index) => (
+          <line
+            key={index}
+            x1={a.x}
+            y1={a.y}
+            x2={b.x}
+            y2={b.y}
+            stroke="#888888"
+            strokeWidth={geometry.strokeWidths.junction}
+          />
+        ))}
         {ENVELOPE_KEYS.map((key) => (
           <polyline
             key={key}
             points={geometry.dEnvelope[key].map((p) => `${p.x},${p.y}`).join(' ')}
             fill="none"
             stroke={COLORS[key]}
-            strokeWidth={0.8}
+            strokeWidth={geometry.strokeWidths.envelope}
           />
         ))}
         <polygon
           points={geometry.dSilhouette.map((p) => `${p.x},${p.y}`).join(' ')}
           fill="rgba(31,95,139,0.15)"
           stroke="#1f5f8b"
-          strokeWidth={1}
+          strokeWidth={geometry.strokeWidths.silhouette}
         />
         {/* Axe longitudinal de la caisse, de bout en bout. */}
         <line
@@ -217,7 +281,7 @@ export function DrawingView({
           y1={geometry.dLongAxis[0].y}
           x2={geometry.dLongAxis[1].x}
           y2={geometry.dLongAxis[1].y}
-          {...lineStyleToSvgProps({ kind: 'centerline', color: '#555555', widthMm: 0.3 })}
+          {...lineStyleToSvgProps({ kind: 'centerline', color: '#555555', widthMm: geometry.strokeWidths.centerline })}
         />
         {/* Trait transversal au centre longitudinal (MG-MD). */}
         <line
@@ -225,7 +289,7 @@ export function DrawingView({
           y1={geometry.dCenterCross[0].y}
           x2={geometry.dCenterCross[1].x}
           y2={geometry.dCenterCross[1].y}
-          {...lineStyleToSvgProps({ kind: 'dashedShort', color: '#555555', widthMm: 0.3 })}
+          {...lineStyleToSvgProps({ kind: 'dashedShort', color: '#555555', widthMm: geometry.strokeWidths.centerline })}
         />
         {/* Essieux/bogies : traits transversaux fins à l'arrière et à l'avant. */}
         <line
@@ -234,7 +298,7 @@ export function DrawingView({
           x2={geometry.dRearAxle[1].x}
           y2={geometry.dRearAxle[1].y}
           stroke="#333333"
-          strokeWidth={0.5}
+          strokeWidth={geometry.strokeWidths.axle}
         />
         <line
           x1={geometry.dFrontAxle[0].x}
@@ -242,7 +306,7 @@ export function DrawingView({
           x2={geometry.dFrontAxle[1].x}
           y2={geometry.dFrontAxle[1].y}
           stroke="#333333"
-          strokeWidth={0.5}
+          strokeWidth={geometry.strokeWidths.axle}
         />
         <ScaleBar
           resolved={geometry.resolvedScale}

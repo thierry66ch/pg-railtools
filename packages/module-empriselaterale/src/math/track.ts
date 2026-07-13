@@ -38,6 +38,23 @@ export function trackLength(segments: TrackSegment[]): number {
   }, 0);
 }
 
+/**
+ * Abscisses curvilignes des jonctions entre segments (« modules » de tracé), y compris les
+ * deux extrémités du tracé (0 et la longueur totale) : `[0, finSegment1, finSegment2, ...]`.
+ */
+export function segmentBoundaries(segments: TrackSegment[]): number[] {
+  const boundaries: number[] = [0];
+  let acc = 0;
+  for (const seg of segments) {
+    acc +=
+      seg.type === 'line'
+        ? (seg.lengthMm ?? 0)
+        : Math.max(0.001, seg.radiusMm ?? 0.001) * Math.abs(degToRad(seg.angleDeg ?? 0));
+    boundaries.push(acc);
+  }
+  return boundaries;
+}
+
 /** Vérifie que le tracé et l'empattement forment une configuration valide. */
 export function validateTrack(segments: TrackSegment[], wheelbaseMm: number): TrackResult<{ totalLengthMm: number }> {
   if (segments.length < 1) return err('aucun-segment');

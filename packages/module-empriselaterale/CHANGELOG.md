@@ -1,5 +1,43 @@
 # Changelog — module-empriselaterale
 
+## 0.4 — 2026-07-13
+
+Retours d'usage sur le dessin :
+
+- Bouton « Enregistrer » du projet déplacé dans un bandeau dédié (« Projet ouvert :
+  {nom} ») sous l'en-tête, décorrélé du formulaire véhicule où il semait la confusion
+  (l'utilisateur croyait qu'il était lié au chargement d'un véhicule depuis la
+  bibliothèque, alors qu'il enregistre le projet ouvert, sans rapport).
+- Axe de la voie redessiné en **trait d'axe** (tiret long/tiret court, norme CAO) plus fin
+  qu'avant (0.6 mm au lieu de 1.2 mm de dessin à l'échelle 1:1), au lieu d'un simple trait
+  plein.
+- **Jonctions entre segments de tracé** matérialisées par un trait transversal
+  (perpendiculaire à la tangente réelle de la voie, pas la corde), long d'un tiers de la
+  largeur max du véhicule, centré sur chaque limite de segment (y compris les deux
+  extrémités du tracé) — nouvelle fonction pure `segmentBoundaries` dans `math/track.ts`.
+- **Épaisseurs de trait atténuées aux échelles de dessin réduites** (ratio > 1:1) : tous
+  les traits de géométrie (axe voie, 6 polylignes d'emprise, silhouette, axe
+  longitudinal/transversal de la caisse, traits d'essieux, jonctions) sont désormais
+  fonction de l'échelle de dessin résolue (`largeur = base / √ratio`, plancher à 35 % de
+  la base pour rester visible jusqu'à 1:50) plutôt que fixes — à 1:1 rien ne change,
+  au-delà les traits s'affinent proportionnellement pour ne pas écraser un dessin devenu
+  plus petit. Distinct du principe "cotes toujours en mm papier fixes"
+  (`pieges-a-eviter.md`) : cette règle concerne les cotes techniques (texte/flèches/traits
+  de cote), pas les traits de géométrie eux-mêmes, qu'aucun module de ce repo n'utilisait
+  encore comme convention de trait d'épaisseur variable selon l'échelle.
+
+Point soulevé par l'utilisateur (débordement du point de transition du chanfrein en
+courbe, potentiellement plus encombrant que les 6 points suivis) : **évalué, pas
+implémenté** — voir la note de décision dans la mémoire de session ; débordement jugé
+minime par l'utilisateur, marge de sécurité déjà prévue par ailleurs, vérification externe
+(CAO) déjà nécessaire pour d'autres besoins.
+
+Vérifié dans le navigateur : bandeau projet actif affiché correctement à la création d'un
+projet, 3 marques de jonction pour un tracé à 2 segments (aux 2 bouts + la limite
+intermédiaire), épaisseurs revenant exactement aux valeurs de base à 1:1 et réduites à une
+échelle plus large (ex. facteur ≈0.51 à 1:3.8, cohérent avec `1/√ratio`), zéro erreur
+console.
+
 ## 0.3 — 2026-07-13
 
 Retours d'usage sur les bibliothèques et la saisie du véhicule (v0.2) :
