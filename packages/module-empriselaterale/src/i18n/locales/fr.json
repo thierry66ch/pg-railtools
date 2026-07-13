@@ -48,6 +48,9 @@
     "trackLength": "Longueur du tracé",
     "segmentCount": "Nombre de segments"
   },
+  "drawing": {
+    "title": "Dessin"
+  },
   "errors": {
     "longueur-non-positive": "La longueur de la caisse doit être strictement positive.",
     "largeur-max-non-positive": "La largeur max de la caisse doit être strictement positive.",

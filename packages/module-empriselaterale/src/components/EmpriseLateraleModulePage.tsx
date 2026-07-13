@@ -1,8 +1,8 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { NumberInput, ResultPageLayout } from '@railtools/commun';
+import { NumberInput, ResultPageLayout, type DrawingScale } from '@railtools/commun';
 import versionInfo from '../../version.json';
 import type { CalcStepMm, TrackElementLibraryItem, TrackSegment, VehicleLibraryItem, VehicleSpec } from '../types';
 import { computeChanfrein } from '../math/vehicle';
@@ -10,6 +10,9 @@ import { validateTrack } from '../math/track';
 import { VehicleLibraryPanel } from './VehicleLibraryPanel';
 import { TrackElementLibraryPanel } from './TrackElementLibraryPanel';
 import { TrackSegmentEditor } from './TrackSegmentEditor';
+import { DrawingView } from './DrawingView';
+
+const DEFAULT_DRAWING_SCALE: DrawingScale = { mode: 'fixed', ratio: 1 };
 
 const CALC_STEP_OPTIONS: CalcStepMm[] = [5, 10, 20, 50];
 const MAX_SEGMENTS = 10;
@@ -38,6 +41,9 @@ export function EmpriseLateraleModulePage() {
   const [track, setTrack] = useState<TrackSegment[]>([{ type: 'line', lengthMm: 400 }]);
   const [calcStepMm, setCalcStepMm] = useState<CalcStepMm>(10);
   const [marginMm, setMarginMm] = useState<number>(50);
+  const [drawingScale, setDrawingScale] = useState<DrawingScale>(DEFAULT_DRAWING_SCALE);
+  const [sRearMm, setSRearMm] = useState(0);
+  const svgRef = useRef<SVGSVGElement>(null);
 
   const vehicleResult = useMemo(() => computeChanfrein(vehicle), [vehicle]);
   const trackResult = useMemo(() => validateTrack(track, vehicle.empattementMm), [track, vehicle.empattementMm]);
@@ -192,6 +198,20 @@ export function EmpriseLateraleModulePage() {
           </tbody>
         </table>
       </div>
+
+      {vehicleResult.ok && trackResult.ok && (
+        <DrawingView
+          vehicle={vehicle}
+          ltaperMm={vehicleResult.value.ltaperMm}
+          track={track}
+          calcStepMm={calcStepMm}
+          sRearMm={sRearMm}
+          marginMm={marginMm}
+          drawingScale={drawingScale}
+          onDrawingScaleChange={setDrawingScale}
+          svgRef={svgRef}
+        />
+      )}
 
       <VehicleLibraryPanel onUseInProject={handleUseVehicle} />
       <TrackElementLibraryPanel onUseInProject={handleUseTrackElement} />

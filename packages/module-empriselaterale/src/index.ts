@@ -6,4 +6,5 @@ export * from './i18n/messages';
 export * from './components/VehicleLibraryPanel';
 export * from './components/TrackElementLibraryPanel';
 export * from './components/TrackSegmentEditor';
+export * from './components/DrawingView';
 export * from './components/EmpriseLateraleModulePage';
