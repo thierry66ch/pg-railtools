@@ -51,6 +51,10 @@
   "drawing": {
     "title": "Dessin"
   },
+  "table": {
+    "segmentIndex": "Segment",
+    "segmentDescription": "Description"
+  },
   "animation": {
     "title": "Animation",
     "play": "Lecture",
