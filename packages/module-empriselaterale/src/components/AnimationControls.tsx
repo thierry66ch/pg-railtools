@@ -33,6 +33,7 @@ export function AnimationControls({ sRearMm, sRearMaxMm, calcStepMm, onChange }:
   }, [isPlaying, sRearMm, sRearMaxMm]);
 
   function stepBy(delta: number) {
+    setIsPlaying(false);
     onChange(Math.min(Math.max(sRearMm + delta, 0), sRearMaxMm));
   }
 

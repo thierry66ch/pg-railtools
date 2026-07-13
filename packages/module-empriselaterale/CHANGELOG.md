@@ -1,5 +1,45 @@
 # Changelog — module-empriselaterale
 
+## 0.2 — 2026-07-13
+
+Retours d'usage sur la v0.1 déployée :
+
+- **Chanfrein déplacé** : la longueur du chanfrein calculée est maintenant un champ en
+  lecture seule dans les specs du véhicule (pas dans le résumé du tracé, dont elle ne
+  faisait pas partie) — cohérent aussi dans l'export PDF (`summaryTable` du véhicule vs
+  `tableIntro` du tracé, désormais deux tables distinctes).
+- **Dessin complété** : trait d'axe longitudinal de la caisse de bout en bout (style
+  `centerline`), trait transversal au centre (corde MG-MD, `dashedShort`), et un trait
+  transversal fin par essieu/bogie (position exacte = ± empattement/2 depuis le centre de
+  la caisse, pas les extrémités de la caisse — ces deux distances ne coïncident que si
+  L = E).
+- **Légende intégrée au dessin SVG** (plutôt qu'un bloc HTML à côté) : apparaît donc
+  automatiquement dans la vue agrandie et dans les exports Markdown/PNG (qui rastérisent
+  ce même SVG), là où elle manquait.
+- **Vue agrandie plus nette** (`packages/commun`, générique — bénéficie aussi à
+  `module-arc`) : le SVG dans `DrawingLightbox` était limité à 800px de large avant zoom
+  CSS, et `will-change: transform` forçait une promotion de calque rastérisée tôt à cette
+  taille — flou visible en zoomant sur un tracé large. Largeur de base portée à
+  `min(96vw, 1800px)` et `will-change` retiré ; non-régression vérifiée sur `module-arc`.
+- **Échelle de dessin par défaut passée à "fit"** (au lieu d'hériter la préférence globale,
+  généralement 1:1) : les tracés de ce module font typiquement plusieurs centaines de mm,
+  donc 1:1 produisait un export PDF où le dessin débordait presque entièrement de la page
+  (contenu visible réduit à un coin). Cible du mode "fit" alignée sur celle de
+  `module-arc` (260×180 mm) pour rester dans une page A4/A3 raisonnable, plutôt que la
+  valeur d'affichage écran (520×320) utilisée jusqu'ici.
+- **PDF corrigé** (conséquence directe des deux points précédents) : dessin désormais
+  visible et non tronqué, tableau récapitulatif du véhicule qui ne mélange plus des
+  informations de tracé/affichage sans rapport (déplacées dans le `tableIntro`, sur la
+  page 2 après le saut de page).
+- **Animation** : cliquer sur "Pas arrière"/"Pas avant" pendant la lecture automatique
+  arrête maintenant la lecture avant d'appliquer le pas, au lieu de continuer à avancer en
+  parallèle du clic.
+
+Vérifié dans le navigateur : structure PDF à 2 pages avec les bonnes tables et une image
+non vide (échantillonnage d'octets), légende présente comme pixels réels dans l'export PNG,
+pas à pas pendant la lecture stoppe bien l'animation (position figée après le clic, pas de
+reprise), non-régression de la vue agrandie sur `module-arc`, zéro erreur console.
+
 ## 0.1 — 2026-07-13
 
 Première version du module. Calcule et visualise l'emprise latérale balayée par un

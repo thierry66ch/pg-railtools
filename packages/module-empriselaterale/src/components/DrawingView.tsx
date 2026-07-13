@@ -6,6 +6,7 @@ import {
   DrawingLightbox,
   DrawingScaleSelector,
   ScaleBar,
+  lineStyleToSvgProps,
   modelToDrawing,
   resolveDrawingScale,
   type DrawingScale,
@@ -16,6 +17,7 @@ import {
   localPointToWorld,
   vehicleContourLocalPoints,
   vehicleFramePoints,
+  type LocalPoint,
   type VehiclePose,
 } from '../math/vehicle';
 import { computeTrackSamples, maxSRear, pointOnTrackAtS, poseAtSRear, trackLength, type TrackPose } from '../math/track';
@@ -30,15 +32,26 @@ const COLORS: Record<'AVG' | 'AVD' | 'MG' | 'MD' | 'ARG' | 'ARD', string> = {
 };
 const ENVELOPE_KEYS = ['AVG', 'AVD', 'MG', 'MD', 'ARG', 'ARD'] as const;
 
-const FIT_TARGET_MM = { width: 520, height: 320 };
+/** Cible du mode "fit", en mm de dessin — proche d'une page A4 utile pour rester raisonnable en export PDF/PNG. */
+const FIT_TARGET_MM = { width: 260, height: 180 };
 const SCALE_BAR_Y_GAP_MM = 8;
 const SCALE_BAR_BOTTOM_SPACE_MM = 14;
+const LEGEND_GAP_MM = 4;
+const LEGEND_ROW_HEIGHT_MM = 5;
+const LEGEND_ITEM_SPACING_MM = 20;
+const LEGEND_SWATCH_LENGTH_MM = 6;
+const LEGEND_FONT_SIZE_MM = 3;
 
 function vehiclePoseFromTrack(pose: TrackPose): VehiclePose {
   return {
     center: { x: (pose.rear.x + pose.front.x) / 2, y: (pose.rear.y + pose.front.y) / 2 },
     thetaRad: pose.thetaRad,
   };
+}
+
+/** Transforme une paire de points locaux (repère caisse) en une paire de points monde, pour tracer un segment. */
+function localSegmentToWorld(a: LocalPoint, b: LocalPoint, pose: VehiclePose): [Point, Point] {
+  return [localPointToWorld(a, pose), localPointToWorld(b, pose)];
 }
 
 export interface DrawingViewProps {
@@ -97,6 +110,26 @@ export function DrawingView({
       localPointToWorld(local, currentVehiclePose),
     );
 
+    const halfL = vehicle.longueurCaisseMm / 2;
+    const halfWmax = vehicle.largeurCaisseMaxMm / 2;
+    const halfWheelbase = vehicle.empattementMm / 2;
+    const [longAxisA, longAxisB] = localSegmentToWorld({ along: -halfL, lat: 0 }, { along: halfL, lat: 0 }, currentVehiclePose);
+    const [centerCrossA, centerCrossB] = localSegmentToWorld(
+      { along: 0, lat: -halfWmax },
+      { along: 0, lat: halfWmax },
+      currentVehiclePose,
+    );
+    const [rearAxleA, rearAxleB] = localSegmentToWorld(
+      { along: -halfWheelbase, lat: -halfWmax },
+      { along: -halfWheelbase, lat: halfWmax },
+      currentVehiclePose,
+    );
+    const [frontAxleA, frontAxleB] = localSegmentToWorld(
+      { along: halfWheelbase, lat: -halfWmax },
+      { along: halfWheelbase, lat: halfWmax },
+      currentVehiclePose,
+    );
+
     const allPoints: Point[] = [...axisPoints, ...Object.values(envelopePoints).flat(), ...silhouettePoints];
     const rawMinX = Math.min(...allPoints.map((p) => p.x));
     const rawMaxX = Math.max(...allPoints.map((p) => p.x));
@@ -125,6 +158,7 @@ export function DrawingView({
 
     const drawingWidth = modelToDrawing(modelWidth, resolvedScale);
     const drawingHeight = modelToDrawing(modelHeight, resolvedScale);
+    const legendY = drawingHeight + SCALE_BAR_Y_GAP_MM + SCALE_BAR_BOTTOM_SPACE_MM + LEGEND_GAP_MM + LEGEND_ROW_HEIGHT_MM / 2;
 
     return {
       dAxisPoints: axisPoints.map(toDrawing),
@@ -132,12 +166,17 @@ export function DrawingView({
         ENVELOPE_KEYS.map((key) => [key, envelopePoints[key].map(toDrawing)]),
       ) as Record<(typeof ENVELOPE_KEYS)[number], Point[]>,
       dSilhouette: silhouettePoints.map(toDrawing),
+      dLongAxis: [toDrawing(longAxisA), toDrawing(longAxisB)] as [Point, Point],
+      dCenterCross: [toDrawing(centerCrossA), toDrawing(centerCrossB)] as [Point, Point],
+      dRearAxle: [toDrawing(rearAxleA), toDrawing(rearAxleB)] as [Point, Point],
+      dFrontAxle: [toDrawing(frontAxleA), toDrawing(frontAxleB)] as [Point, Point],
       resolvedScale,
       drawingWidth,
       drawingHeight,
+      legendY,
       viewBox: {
         width: drawingWidth,
-        height: drawingHeight + SCALE_BAR_Y_GAP_MM + SCALE_BAR_BOTTOM_SPACE_MM,
+        height: drawingHeight + SCALE_BAR_Y_GAP_MM + SCALE_BAR_BOTTOM_SPACE_MM + LEGEND_GAP_MM + LEGEND_ROW_HEIGHT_MM,
       },
       sRearMax,
     };
@@ -172,12 +211,70 @@ export function DrawingView({
           stroke="#1f5f8b"
           strokeWidth={1}
         />
+        {/* Axe longitudinal de la caisse, de bout en bout. */}
+        <line
+          x1={geometry.dLongAxis[0].x}
+          y1={geometry.dLongAxis[0].y}
+          x2={geometry.dLongAxis[1].x}
+          y2={geometry.dLongAxis[1].y}
+          {...lineStyleToSvgProps({ kind: 'centerline', color: '#555555', widthMm: 0.3 })}
+        />
+        {/* Trait transversal au centre longitudinal (MG-MD). */}
+        <line
+          x1={geometry.dCenterCross[0].x}
+          y1={geometry.dCenterCross[0].y}
+          x2={geometry.dCenterCross[1].x}
+          y2={geometry.dCenterCross[1].y}
+          {...lineStyleToSvgProps({ kind: 'dashedShort', color: '#555555', widthMm: 0.3 })}
+        />
+        {/* Essieux/bogies : traits transversaux fins à l'arrière et à l'avant. */}
+        <line
+          x1={geometry.dRearAxle[0].x}
+          y1={geometry.dRearAxle[0].y}
+          x2={geometry.dRearAxle[1].x}
+          y2={geometry.dRearAxle[1].y}
+          stroke="#333333"
+          strokeWidth={0.5}
+        />
+        <line
+          x1={geometry.dFrontAxle[0].x}
+          y1={geometry.dFrontAxle[0].y}
+          x2={geometry.dFrontAxle[1].x}
+          y2={geometry.dFrontAxle[1].y}
+          stroke="#333333"
+          strokeWidth={0.5}
+        />
         <ScaleBar
           resolved={geometry.resolvedScale}
           x={0}
           y={geometry.drawingHeight + SCALE_BAR_Y_GAP_MM}
           unitCaption={tCommon('drawing.cotesInUnit', { unit: 'mm' })}
         />
+        {ENVELOPE_KEYS.map((key, index) => {
+          const x = index * LEGEND_ITEM_SPACING_MM;
+          return (
+            <g key={key}>
+              <line
+                x1={x}
+                y1={geometry.legendY}
+                x2={x + LEGEND_SWATCH_LENGTH_MM}
+                y2={geometry.legendY}
+                stroke={COLORS[key]}
+                strokeWidth={1.4}
+              />
+              <text
+                x={x + LEGEND_SWATCH_LENGTH_MM + 1.5}
+                y={geometry.legendY}
+                fontSize={LEGEND_FONT_SIZE_MM}
+                fill="#1a1a1a"
+                fontFamily="Arial, Helvetica, sans-serif"
+                dominantBaseline="middle"
+              >
+                {key}
+              </text>
+            </g>
+          );
+        })}
       </svg>
     );
   }
@@ -198,16 +295,6 @@ export function DrawingView({
         </DrawingLightbox>
       </div>
       {renderSvg(svgRef)}
-      <div className="rt-toolbar">
-        {ENVELOPE_KEYS.map((key) => (
-          <span key={key} className="legend-chip" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-            <span
-              style={{ width: 12, height: 12, borderRadius: '50%', background: COLORS[key], display: 'inline-block' }}
-            />
-            {key}
-          </span>
-        ))}
-      </div>
     </div>
   );
 }

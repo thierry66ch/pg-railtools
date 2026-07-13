@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   EnvironmentTransfer,
@@ -8,7 +8,6 @@ import {
   NumberInput,
   ProjectManager,
   ResultPageLayout,
-  getPreferredDrawingScale,
   updateProject,
   type DrawingScale,
   type Project,
@@ -33,7 +32,10 @@ import { DrawingView } from './DrawingView';
 import { AnimationControls } from './AnimationControls';
 
 const MODULE_ID = 'empriselaterale';
-const DEFAULT_DRAWING_SCALE: DrawingScale = { mode: 'fixed', ratio: 1 };
+// Les tracés de ce module font typiquement plusieurs centaines de mm : "fit" par défaut
+// (plutôt que le 1:1 par défaut de la préférence globale) évite un dessin d'export
+// PDF/PNG débordant largement de la page dès la première utilisation.
+const DEFAULT_DRAWING_SCALE: DrawingScale = { mode: 'fit' };
 
 const CALC_STEP_OPTIONS: CalcStepMm[] = [5, 10, 20, 50];
 const MAX_SEGMENTS = 10;
@@ -71,13 +73,6 @@ export function EmpriseLateraleModulePage() {
   // enregistrement direct — sans ça sa liste interne reste périmée (pieges-a-eviter.md).
   const [projectListVersion, setProjectListVersion] = useState(0);
   const svgRef = useRef<SVGSVGElement>(null);
-
-  useEffect(() => {
-    if (!activeProjectId) {
-      void getPreferredDrawingScale().then(setDrawingScale);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const vehicleResult = useMemo(() => computeChanfrein(vehicle), [vehicle]);
   const trackResult = useMemo(() => validateTrack(track, vehicle.empattementMm), [track, vehicle.empattementMm]);
@@ -148,6 +143,9 @@ export function EmpriseLateraleModulePage() {
           title: t('title'),
           description: vehicle.name || undefined,
           drawingAlt: t('title'),
+          // Specs du véhicule uniquement (le chanfrein est une grandeur dérivée du
+          // véhicule, pas du tracé) — séparé du résumé tracé/affichage ci-dessous pour
+          // ne pas mélanger deux catégories d'information dans une même table.
           summaryTable: {
             headers: [
               t('vehicle.fields.name'),
@@ -157,9 +155,6 @@ export function EmpriseLateraleModulePage() {
               t('vehicle.fields.angle'),
               t('vehicle.fields.wheelbase'),
               t('summary.chanfreinLength'),
-              t('summary.trackLength'),
-              t('display.calcStep'),
-              t('display.margin'),
             ],
             rows: [
               [
@@ -170,11 +165,13 @@ export function EmpriseLateraleModulePage() {
                 vehicle.angleBiaisExtremiteDeg,
                 vehicle.empattementMm,
                 vehicleResult.value.ltaperMm.toFixed(1),
-                trackResult.value.totalLengthMm.toFixed(1),
-                calcStepMm,
-                marginMm,
               ],
             ],
+          },
+          pageBreakBeforeTable: true,
+          tableIntro: {
+            headers: [t('summary.trackLength'), t('summary.segmentCount'), t('display.calcStep'), t('display.margin')],
+            rows: [[trackResult.value.totalLengthMm.toFixed(1), track.length, calcStepMm, marginMm]],
           },
           table: {
             headers: [t('table.segmentIndex'), t('table.segmentDescription')],
@@ -227,6 +224,15 @@ export function EmpriseLateraleModulePage() {
           <label className="rt-field">
             <span>{t('vehicle.fields.wheelbase')}</span>
             <NumberInput value={vehicle.empattementMm} onChange={(v) => setVehicle({ ...vehicle, empattementMm: v })} />
+          </label>
+          <label className="rt-field">
+            <span>{t('summary.chanfreinLength')}</span>
+            <input
+              className="rt-input"
+              readOnly
+              disabled
+              value={vehicleResult.ok ? `${vehicleResult.value.ltaperMm.toFixed(1)} mm` : '—'}
+            />
           </label>
           {activeProjectId && (
             <button type="button" className="rt-button" onClick={() => void handleSave()}>
@@ -289,10 +295,6 @@ export function EmpriseLateraleModulePage() {
         <h3 className="rt-section-title">{t('summary.title')}</h3>
         <table>
           <tbody>
-            <tr>
-              <td>{t('summary.chanfreinLength')}</td>
-              <td>{vehicleResult.ok ? `${vehicleResult.value.ltaperMm.toFixed(1)} mm` : '—'}</td>
-            </tr>
             <tr>
               <td>{t('summary.trackLength')}</td>
               <td>{trackResult.ok ? `${trackResult.value.totalLengthMm.toFixed(1)} mm` : '—'}</td>

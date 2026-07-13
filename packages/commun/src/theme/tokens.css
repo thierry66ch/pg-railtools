@@ -536,12 +536,16 @@ a {
 
 .rt-lightbox-content {
   transform-origin: center center;
-  will-change: transform;
 }
 
+/* Pas de `width: min(90vw, 800px)` étroit : plus la base est rendue grande, moins le
+   zoom (transform: scale) a besoin d'agrandir un rendu déjà figé, donc plus net. Pas de
+   `will-change: transform` non plus — cette combinaison forçait une promotion de calque
+   anticipée dont la texture rastérisée restait figée à sa taille de base, floutée dès
+   qu'on zoomait dessus (signalé en usage réel sur des dessins de tracé larges). */
 .rt-lightbox-content svg {
   max-width: none !important;
-  width: min(90vw, 800px) !important;
+  width: min(96vw, 1800px) !important;
   height: auto !important;
 }
 
