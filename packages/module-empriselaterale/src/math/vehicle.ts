@@ -67,6 +67,34 @@ export function computeChanfrein(vehicle: VehicleSpec): VehicleResult<{ ltaperMm
   return ok({ ltaperMm });
 }
 
+/**
+ * Longueur du chanfrein telle qu'un modéliste la mesure au double-décimètre sur une
+ * maquette : l'HYPOTÉNUSE du triangle rectangle formé par le chanfrein (côtés `ltaperMm`
+ * le long de l'axe et `(Wmax−Wend)/2` en travers), pas `ltaperMm` lui-même (qui suppose de
+ * repérer précisément l'axe longitudinal, peu pratique à mesurer directement).
+ */
+export function chanfreinHypotenuseFromLtaper(vehicle: VehicleSpec, ltaperMm: number): number {
+  const halfDeltaW = (vehicle.largeurCaisseMaxMm - vehicle.largeurCaisseExtremiteMm) / 2;
+  return Math.hypot(ltaperMm, halfDeltaW);
+}
+
+/**
+ * Angle de biais (degrés) tel que le chanfrein ait pour hypoténuse `hypotenuseMm`, pour les
+ * largeurs (Wmax, Wend) données — sens inverse de `chanfreinHypotenuseFromLtaper`, utilisé
+ * quand l'utilisateur saisit la longueur du chanfrein plutôt que l'angle directement.
+ * `undefined` si géométriquement indéterminé (Wend = Wmax : le chanfrein est nul quel que
+ * soit l'angle, rien à en déduire) ou si `hypotenuseMm` n'est pas strictement positif.
+ */
+export function angleFromChanfreinHypotenuse(vehicle: VehicleSpec, hypotenuseMm: number): number | undefined {
+  const halfDeltaW = (vehicle.largeurCaisseMaxMm - vehicle.largeurCaisseExtremiteMm) / 2;
+  if (halfDeltaW <= 0 || !(hypotenuseMm > 0)) return undefined;
+  // Une hypoténuse plus courte que le côté (Wmax−Wend)/2 est géométriquement impossible :
+  // on ramène au cas limite θ=90° (chanfrein nul) plutôt que de renvoyer `undefined`, pour
+  // rester tolérant à une saisie légèrement en dessous de ce plancher.
+  const ratio = Math.min(1, halfDeltaW / hypotenuseMm);
+  return (Math.asin(ratio) * 180) / Math.PI;
+}
+
 /** Point exprimé dans le repère local de la caisse (along = axe longitudinal, lat = latéral, + = gauche). */
 export interface LocalPoint {
   along: number;

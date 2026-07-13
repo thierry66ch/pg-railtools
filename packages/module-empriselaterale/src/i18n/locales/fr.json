@@ -3,6 +3,8 @@
   "description": "Calcule et visualise l'emprise latérale balayée par un véhicule ferroviaire (caisse guidée par deux essieux/bogies) le long d'un tracé composé de droites et de courbes, afin de vérifier les dégagements nécessaires en courbe.",
   "vehicle": {
     "title": "Véhicule",
+    "fromLibrary": "Charger depuis la bibliothèque",
+    "fromLibraryPlaceholder": "— choisir un véhicule —",
     "fields": {
       "name": "Nom",
       "length": "Longueur caisse (mm)",
@@ -21,6 +23,8 @@
     "moveUp": "Monter",
     "moveDown": "Descendre",
     "remove": "Supprimer",
+    "fromLibrary": "Charger depuis la bibliothèque",
+    "fromLibraryPlaceholder": "— choisir un élément —",
     "type": {
       "line": "Droit",
       "curve": "Courbe"

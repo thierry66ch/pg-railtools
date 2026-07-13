@@ -46,6 +46,13 @@ export interface TrackElementLibraryItem {
   angleDeg?: number;
 }
 
+/** Copie figée d'un item de bibliothèque en `TrackSegment` (sans `id`/`name`), pour insertion dans un tracé. */
+export function segmentFromLibraryItem(item: TrackElementLibraryItem): TrackSegment {
+  return item.type === 'line'
+    ? { type: 'line', lengthMm: item.lengthMm }
+    : { type: 'curve', radiusMm: item.radiusMm, angleDeg: item.angleDeg, direction: 'left' };
+}
+
 export type CalcStepMm = 5 | 10 | 20 | 50;
 
 export interface EmpriseLateraleProjectData {

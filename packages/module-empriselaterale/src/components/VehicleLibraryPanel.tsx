@@ -23,9 +23,11 @@ function defaultDraft(): VehicleSpec {
 
 export interface VehicleLibraryPanelProps {
   onUseInProject: (item: VehicleLibraryItem) => void;
+  /** Appelé après toute création/modification/suppression, pour que le parent puisse rafraîchir ses propres sélecteurs. */
+  onChanged?: () => void;
 }
 
-export function VehicleLibraryPanel({ onUseInProject }: VehicleLibraryPanelProps) {
+export function VehicleLibraryPanel({ onUseInProject, onChanged }: VehicleLibraryPanelProps) {
   const t = useTranslations('moduleEmpriseLaterale');
   const tCommon = useTranslations('common');
   const [items, setItems] = useState<VehicleLibraryItem[]>([]);
@@ -63,12 +65,14 @@ export function VehicleLibraryPanel({ onUseInProject }: VehicleLibraryPanelProps
     }
     setEditingId(null);
     await refresh();
+    onChanged?.();
   }
 
   async function handleDelete(item: VehicleLibraryItem) {
     if (!window.confirm(tCommon('actions.confirmDelete'))) return;
     await library.deleteItem(item.id);
     await refresh();
+    onChanged?.();
   }
 
   return (

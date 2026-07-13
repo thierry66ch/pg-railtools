@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   EnvironmentTransfer,
@@ -8,6 +8,7 @@ import {
   NumberInput,
   ProjectManager,
   ResultPageLayout,
+  itemLibrary,
   updateProject,
   type DrawingScale,
   type Project,
@@ -15,6 +16,7 @@ import {
 } from '@railtools/commun';
 import versionInfo from '../../version.json';
 import {
+  segmentFromLibraryItem,
   vehicleSpecFromLibraryItem,
   type CalcStepMm,
   type EmpriseLateraleProjectData,
@@ -23,7 +25,7 @@ import {
   type VehicleLibraryItem,
   type VehicleSpec,
 } from '../types';
-import { computeChanfrein } from '../math/vehicle';
+import { angleFromChanfreinHypotenuse, chanfreinHypotenuseFromLtaper, computeChanfrein } from '../math/vehicle';
 import { maxSRear, validateTrack } from '../math/track';
 import { VehicleLibraryPanel } from './VehicleLibraryPanel';
 import { TrackElementLibraryPanel } from './TrackElementLibraryPanel';
@@ -40,6 +42,9 @@ const DEFAULT_DRAWING_SCALE: DrawingScale = { mode: 'fit' };
 const CALC_STEP_OPTIONS: CalcStepMm[] = [5, 10, 20, 50];
 const MAX_SEGMENTS = 10;
 
+const vehicleLibrary = itemLibrary<VehicleLibraryItem>(MODULE_ID, 'vehicle');
+const trackElementLibrary = itemLibrary<TrackElementLibraryItem>(MODULE_ID, 'trackElement');
+
 function defaultVehicle(): VehicleSpec {
   return {
     name: '',
@@ -49,12 +54,6 @@ function defaultVehicle(): VehicleSpec {
     angleBiaisExtremiteDeg: 90,
     empattementMm: 180,
   };
-}
-
-function segmentFromLibraryItem(item: TrackElementLibraryItem): TrackSegment {
-  return item.type === 'line'
-    ? { type: 'line', lengthMm: item.lengthMm }
-    : { type: 'curve', radiusMm: item.radiusMm, angleDeg: item.angleDeg, direction: 'left' };
 }
 
 export function EmpriseLateraleModulePage() {
@@ -74,8 +73,30 @@ export function EmpriseLateraleModulePage() {
   const [projectListVersion, setProjectListVersion] = useState(0);
   const svgRef = useRef<SVGSVGElement>(null);
 
+  // Listes de bibliothèque tenues au niveau de la page (pas seulement dans les panneaux
+  // dédiés) pour alimenter les sélecteurs "puiser dans la bibliothèque" directement dans
+  // le formulaire véhicule et dans chaque cadre de segment — évite d'avoir à défiler
+  // jusqu'aux panneaux de bibliothèque en bas de page à chaque insertion.
+  const [vehicleLibraryItems, setVehicleLibraryItems] = useState<VehicleLibraryItem[]>([]);
+  const [trackElementLibraryItems, setTrackElementLibraryItems] = useState<TrackElementLibraryItem[]>([]);
+  const [libraryVersion, setLibraryVersion] = useState(0);
+
+  useEffect(() => {
+    void vehicleLibrary.listItems().then(setVehicleLibraryItems);
+    void trackElementLibrary.listItems().then(setTrackElementLibraryItems);
+  }, [libraryVersion]);
+
   const vehicleResult = useMemo(() => computeChanfrein(vehicle), [vehicle]);
   const trackResult = useMemo(() => validateTrack(track, vehicle.empattementMm), [track, vehicle.empattementMm]);
+  const chanfreinHypotenuseMm = vehicleResult.ok
+    ? Math.round(chanfreinHypotenuseFromLtaper(vehicle, vehicleResult.value.ltaperMm) * 10) / 10
+    : 0;
+
+  function handleChanfreinHypotenuseChange(nextHypotenuseMm: number) {
+    const angleDeg = angleFromChanfreinHypotenuse(vehicle, nextHypotenuseMm);
+    if (angleDeg === undefined) return;
+    setVehicle({ ...vehicle, angleBiaisExtremiteDeg: Math.round(angleDeg * 10) / 10 });
+  }
 
   function createDefaultData(): EmpriseLateraleProjectData {
     return { vehicle, track, calcStepMm, marginMm, drawingScale };
@@ -152,8 +173,8 @@ export function EmpriseLateraleModulePage() {
               t('vehicle.fields.length'),
               t('vehicle.fields.widthMax'),
               t('vehicle.fields.widthEnd'),
-              t('vehicle.fields.angle'),
               t('vehicle.fields.wheelbase'),
+              t('vehicle.fields.angle'),
               t('summary.chanfreinLength'),
             ],
             rows: [
@@ -162,9 +183,9 @@ export function EmpriseLateraleModulePage() {
                 vehicle.longueurCaisseMm,
                 vehicle.largeurCaisseMaxMm,
                 vehicle.largeurCaisseExtremiteMm,
-                vehicle.angleBiaisExtremiteDeg,
                 vehicle.empattementMm,
-                vehicleResult.value.ltaperMm.toFixed(1),
+                vehicle.angleBiaisExtremiteDeg,
+                chanfreinHypotenuseMm.toFixed(1),
               ],
             ],
           },
@@ -184,6 +205,26 @@ export function EmpriseLateraleModulePage() {
     <ResultPageLayout title={t('title')} description={t('description')} version={versionInfo}>
       <div className="rt-section">
         <h3 className="rt-section-title">{t('vehicle.title')}</h3>
+        {vehicleLibraryItems.length > 0 && (
+          <label className="rt-field rt-field--inline">
+            <span>{t('vehicle.fromLibrary')}</span>
+            <select
+              className="rt-select"
+              value=""
+              onChange={(event) => {
+                const item = vehicleLibraryItems.find((candidate) => candidate.id === event.target.value);
+                if (item) setVehicle(vehicleSpecFromLibraryItem(item));
+              }}
+            >
+              <option value="">{t('vehicle.fromLibraryPlaceholder')}</option>
+              {vehicleLibraryItems.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         <div className="rt-toolbar">
           <label className="rt-field">
             <span>{t('vehicle.fields.name')}</span>
@@ -215,6 +256,10 @@ export function EmpriseLateraleModulePage() {
             />
           </label>
           <label className="rt-field">
+            <span>{t('vehicle.fields.wheelbase')}</span>
+            <NumberInput value={vehicle.empattementMm} onChange={(v) => setVehicle({ ...vehicle, empattementMm: v })} />
+          </label>
+          <label className="rt-field">
             <span>{t('vehicle.fields.angle')}</span>
             <NumberInput
               value={vehicle.angleBiaisExtremiteDeg}
@@ -222,17 +267,8 @@ export function EmpriseLateraleModulePage() {
             />
           </label>
           <label className="rt-field">
-            <span>{t('vehicle.fields.wheelbase')}</span>
-            <NumberInput value={vehicle.empattementMm} onChange={(v) => setVehicle({ ...vehicle, empattementMm: v })} />
-          </label>
-          <label className="rt-field">
             <span>{t('summary.chanfreinLength')}</span>
-            <input
-              className="rt-input"
-              readOnly
-              disabled
-              value={vehicleResult.ok ? `${vehicleResult.value.ltaperMm.toFixed(1)} mm` : '—'}
-            />
+            <NumberInput value={chanfreinHypotenuseMm} onChange={handleChanfreinHypotenuseChange} />
           </label>
           {activeProjectId && (
             <button type="button" className="rt-button" onClick={() => void handleSave()}>
@@ -258,6 +294,7 @@ export function EmpriseLateraleModulePage() {
             isFirst={index === 0}
             isLast={index === track.length - 1}
             canRemove={track.length > 1}
+            libraryItems={trackElementLibraryItems}
             onChange={(next) => updateSegment(index, next)}
             onRemove={() => removeSegment(index)}
             onMoveUp={() => moveSegment(index, -1)}
@@ -338,8 +375,11 @@ export function EmpriseLateraleModulePage() {
         </>
       )}
 
-      <VehicleLibraryPanel onUseInProject={handleUseVehicle} />
-      <TrackElementLibraryPanel onUseInProject={handleUseTrackElement} />
+      <VehicleLibraryPanel onUseInProject={handleUseVehicle} onChanged={() => setLibraryVersion((v) => v + 1)} />
+      <TrackElementLibraryPanel
+        onUseInProject={handleUseTrackElement}
+        onChanged={() => setLibraryVersion((v) => v + 1)}
+      />
 
       <ProjectManager<EmpriseLateraleProjectData>
         key={projectListVersion}

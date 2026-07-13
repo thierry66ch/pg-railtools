@@ -18,9 +18,11 @@ function defaultDraft(): Draft {
 
 export interface TrackElementLibraryPanelProps {
   onUseInProject: (item: TrackElementLibraryItem) => void;
+  /** Appelé après toute création/modification/suppression, pour que le parent puisse rafraîchir ses propres sélecteurs. */
+  onChanged?: () => void;
 }
 
-export function TrackElementLibraryPanel({ onUseInProject }: TrackElementLibraryPanelProps) {
+export function TrackElementLibraryPanel({ onUseInProject, onChanged }: TrackElementLibraryPanelProps) {
   const t = useTranslations('moduleEmpriseLaterale');
   const tCommon = useTranslations('common');
   const [items, setItems] = useState<TrackElementLibraryItem[]>([]);
@@ -64,12 +66,14 @@ export function TrackElementLibraryPanel({ onUseInProject }: TrackElementLibrary
     }
     setEditingId(null);
     await refresh();
+    onChanged?.();
   }
 
   async function handleDelete(item: TrackElementLibraryItem) {
     if (!window.confirm(tCommon('actions.confirmDelete'))) return;
     await library.deleteItem(item.id);
     await refresh();
+    onChanged?.();
   }
 
   function describe(item: TrackElementLibraryItem): string {

@@ -1,5 +1,37 @@
 # Changelog — module-empriselaterale
 
+## 0.3 — 2026-07-13
+
+Retours d'usage sur les bibliothèques et la saisie du véhicule (v0.2) :
+
+- **Sélecteurs de bibliothèque en place** : un sélecteur « Charger depuis la
+  bibliothèque » apparaît désormais directement dans le formulaire véhicule et dans
+  chaque cadre de segment de tracé (au lieu de devoir descendre jusqu'aux panneaux de
+  bibliothèque en bas de page, choisir « Utiliser dans le projet », puis remonter). Les
+  listes de bibliothèque sont désormais tenues au niveau de la page et rafraîchies dès
+  qu'un élément est ajouté/modifié/supprimé dans un panneau (`onChanged` propagé vers un
+  compteur de version côté page, sur le même principe que le rafraîchissement de
+  `ProjectManager` après import en vrac). Les boutons « Utiliser dans le projet » des
+  panneaux restent disponibles en complément, pas remplacés.
+- **Empattement déplacé avant l'angle de biais**, qui vient maintenant juste à côté de la
+  longueur du chanfrein — les deux ouverts à la modification et liés dans les deux sens.
+- **Longueur du chanfrein éditable et redéfinie comme l'HYPOTÉNUSE** du triangle du
+  chanfrein (`Math.hypot(Ltaper, (Wmax−Wend)/2)`), pas l'ancien `Ltaper` (le côté le long
+  de l'axe) : c'est la longueur qu'un modéliste mesure réellement au double-décimètre sur
+  une maquette, sans avoir à repérer précisément l'axe longitudinal. Modifier l'angle
+  recalcule le chanfrein ; modifier le chanfrein recalcule l'angle
+  (`angleFromChanfreinHypotenuse`, via `asin`). `Ltaper` reste utilisé en interne pour la
+  géométrie du contour (`vehicleContourLocalPoints`) et pour la validation
+  `chanfrein-trop-long`, inchangée.
+  - Piège évité : un champ contrôlé dont la valeur est recalculée par aller-retour
+    trigonométrique (asin/sin) n'est quasiment jamais bit-exact à la frappe — sans
+    arrondi, `NumberInput` re-synchronisait le texte affiché vers une valeur à 17
+    décimales à chaque frappe (`parseDecimal(text) !== value` déclenchant son `useEffect`
+    de resynchronisation). Arrondi à 0.1 mm (chanfrein) / 0.1° (angle) après chaque
+    recalcul pour que l'aller-retour soit stable pour une frappe normale — vérifié en
+    tapant caractère par caractère via de vrais événements clavier, aucun figeage ni
+    valeur parasite affichée pendant la frappe.
+
 ## 0.2 — 2026-07-13
 
 Retours d'usage sur la v0.1 déployée :

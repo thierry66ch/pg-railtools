@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { IconButton, IconTrash, NumberInput } from '@railtools/commun';
-import type { TrackDirection, TrackSegment, TrackSegmentType } from '../types';
+import { segmentFromLibraryItem, type TrackDirection, type TrackElementLibraryItem, type TrackSegment, type TrackSegmentType } from '../types';
 
 export interface TrackSegmentEditorProps {
   segment: TrackSegment;
@@ -10,6 +10,7 @@ export interface TrackSegmentEditorProps {
   isFirst: boolean;
   isLast: boolean;
   canRemove: boolean;
+  libraryItems: TrackElementLibraryItem[];
   onChange: (segment: TrackSegment) => void;
   onRemove: () => void;
   onMoveUp: () => void;
@@ -28,6 +29,7 @@ export function TrackSegmentEditor({
   isFirst,
   isLast,
   canRemove,
+  libraryItems,
   onChange,
   onRemove,
   onMoveUp,
@@ -78,6 +80,27 @@ export function TrackSegmentEditor({
           />
         </div>
       </div>
+
+      {libraryItems.length > 0 && (
+        <label className="rt-field rt-field--inline">
+          <span>{t('trackSegment.fromLibrary')}</span>
+          <select
+            className="rt-select"
+            value=""
+            onChange={(event) => {
+              const item = libraryItems.find((candidate) => candidate.id === event.target.value);
+              if (item) onChange(segmentFromLibraryItem(item));
+            }}
+          >
+            <option value="">{t('trackSegment.fromLibraryPlaceholder')}</option>
+            {libraryItems.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
 
       <div className="rt-toolbar">
         <label className="rt-field">
