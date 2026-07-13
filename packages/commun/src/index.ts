@@ -3,6 +3,7 @@ export * from './units';
 export * from './drawing';
 export * from './storage';
 export * from './projects';
+export * from './library';
 export * from './transfer/files';
 export * from './transfer/bulk';
 export * from './export';

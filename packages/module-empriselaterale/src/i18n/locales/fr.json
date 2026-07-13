@@ -1,4 +1,42 @@
 {
   "title": "Emprise latérale",
-  "description": "Calcule et visualise l'emprise latérale balayée par un véhicule ferroviaire (caisse guidée par deux essieux/bogies) le long d'un tracé composé de droites et de courbes, afin de vérifier les dégagements nécessaires en courbe."
+  "description": "Calcule et visualise l'emprise latérale balayée par un véhicule ferroviaire (caisse guidée par deux essieux/bogies) le long d'un tracé composé de droites et de courbes, afin de vérifier les dégagements nécessaires en courbe.",
+  "trackSegment": {
+    "type": {
+      "line": "Droit",
+      "curve": "Courbe"
+    }
+  },
+  "library": {
+    "useInProject": "Utiliser dans le projet",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "vehicles": {
+      "title": "Bibliothèque de véhicules",
+      "empty": "Aucun véhicule enregistré pour l'instant.",
+      "add": "Ajouter un véhicule",
+      "fields": {
+        "name": "Nom",
+        "length": "Longueur caisse (mm)",
+        "widthMax": "Largeur max (mm)",
+        "widthEnd": "Largeur extrémité (mm)",
+        "angle": "Angle de biais (°)",
+        "wheelbase": "Empattement (mm)"
+      }
+    },
+    "trackElements": {
+      "title": "Bibliothèque d'éléments de voie",
+      "empty": "Aucun élément de voie enregistré pour l'instant.",
+      "add": "Ajouter un élément",
+      "summaryLine": "droit, {length} mm",
+      "summaryCurve": "courbe, R={radius} mm, {angle}°",
+      "fields": {
+        "name": "Nom",
+        "type": "Type",
+        "length": "Longueur (mm)",
+        "radius": "Rayon (mm)",
+        "angle": "Angle (°)"
+      }
+    }
+  }
 }
