@@ -21,3 +21,22 @@ d'autres modules futurs devraient avoir le même besoin avec des formes d'item d
 Le moteur de tracé (abscisse curviligne sur une polyligne droites+courbes) reste en
 revanche propre à ce module pour cette livraison — à réévaluer comme candidat commun
 seulement si un futur module (ex. piquetage) en a besoin.
+
+Validations bloquantes du véhicule (largeur d'extrémité > largeur max, chanfrein dépassant
+le milieu de la caisse, incohérence largeurs à angle de biais nul, empattement > longueur
+caisse) et du tracé (empattement > longueur totale du tracé, segment dégénéré), chacune
+avec un message identifiant le paramètre en cause.
+
+Dessin : axe du tracé + 6 polylignes d'emprise colorées (AVG/AVD/MG/MD/ARG/ARD) + silhouette
+de la caisse à la position d'animation courante, à l'échelle de dessin choisie (1:1 à 1:50
+ou "fit") avec échelle graduée et légende — volontairement sans cotes techniques
+(`LengthCote`/`RadiusCote`/`AngleCote`) : c'est un tracé/graphe d'emprise balayée, pas un
+dessin coté façon CAO comme `module-arc`.
+
+Exports (PDF/Markdown/PNG) : le résumé reprend le nom du véhicule saisi et ses
+caractéristiques ; le dessin exporté représente le véhicule tel que placé par l'animation
+au moment de l'export (silhouette à la position courante, pas une vue générique). Vérifié
+dans le navigateur : cycle projet complet (créer/enregistrer/recharger/rouvrir), export/
+import d'environnement en vrac, PDF (texte du cartouche et du tableau décodés et vérifiés,
+image embarquée non vide), Markdown (nom de projet + véhicule présents), PNG réellement
+transparent (échantillonné pixel par pixel), zéro erreur console.

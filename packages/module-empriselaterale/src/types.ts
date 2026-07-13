@@ -14,6 +14,18 @@ export interface VehicleLibraryItem extends VehicleSpec {
   id: string;
 }
 
+/** Copie figée d'un item de bibliothèque en `VehicleSpec` (sans `id`), pour insertion dans un projet. */
+export function vehicleSpecFromLibraryItem(item: VehicleLibraryItem): VehicleSpec {
+  return {
+    name: item.name,
+    longueurCaisseMm: item.longueurCaisseMm,
+    largeurCaisseMaxMm: item.largeurCaisseMaxMm,
+    largeurCaisseExtremiteMm: item.largeurCaisseExtremiteMm,
+    angleBiaisExtremiteDeg: item.angleBiaisExtremiteDeg,
+    empattementMm: item.empattementMm,
+  };
+}
+
 export type TrackSegmentType = 'line' | 'curve';
 export type TrackDirection = 'left' | 'right';
 

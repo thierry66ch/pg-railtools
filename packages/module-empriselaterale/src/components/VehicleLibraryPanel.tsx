@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { IconButton, IconFolderOpen, IconPencil, IconPlus, IconTrash, NumberInput, itemLibrary } from '@railtools/commun';
-import type { VehicleLibraryItem, VehicleSpec } from '../types';
+import { vehicleSpecFromLibraryItem, type VehicleLibraryItem, type VehicleSpec } from '../types';
 
 const MODULE_ID = 'empriselaterale';
 const KIND = 'vehicle';
@@ -46,8 +46,7 @@ export function VehicleLibraryPanel({ onUseInProject }: VehicleLibraryPanelProps
   }
 
   function startEdit(item: VehicleLibraryItem) {
-    const { id: _id, ...rest } = item;
-    setDraft(rest);
+    setDraft(vehicleSpecFromLibraryItem(item));
     setEditingId(item.id);
   }
 

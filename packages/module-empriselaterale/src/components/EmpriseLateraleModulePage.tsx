@@ -15,13 +15,14 @@ import {
   type ResultData,
 } from '@railtools/commun';
 import versionInfo from '../../version.json';
-import type {
-  CalcStepMm,
-  EmpriseLateraleProjectData,
-  TrackElementLibraryItem,
-  TrackSegment,
-  VehicleLibraryItem,
-  VehicleSpec,
+import {
+  vehicleSpecFromLibraryItem,
+  type CalcStepMm,
+  type EmpriseLateraleProjectData,
+  type TrackElementLibraryItem,
+  type TrackSegment,
+  type VehicleLibraryItem,
+  type VehicleSpec,
 } from '../types';
 import { computeChanfrein } from '../math/vehicle';
 import { maxSRear, validateTrack } from '../math/track';
@@ -103,8 +104,7 @@ export function EmpriseLateraleModulePage() {
   }
 
   function handleUseVehicle(item: VehicleLibraryItem) {
-    const { id: _id, ...rest } = item;
-    setVehicle(rest);
+    setVehicle(vehicleSpecFromLibraryItem(item));
   }
 
   function handleUseTrackElement(item: TrackElementLibraryItem) {

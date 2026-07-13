@@ -41,8 +41,13 @@ export function TrackElementLibraryPanel({ onUseInProject }: TrackElementLibrary
   }
 
   function startEdit(item: TrackElementLibraryItem) {
-    const { id: _id, ...rest } = item;
-    setDraft(rest);
+    setDraft({
+      name: item.name,
+      type: item.type,
+      lengthMm: item.lengthMm,
+      radiusMm: item.radiusMm,
+      angleDeg: item.angleDeg,
+    });
     setEditingId(item.id);
   }
 

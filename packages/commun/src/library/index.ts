@@ -83,8 +83,9 @@ export function itemLibrary<T extends LibraryItem>(moduleId: string, kind: strin
     if (!existing) {
       throw new Error(`Library item ${id} not found for ${moduleId}/${kind}`);
     }
-    const { id: _existingId, ...rest } = existing;
-    return createItem({ ...rest, name: newName ?? `${existing.name} (copie)` } as Omit<T, 'id'>);
+    const rest = { ...existing };
+    delete (rest as Partial<T>).id;
+    return createItem({ ...rest, name: newName ?? `${existing.name} (copie)` });
   }
 
   return { listItems, createItem, updateItem, deleteItem, duplicateItem };
