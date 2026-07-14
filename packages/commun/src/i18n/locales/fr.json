@@ -3,6 +3,7 @@
     "exportPdf": "Exporter en PDF",
     "exportMarkdown": "Exporter en Markdown",
     "exportPng": "Exporter en PNG",
+    "exportSvg": "Exporter en SVG",
     "exportProject": "Exporter ce projet",
     "importProject": "Importer un projet",
     "exportEnvironment": "Exporter tout l'environnement",

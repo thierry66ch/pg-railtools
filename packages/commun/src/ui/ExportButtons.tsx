@@ -3,10 +3,11 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { IconButton } from './IconButton';
-import { IconFilePdf, IconFileText, IconImage } from './icons';
+import { IconFilePdf, IconFileSvg, IconFileText, IconImage } from './icons';
 import { exportElementToPdfFile, type PdfPageFormat } from '../export/pdf';
 import { exportResultToMarkdownFile } from '../export/markdown';
 import { exportSvgToPngFile, svgMarkupToPngDataUrl } from '../export/png';
+import { exportSvgToSvgFile } from '../export/svg';
 import type { ResultData } from '../export/types';
 
 const APP_NAME = 'RailTools';
@@ -49,6 +50,7 @@ export function ExportButtons({
   const t = useTranslations('common');
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [isExportingPng, setIsExportingPng] = useState(false);
+  const [isExportingSvg, setIsExportingSvg] = useState(false);
   const [isExportingMarkdown, setIsExportingMarkdown] = useState(false);
   const [pdfFormat, setPdfFormat] = useState<PdfPageFormat>('a4-landscape');
 
@@ -97,6 +99,17 @@ export function ExportButtons({
     }
   }
 
+  function handleSvg() {
+    const svg = getSvgElement?.();
+    if (!svg) return;
+    setIsExportingSvg(true);
+    try {
+      exportSvgToSvgFile(svg, `${filenameBase}.svg`);
+    } finally {
+      setIsExportingSvg(false);
+    }
+  }
+
   return (
     <div className="rt-toolbar" style={{ alignItems: 'flex-end' }}>
       <label className="rt-field">
@@ -131,6 +144,14 @@ export function ExportButtons({
           icon={<IconImage />}
           onClick={() => void handlePng()}
           disabled={isExportingPng}
+        />
+      )}
+      {getSvgElement && (
+        <IconButton
+          label={t('actions.exportSvg')}
+          icon={<IconFileSvg />}
+          onClick={handleSvg}
+          disabled={isExportingSvg}
         />
       )}
     </div>
