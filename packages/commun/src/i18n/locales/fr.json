@@ -29,7 +29,8 @@
     "resetZoom": "Réinitialiser le zoom"
   },
   "export": {
-    "pdfFormat": "Format PDF"
+    "pdfFormat": "Format PDF",
+    "svgSizeLabel": "Dimensions export"
   },
   "language": {
     "select": "Langue"

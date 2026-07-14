@@ -4,6 +4,23 @@ Toutes les évolutions fonctionnelles notables de la base commune sont document�
 Format de version : majeur.mineur (voir §9 du cahier des charges). Chaque module a son propre
 `CHANGELOG.md` (ex. [packages/module-demo/CHANGELOG.md](packages/module-demo/CHANGELOG.md)).
 
+## 1.13 — 2026-07-14
+
+- **Calibrage manuel de secours pour l'export SVG** (`packages/commun/export/svg.ts`) :
+  retour d'usage réel — certains logiciels CAD importent le SVG mais ignorent les
+  attributs `width`/`height` en mm posés en v1.12 (aucun calibrage automatique à
+  l'ouverture). Deux ajouts pour permettre un calibrage manuel fiable :
+  - Un **bandeau texte** (« Dimensions export : W × H mm ») est désormais dessiné juste
+    sous le contenu du dessin exporté (viewBox agrandi en hauteur uniquement, x/y/largeur
+    d'origine préservés — jamais de chevauchement avec la géométrie ni la légende/barre
+    d'échelle existantes). Bien plus précis qu'une lecture visuelle sur l'échelle graduée
+    du dessin.
+  - Les **mêmes dimensions apparaissent dans le nom du fichier téléchargé**
+    (`..._260x95.1mm.svg`), lisibles sans avoir à rouvrir le fichier.
+  - `exportSvgToSvgFile` prend désormais `filenameBase` **sans extension** (le suffixe de
+    taille et `.svg` sont ajoutés par la fonction elle-même) — signature changée en
+    conséquence côté `ExportButtons`.
+
 ## 1.12 — 2026-07-14
 
 - **Nouvel export SVG** (`packages/commun`) : bouton d'export ajouté à `ExportButtons`

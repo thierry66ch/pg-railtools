@@ -104,7 +104,7 @@ export function ExportButtons({
     if (!svg) return;
     setIsExportingSvg(true);
     try {
-      exportSvgToSvgFile(svg, `${filenameBase}.svg`);
+      exportSvgToSvgFile(svg, filenameBase, t('export.svgSizeLabel'));
     } finally {
       setIsExportingSvg(false);
     }
