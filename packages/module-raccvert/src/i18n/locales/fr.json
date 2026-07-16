@@ -1,4 +1,74 @@
 {
   "title": "Sommet Vertical",
-  "description": "Calcule le raccordement en profil en long de deux tronçons de voie de pentes différentes par un arc de cercle, et matérialise cet arc par une polyligne de segments plats de voie. Hypothèse : approximation des petits angles (pentes très inférieures à 100 %). Ne prend pas en compte le dévers, les tolérances de pose, ni les règles de construction spécifiques à un réseau ou un écartement donné."
+  "description": "Calcule le raccordement en profil en long de deux tronçons de voie de pentes différentes par un arc de cercle, et matérialise cet arc par une polyligne de segments plats de voie. Hypothèse : approximation des petits angles (pentes très inférieures à 100 %). Ne prend pas en compte le dévers, les tolérances de pose, ni les règles de construction spécifiques à un réseau ou un écartement donné.",
+  "common": {
+    "i0": "Pente amont i₀ (‰)",
+    "iN": "Pente aval iₙ (‰)",
+    "kV": "Abscisse du sommet K_V (mm)",
+    "hV": "Altitude du sommet H_V (mm)",
+    "decimals": "Décimales affichées",
+    "horizonH": "Ligne d'horizon (mm)"
+  },
+  "approach": {
+    "label": "Approche",
+    "approche1": "Approche 1 — Arc défini, segments déduits",
+    "approche2": "Approche 2 — Segments imposés, arc déduit"
+  },
+  "approche1": {
+    "part1": {
+      "label": "Définition de l'arc",
+      "radius": "Rayon R (mm, signé)",
+      "sagitta": "Flèche f (mm)",
+      "tangent": "Tangente T (mm)"
+    },
+    "part2": {
+      "label": "Matérialisation par segments",
+      "deltaITarget": "Δi cible (‰)",
+      "length": "Longueur de segment L imposée (mm)"
+    }
+  },
+  "approche2": {
+    "subMode": {
+      "label": "Mode",
+      "2a": "n et L imposés",
+      "2b": "L et Δi cible imposés"
+    },
+    "n": "Nombre de segments n",
+    "length": "Longueur de segment L (mm)",
+    "deltaI2b": "Δi cible (‰)"
+  },
+  "result": {
+    "summary": {
+      "r": "R",
+      "f": "f",
+      "t": "T",
+      "n": "n",
+      "lEff": "L",
+      "deltaIEff": "Δi eff.",
+      "rInt": "R_int"
+    }
+  },
+  "table": {
+    "pointsCles": {
+      "title": "Points clés (arc théorique)",
+      "point": "Point",
+      "k": "K (mm)",
+      "h": "H (mm)",
+      "gradeBefore": "i avant (‰)",
+      "gradeAfter": "i après (‰)"
+    },
+    "sommets": {
+      "title": "Sommets de la polyligne rouge (segments matérialisés)",
+      "index": "Point"
+    }
+  },
+  "errors": {
+    "delta-i-zero": "Les deux pentes sont identiques : raccordement impossible.",
+    "radius-zero": "Le rayon ne peut pas être nul.",
+    "sagitta-not-positive": "La flèche doit être strictement positive.",
+    "tangent-not-positive": "La tangente doit être strictement positive.",
+    "delta-target-not-positive": "Le Δi cible doit être strictement positif.",
+    "length-not-positive": "La longueur de segment doit être strictement positive.",
+    "segments-not-positive-integer": "Le nombre de segments doit être un entier positif."
+  }
 }
