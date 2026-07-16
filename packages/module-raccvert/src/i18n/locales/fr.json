@@ -7,7 +7,8 @@
     "kV": "Abscisse du sommet K_V (mm)",
     "hV": "Altitude du sommet H_V (mm)",
     "decimals": "Décimales affichées",
-    "horizonH": "Ligne d'horizon (mm)"
+    "horizonH": "Ligne d'horizon (mm)",
+    "verticalExaggeration": "Déformation verticale"
   },
   "approach": {
     "label": "Approche",
