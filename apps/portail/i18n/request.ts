@@ -4,6 +4,7 @@ import { DEFAULT_LOCALE, LOCALE_COOKIE_NAME, commonMessages, isSupportedLocale }
 import { demoMessages } from '@railtools/module-demo';
 import { arcMessages } from '@railtools/module-arc';
 import { empriseLateraleMessages } from '@railtools/module-empriselaterale';
+import { raccVertMessages } from '@railtools/module-raccvert';
 import { portailMessages } from './messages';
 
 export default getRequestConfig(async () => {
@@ -20,6 +21,7 @@ export default getRequestConfig(async () => {
       moduleDemo: demoMessages[locale],
       moduleArc: arcMessages[locale],
       moduleEmpriseLaterale: empriseLateraleMessages[locale],
+      moduleRaccVert: raccVertMessages[locale],
     },
   };
 });

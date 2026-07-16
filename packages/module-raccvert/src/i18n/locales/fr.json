@@ -1,0 +1,4 @@
+{
+  "title": "Sommet Vertical",
+  "description": "Calcule le raccordement en profil en long de deux tronçons de voie de pentes différentes par un arc de cercle, et matérialise cet arc par une polyligne de segments plats de voie. Hypothèse : approximation des petits angles (pentes très inférieures à 100 %). Ne prend pas en compte le dévers, les tolérances de pose, ni les règles de construction spécifiques à un réseau ou un écartement donné."
+}

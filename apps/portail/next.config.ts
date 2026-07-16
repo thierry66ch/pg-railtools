@@ -9,6 +9,7 @@ const nextConfig: NextConfig = {
     '@railtools/module-demo',
     '@railtools/module-arc',
     '@railtools/module-empriselaterale',
+    '@railtools/module-raccvert',
   ],
 };
 
