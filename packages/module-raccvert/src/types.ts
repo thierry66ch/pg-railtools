@@ -19,12 +19,14 @@ export interface RaccVertProjectData {
   tangentMm: number;
   approche1Part2Mode: Approche1Part2Mode;
   deltaITargetPerMille: number;
+  deltaITargetDeg: number;
   approche1LengthMm: number;
 
   approche2SubMode: Approche2SubMode;
   nSegments: number;
   approche2LengthMm: number;
   deltaI2bPerMille: number;
+  deltaI2bDeg: number;
 
   decimals: number;
   drawingScale: DrawingScale;

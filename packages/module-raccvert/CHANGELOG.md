@@ -1,5 +1,34 @@
 # Changelog — module-raccvert
 
+## 1.1 — 2026-07-17
+
+Retouches suite aux premiers retours d'usage réel :
+
+- Valeurs par défaut d'un nouveau projet rendues plus lisibles (i₀=−40‰, iₙ=30‰, R=500mm,
+  Δi cible=30‰) — la courbe est désormais nettement visible dès l'ouverture du module.
+- Libellé "Rayon R (mm, signé)" simplifié en "Rayon R (mm)".
+- Nouvelle colonne "Δi (°)" dans les deux tableaux (points clés et sommets de la polyligne) :
+  écart de pente avant/après converti en degrés (même convention petits angles que le reste
+  du module, pas de conversion trigonométrique).
+- Champs "Δi cible (°)" ajoutés à côté des champs "Δi cible (‰)" existants (Approche 1
+  Partie 2 et Approche 2 option 2b), liés dans les deux sens : modifier l'un recalcule
+  l'autre.
+- Ligne d'horizon : champ déplacé à côté du sélecteur d'échelle/déformation verticale (plus
+  visible, juste au-dessus du dessin, au lieu d'être isolé après les deux tableaux) ; la
+  suggestion automatique arrondit désormais au 10mm inférieur (au lieu de 100mm) — évitait
+  un retour utilisateur où la valeur proposée "tombait" parfois à 0, très loin de la courbe.
+- **Correctif export PDF** : le `resultData` du module n'activait jamais
+  `pageBreakBeforeTable`, contrairement à module-arc — en paysage, les deux tableaux
+  (points clés + sommets) partageaient la page 1 avec le dessin et débordaient hors page
+  (seul le premier tableau, tronqué, restait visible). Les deux tableaux passent
+  maintenant systématiquement en page 2.
+- **Correctif export PDF** : l'échelle de dessin "ajustée à la page" ne prenait en compte
+  que la géométrie, pas les marges des axes gradués ni la barre d'échelle — le SVG exporté
+  (212mm de large) débordait la largeur utile d'une page portrait (~190mm). `FIT_TARGET_MM`
+  recalculé pour que la taille TOTALE du SVG exporté (marges comprises) reste sous la
+  largeur/hauteur utile la plus contraignante des 4 formats PDF ; vérifié par export réel
+  (paysage et portrait) : dessin désormais à 150×61.8mm dans les deux cas.
+
 ## 1.0 — 2026-07-16
 
 Première version fonctionnelle complète du module :

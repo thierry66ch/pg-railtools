@@ -51,30 +51,56 @@ import type {
 
 const MODULE_ID = 'raccvert';
 
-const DEFAULT_I0_PER_MILLE = 15;
-const DEFAULT_IN_PER_MILLE = -15;
+const DEFAULT_I0_PER_MILLE = -40;
+const DEFAULT_IN_PER_MILLE = 30;
 const DEFAULT_KV_MM = 0;
 const DEFAULT_HV_MM = 100;
-const DEFAULT_RADIUS_MM = -5000;
+const DEFAULT_RADIUS_MM = 500;
 const DEFAULT_SAGITTA_MM = 5;
 const DEFAULT_TANGENT_MM = 100;
-const DEFAULT_DELTA_TARGET_PER_MILLE = 5;
+const DEFAULT_DELTA_TARGET_PER_MILLE = 30;
 const DEFAULT_APPROCHE1_LENGTH_MM = 50;
 const DEFAULT_N_SEGMENTS = 5;
 const DEFAULT_APPROCHE2_LENGTH_MM = 50;
 const DEFAULT_DELTA_I2B_PER_MILLE = 5;
+
+/** Conversion ‰ ↔ ° pour les champs Δi cible liés (mêmes conventions "petits angles" que math/raccvert.ts). */
+function permilleToDeg(permille: number): number {
+  return (permille / 1000) * (180 / Math.PI);
+}
+function degToPermille(deg: number): number {
+  return deg * (Math.PI / 180) * 1000;
+}
+
+const DEFAULT_DELTA_TARGET_DEG = Math.round(permilleToDeg(DEFAULT_DELTA_TARGET_PER_MILLE) * 1000) / 1000;
+const DEFAULT_DELTA_I2B_DEG = Math.round(permilleToDeg(DEFAULT_DELTA_I2B_PER_MILLE) * 1000) / 1000;
 const DEFAULT_DECIMALS = 1;
 const MAX_DECIMALS = 6;
 const DEFAULT_VERTICAL_EXAGGERATION = 5;
 
-/** Dimensions cible (mm de dessin) utilisées par le mode d'échelle de dessin "fit". */
-const FIT_TARGET_MM = { width: 260, height: 180 };
 /** Marges (mm de dessin, fixes) autour de la géométrie — réservées aux axes gradués. */
 const LEFT_MARGIN_MM = 22;
 const RIGHT_MARGIN_MM = 10;
 const TOP_MARGIN_MM = 15;
 const BOTTOM_MARGIN_MM = 15;
 const SCALE_BAR_EXTRA_MM = 20;
+
+/**
+ * Dimensions cible (mm de dessin) utilisées par le mode d'échelle de dessin "fit", pour le
+ * CONTENU (géométrie) uniquement — le SVG exporté est plus grand que ça une fois les marges
+ * ci-dessus ajoutées (axes gradués + barre d'échelle), et c'est bien la taille TOTALE du SVG
+ * qui doit tenir sur la page PDF choisie (image placée à l'échelle réelle, 1mm dessin = 1mm
+ * papier, cf. docs/integration.md §2ter). Cible donc réduite pour qu'une fois les marges
+ * ajoutées, le total reste sous la largeur/hauteur utile la plus contraignante parmi les 4
+ * formats PDF (portrait A4 : ~190mm de large ; page 1 en paysage, une fois cartouche +
+ * description + tableau récapitulatif déjà posés : ~140mm de haut restants) — vérifié par
+ * export réel (bug initial : un FIT_TARGET_MM non ajusté aux marges produisait un SVG de
+ * 212mm de large, débordant les ~190mm utiles d'une page portrait).
+ */
+const FIT_TARGET_MM = {
+  width: 150 - LEFT_MARGIN_MM - RIGHT_MARGIN_MM,
+  height: 80 - TOP_MARGIN_MM - BOTTOM_MARGIN_MM - SCALE_BAR_EXTRA_MM,
+};
 const ARC_STROKE_WIDTH_MM = 1;
 const SEGMENTS_STROKE_WIDTH_MM = 1.2;
 const KEY_POINT_DOT_RADIUS_MM = 1.3;
@@ -112,6 +138,22 @@ function formatNumber(value: number, decimals: number): string {
 /** Pentes affichées en entier (‰), sans décimale — CDC §6.4. */
 function formatGrade(value: number): string {
   return formatFixed(value, 0);
+}
+
+/**
+ * Écart de pente entre "avant" et "après" un point, converti en degrés selon la convention
+ * petits angles déjà utilisée dans tout le module (angle_rad ≈ pente, cf. `deltaIRad =
+ * deltaI/1000` dans math/raccvert.ts) — pas de conversion trigonométrique (atan), qui
+ * introduirait une correction non-linéaire incohérente avec le reste des formules.
+ */
+function deltaIDeg(gradeBeforePerMille?: number, gradeAfterPerMille?: number): number | undefined {
+  if (gradeBeforePerMille === undefined || gradeAfterPerMille === undefined) return undefined;
+  return ((gradeAfterPerMille - gradeBeforePerMille) / 1000) * (180 / Math.PI);
+}
+
+/** Angles de déviation affichés avec 2 décimales fixes, indépendamment des décimales globales. */
+function formatDeltaIDeg(value: number): string {
+  return formatFixed(value, 2);
 }
 
 /** "Pas" arrondi (1/2/5 × 10^n) pour une graduation lisible, visant environ `targetTicks` ticks. */
@@ -318,12 +360,14 @@ export function RaccVertModulePage() {
   const [tangentMm, setTangentMm] = useState(DEFAULT_TANGENT_MM);
   const [approche1Part2Mode, setApproche1Part2Mode] = useState<Approche1Part2Mode>('deltaITarget');
   const [deltaITargetPerMille, setDeltaITargetPerMille] = useState(DEFAULT_DELTA_TARGET_PER_MILLE);
+  const [deltaITargetDeg, setDeltaITargetDeg] = useState(DEFAULT_DELTA_TARGET_DEG);
   const [approche1LengthMm, setApproche1LengthMm] = useState(DEFAULT_APPROCHE1_LENGTH_MM);
 
   const [approche2SubMode, setApproche2SubMode] = useState<Approche2SubMode>('2a');
   const [nSegments, setNSegments] = useState(DEFAULT_N_SEGMENTS);
   const [approche2LengthMm, setApproche2LengthMm] = useState(DEFAULT_APPROCHE2_LENGTH_MM);
   const [deltaI2bPerMille, setDeltaI2bPerMille] = useState(DEFAULT_DELTA_I2B_PER_MILLE);
+  const [deltaI2bDeg, setDeltaI2bDeg] = useState(DEFAULT_DELTA_I2B_DEG);
 
   const [decimals, setDecimals] = useState(DEFAULT_DECIMALS);
   const [drawingScale, setDrawingScale] = useState<DrawingScale>({ mode: 'fit' });
@@ -410,6 +454,9 @@ export function RaccVertModulePage() {
           ],
         ],
       },
+      // Le dessin (échelle réelle) occupe déjà toute la page 1 : les deux tableaux passent
+      // systématiquement en page 2, sinon le second (voire les deux) déborde hors page.
+      pageBreakBeforeTable: true,
       tableIntro: {
         headers: [
           t('table.pointsCles.point'),
@@ -417,14 +464,19 @@ export function RaccVertModulePage() {
           t('table.pointsCles.h'),
           t('table.pointsCles.gradeBefore'),
           t('table.pointsCles.gradeAfter'),
+          t('table.pointsCles.deltaIDeg'),
         ],
-        rows: keyPoints.map((p) => [
-          p.name,
-          formatNumber(p.kMm, decimals),
-          formatNumber(p.hMm, decimals),
-          p.gradeBeforePerMille === undefined ? '—' : formatGrade(p.gradeBeforePerMille),
-          p.gradeAfterPerMille === undefined ? '—' : formatGrade(p.gradeAfterPerMille),
-        ]),
+        rows: keyPoints.map((p) => {
+          const deg = deltaIDeg(p.gradeBeforePerMille, p.gradeAfterPerMille);
+          return [
+            p.name,
+            formatNumber(p.kMm, decimals),
+            formatNumber(p.hMm, decimals),
+            p.gradeBeforePerMille === undefined ? '—' : formatGrade(p.gradeBeforePerMille),
+            p.gradeAfterPerMille === undefined ? '—' : formatGrade(p.gradeAfterPerMille),
+            deg === undefined ? '—' : formatDeltaIDeg(deg),
+          ];
+        }),
       },
       table: {
         headers: [
@@ -433,21 +485,29 @@ export function RaccVertModulePage() {
           t('table.pointsCles.h'),
           t('table.pointsCles.gradeBefore'),
           t('table.pointsCles.gradeAfter'),
+          t('table.pointsCles.deltaIDeg'),
         ],
-        rows: polylineVertices.map((v) => [
-          v.index,
-          formatNumber(v.kMm, decimals),
-          formatNumber(v.hMm, decimals),
-          v.gradeBeforePerMille === undefined ? '—' : formatGrade(v.gradeBeforePerMille),
-          v.gradeAfterPerMille === undefined ? '—' : formatGrade(v.gradeAfterPerMille),
-        ]),
+        rows: polylineVertices.map((v) => {
+          const deg = deltaIDeg(v.gradeBeforePerMille, v.gradeAfterPerMille);
+          return [
+            v.index,
+            formatNumber(v.kMm, decimals),
+            formatNumber(v.hMm, decimals),
+            v.gradeBeforePerMille === undefined ? '—' : formatGrade(v.gradeBeforePerMille),
+            v.gradeAfterPerMille === undefined ? '—' : formatGrade(v.gradeAfterPerMille),
+            deg === undefined ? '—' : formatDeltaIDeg(deg),
+          ];
+        }),
       },
     };
   }
 
   if (core && !horizonEdited) {
     const minHMm = Math.min(core.hTcMm, core.hCtMm, core.hPMm);
-    const autoHorizonHMm = Math.floor(minHMm / 100) * 100;
+    // Arrondi au 10 mm inférieur (pas 100 mm, cf. retour utilisateur : la suggestion
+    // pouvait "tomber" jusqu'à 0 si H_min était juste au-dessus d'un multiple de 100 —
+    // 10 mm garde une suggestion toujours proche de la courbe, tout en restant ronde).
+    const autoHorizonHMm = Math.floor(minHMm / 10) * 10;
     if (autoHorizonHMm !== horizonHMm) setHorizonHMm(autoHorizonHMm);
   }
 
@@ -465,6 +525,30 @@ export function RaccVertModulePage() {
     setHorizonHMm(next);
   }
 
+  function handleDeltaITargetPerMilleChange(next: number) {
+    const roundedPerMille = Math.round(next * 100) / 100;
+    setDeltaITargetPerMille(roundedPerMille);
+    setDeltaITargetDeg(Math.round(permilleToDeg(roundedPerMille) * 1000) / 1000);
+  }
+
+  function handleDeltaITargetDegChange(next: number) {
+    const roundedDeg = Math.round(next * 1000) / 1000;
+    setDeltaITargetDeg(roundedDeg);
+    setDeltaITargetPerMille(Math.round(degToPermille(roundedDeg) * 100) / 100);
+  }
+
+  function handleDeltaI2bPerMilleChange(next: number) {
+    const roundedPerMille = Math.round(next * 100) / 100;
+    setDeltaI2bPerMille(roundedPerMille);
+    setDeltaI2bDeg(Math.round(permilleToDeg(roundedPerMille) * 1000) / 1000);
+  }
+
+  function handleDeltaI2bDegChange(next: number) {
+    const roundedDeg = Math.round(next * 1000) / 1000;
+    setDeltaI2bDeg(roundedDeg);
+    setDeltaI2bPerMille(Math.round(degToPermille(roundedDeg) * 100) / 100);
+  }
+
   function createDefaultData(): RaccVertProjectData {
     return {
       i0PerMille,
@@ -478,11 +562,13 @@ export function RaccVertModulePage() {
       tangentMm,
       approche1Part2Mode,
       deltaITargetPerMille,
+      deltaITargetDeg,
       approche1LengthMm,
       approche2SubMode,
       nSegments,
       approche2LengthMm,
       deltaI2bPerMille,
+      deltaI2bDeg,
       decimals,
       drawingScale,
       verticalExaggeration,
@@ -502,11 +588,13 @@ export function RaccVertModulePage() {
     setTangentMm(project.data.tangentMm);
     setApproche1Part2Mode(project.data.approche1Part2Mode);
     setDeltaITargetPerMille(project.data.deltaITargetPerMille);
+    setDeltaITargetDeg(project.data.deltaITargetDeg);
     setApproche1LengthMm(project.data.approche1LengthMm);
     setApproche2SubMode(project.data.approche2SubMode);
     setNSegments(project.data.nSegments);
     setApproche2LengthMm(project.data.approche2LengthMm);
     setDeltaI2bPerMille(project.data.deltaI2bPerMille);
+    setDeltaI2bDeg(project.data.deltaI2bDeg);
     setDecimals(project.data.decimals);
     setDrawingScale(project.data.drawingScale);
     setVerticalExaggeration(project.data.verticalExaggeration);
@@ -706,10 +794,19 @@ export function RaccVertModulePage() {
               </select>
             </label>
             {approche1Part2Mode === 'deltaITarget' && (
-              <label className="rt-field">
-                <span>{t('approche1.part2.deltaITarget')}</span>
-                <NumberInput value={deltaITargetPerMille} onChange={setDeltaITargetPerMille} />
-              </label>
+              <>
+                <label className="rt-field">
+                  <span>{t('approche1.part2.deltaITarget')}</span>
+                  <NumberInput
+                    value={deltaITargetPerMille}
+                    onChange={handleDeltaITargetPerMilleChange}
+                  />
+                </label>
+                <label className="rt-field">
+                  <span>{t('approche1.part2.deltaITargetDeg')}</span>
+                  <NumberInput value={deltaITargetDeg} onChange={handleDeltaITargetDegChange} />
+                </label>
+              </>
             )}
             {approche1Part2Mode === 'length' && (
               <label className="rt-field">
@@ -752,7 +849,11 @@ export function RaccVertModulePage() {
               </label>
               <label className="rt-field">
                 <span>{t('approche2.deltaI2b')}</span>
-                <NumberInput value={deltaI2bPerMille} onChange={setDeltaI2bPerMille} />
+                <NumberInput value={deltaI2bPerMille} onChange={handleDeltaI2bPerMilleChange} />
+              </label>
+              <label className="rt-field">
+                <span>{t('approche2.deltaI2bDeg')}</span>
+                <NumberInput value={deltaI2bDeg} onChange={handleDeltaI2bDegChange} />
               </label>
             </>
           )}
@@ -798,6 +899,10 @@ export function RaccVertModulePage() {
                 <option value={10}>×10</option>
               </select>
             </label>
+            <label className="rt-field rt-field--inline">
+              <span>{t('common.horizonH')}</span>
+              <NumberInput value={horizonHMm} onChange={handleHorizonChange} />
+            </label>
             <DrawingLightbox
               label={tCommon('drawing.enlarge')}
               closeLabel={tCommon('actions.close')}
@@ -832,18 +937,23 @@ export function RaccVertModulePage() {
               <th>{t('table.pointsCles.h')}</th>
               <th>{t('table.pointsCles.gradeBefore')}</th>
               <th>{t('table.pointsCles.gradeAfter')}</th>
+              <th>{t('table.pointsCles.deltaIDeg')}</th>
             </tr>
           </thead>
           <tbody>
-            {keyPoints.map((p) => (
-              <tr key={p.name}>
-                <td>{p.name}</td>
-                <td>{formatNumber(p.kMm, decimals)}</td>
-                <td>{formatNumber(p.hMm, decimals)}</td>
-                <td>{p.gradeBeforePerMille === undefined ? '—' : formatGrade(p.gradeBeforePerMille)}</td>
-                <td>{p.gradeAfterPerMille === undefined ? '—' : formatGrade(p.gradeAfterPerMille)}</td>
-              </tr>
-            ))}
+            {keyPoints.map((p) => {
+              const deg = deltaIDeg(p.gradeBeforePerMille, p.gradeAfterPerMille);
+              return (
+                <tr key={p.name}>
+                  <td>{p.name}</td>
+                  <td>{formatNumber(p.kMm, decimals)}</td>
+                  <td>{formatNumber(p.hMm, decimals)}</td>
+                  <td>{p.gradeBeforePerMille === undefined ? '—' : formatGrade(p.gradeBeforePerMille)}</td>
+                  <td>{p.gradeAfterPerMille === undefined ? '—' : formatGrade(p.gradeAfterPerMille)}</td>
+                  <td>{deg === undefined ? '—' : formatDeltaIDeg(deg)}</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       )}
@@ -858,29 +968,25 @@ export function RaccVertModulePage() {
               <th>{t('table.pointsCles.h')}</th>
               <th>{t('table.pointsCles.gradeBefore')}</th>
               <th>{t('table.pointsCles.gradeAfter')}</th>
+              <th>{t('table.pointsCles.deltaIDeg')}</th>
             </tr>
           </thead>
           <tbody>
-            {polylineVertices.map((v) => (
-              <tr key={v.index}>
-                <td>{v.index}</td>
-                <td>{formatNumber(v.kMm, decimals)}</td>
-                <td>{formatNumber(v.hMm, decimals)}</td>
-                <td>{v.gradeBeforePerMille === undefined ? '—' : formatGrade(v.gradeBeforePerMille)}</td>
-                <td>{v.gradeAfterPerMille === undefined ? '—' : formatGrade(v.gradeAfterPerMille)}</td>
-              </tr>
-            ))}
+            {polylineVertices.map((v) => {
+              const deg = deltaIDeg(v.gradeBeforePerMille, v.gradeAfterPerMille);
+              return (
+                <tr key={v.index}>
+                  <td>{v.index}</td>
+                  <td>{formatNumber(v.kMm, decimals)}</td>
+                  <td>{formatNumber(v.hMm, decimals)}</td>
+                  <td>{v.gradeBeforePerMille === undefined ? '—' : formatGrade(v.gradeBeforePerMille)}</td>
+                  <td>{v.gradeAfterPerMille === undefined ? '—' : formatGrade(v.gradeAfterPerMille)}</td>
+                  <td>{deg === undefined ? '—' : formatDeltaIDeg(deg)}</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
-      )}
-
-      {core && (
-        <div className="rt-toolbar">
-          <label className="rt-field rt-field--inline">
-            <span>{t('common.horizonH')}</span>
-            <NumberInput value={horizonHMm} onChange={handleHorizonChange} />
-          </label>
-        </div>
       )}
 
       <ProjectManager<RaccVertProjectData>

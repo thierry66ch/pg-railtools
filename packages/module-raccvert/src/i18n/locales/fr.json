@@ -18,13 +18,14 @@
   "approche1": {
     "part1": {
       "label": "Définition de l'arc",
-      "radius": "Rayon R (mm, signé)",
+      "radius": "Rayon R (mm)",
       "sagitta": "Flèche f (mm)",
       "tangent": "Tangente T (mm)"
     },
     "part2": {
       "label": "Matérialisation par segments",
       "deltaITarget": "Δi cible (‰)",
+      "deltaITargetDeg": "Δi cible (°)",
       "length": "Longueur de segment L imposée (mm)"
     }
   },
@@ -36,7 +37,8 @@
     },
     "n": "Nombre de segments n",
     "length": "Longueur de segment L (mm)",
-    "deltaI2b": "Δi cible (‰)"
+    "deltaI2b": "Δi cible (‰)",
+    "deltaI2bDeg": "Δi cible (°)"
   },
   "result": {
     "summary": {
@@ -56,7 +58,8 @@
       "k": "K (mm)",
       "h": "H (mm)",
       "gradeBefore": "i avant (‰)",
-      "gradeAfter": "i après (‰)"
+      "gradeAfter": "i après (‰)",
+      "deltaIDeg": "Δi (°)"
     },
     "sommets": {
       "title": "Sommets de la polyligne rouge (segments matérialisés)",
