@@ -1,5 +1,11 @@
 # Changelog — module-raccvert
 
+## 1.4 — 2026-07-17
+
+- Dessin : ajout des deux droites de pente théoriques en traitillé fin (TC → V et V → CT),
+  matérialisant la construction du sommet théorique V au-dessus de l'arc (en plus des
+  prolongements amont/aval déjà tracés au-delà de TC/CT).
+
 ## 1.3 — 2026-07-17
 
 Enrichissement des exports PDF/Markdown et du dessin :

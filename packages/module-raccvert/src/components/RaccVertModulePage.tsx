@@ -224,6 +224,8 @@ interface DrawingGeometry {
   polylinePathD: string;
   upstreamLine: { from: Point; to: Point };
   downstreamLine: { from: Point; to: Point };
+  /** Droites de pente théoriques TC→V et V→CT (traitillé fin, construction du sommet V). */
+  vertexTangentLines: { from: Point; to: Point }[];
   horizonLineY: number;
   keyPointsDrawing: { name: string; point: Point }[];
   horizontalTicks: { positionMm: number; label: string }[];
@@ -314,6 +316,12 @@ function buildDrawingGeometry(
     to: toDrawing(kEndMm, downstreamEndH),
   };
 
+  const vertexPoint = toDrawing(core.kVMm, core.hVMm);
+  const vertexTangentLines = [
+    { from: toDrawing(core.kTcMm, core.hTcMm), to: vertexPoint },
+    { from: vertexPoint, to: toDrawing(core.kCtMm, core.hCtMm) },
+  ];
+
   const horizonLineY = toDrawing(kOrigineMm, horizonHMm).y;
 
   const keyPointsDrawing = [
@@ -350,6 +358,7 @@ function buildDrawingGeometry(
     polylinePathD,
     upstreamLine,
     downstreamLine,
+    vertexTangentLines,
     horizonLineY,
     keyPointsDrawing,
     horizontalTicks,
@@ -724,6 +733,19 @@ export function RaccVertModulePage() {
           y2={g.downstreamLine.to.y}
           {...lineStyleToSvgProps({ kind: 'solid', color: EXTENSION_LINE_COLOR, widthMm: 0.3 })}
         />
+
+        {/* Droites de pente théoriques TC→V et V→CT (traitillé fin) : matérialisent la
+            construction du sommet théorique V au-dessus de l'arc. */}
+        {g.vertexTangentLines.map((seg, i) => (
+          <line
+            key={i}
+            x1={seg.from.x}
+            y1={seg.from.y}
+            x2={seg.to.x}
+            y2={seg.to.y}
+            {...lineStyleToSvgProps({ kind: 'dashedShort', color: EXTENSION_LINE_COLOR, widthMm: 0.2 })}
+          />
+        ))}
 
         <path d={g.arcPathD} stroke={ARC_COLOR} strokeWidth={ARC_STROKE_WIDTH_MM} fill="none" />
         <path
