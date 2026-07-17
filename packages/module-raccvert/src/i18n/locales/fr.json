@@ -10,6 +10,17 @@
     "horizonH": "Ligne d'horizon (mm)",
     "verticalExaggeration": "Déformation verticale"
   },
+  "drawing": {
+    "scales": "Éch. H : 1/{h} — Éch. V : 1/{v} (déf. ×{factor})",
+    "unit": "K et H en mm"
+  },
+  "export": {
+    "grades": "Pente amont i0 : {i0} ‰ — Pente aval iN : {iN} ‰",
+    "vertex": "Sommet V : K_V = {kV} mm — H_V = {hV} mm",
+    "deltaI": "Variation totale de pente au sommet V : {permille} ‰ ({deg} °)",
+    "approche1": "{approach} — Définition : {part1} ; Segments : {part2}",
+    "approche2": "{approach} — {subMode} ; Répartition : {distribution}"
+  },
   "approach": {
     "label": "Approche",
     "approche1": "Approche 1 — Arc défini, segments déduits",

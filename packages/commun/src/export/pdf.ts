@@ -104,7 +104,11 @@ function drawCartouche(pdf: jsPDF, cartouche: PdfCartouche, x: number, y: number
   return y + CARTOUCHE_HEIGHT_MM;
 }
 
-/** Dessine le résumé textuel (ex. valeurs clés du résultat) avant le tableau. */
+/**
+ * Dessine le résumé textuel (ex. valeurs clés du résultat) avant le tableau. `splitTextToSize`
+ * respecte les retours à la ligne explicites (`\n`) du texte d'entrée en plus du retour à la
+ * ligne automatique sur `width` — un appelant peut donc passer un bloc multi-lignes.
+ */
 function drawDescription(pdf: jsPDF, description: string, x: number, y: number, width: number): number {
   pdf.setFont('helvetica', 'normal');
   pdf.setFontSize(DESCRIPTION_FONT_SIZE);
@@ -178,6 +182,16 @@ export async function exportElementToPdfFile(
   }
 
   if (options.svg && svgSize) {
+    // Si le dessin ne tient pas dans l'espace vertical restant de la page courante, le
+    // reporter sur une page neuve plutôt que de le laisser tronquer par le bord de page
+    // (`pdf.addImage` coupe silencieusement ce qui dépasse). Au pire, le dessin occupe seul
+    // une page — comportement voulu (voir retour utilisateur). Ne s'applique pas à la largeur
+    // (un dessin plus large que la page reste à l'utilisateur de le remettre à l'échelle).
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    if (cursorY + svgSize.height > pageHeight - MARGIN_MM) {
+      pdf.addPage();
+      cursorY = MARGIN_MM;
+    }
     const blob = await svgToPngBlob(options.svg, 8);
     const dataUrl = await blobToDataUrl(blob);
     // Échelle réelle : 1 mm de dessin = 1 mm papier, aucune mise à l'échelle automatique.

@@ -12,7 +12,6 @@ import {
   PointLabel,
   ProjectManager,
   ResultPageLayout,
-  ScaleBar,
   lineStyleToSvgProps,
   modelToDrawingX,
   modelToDrawingY,
@@ -84,7 +83,7 @@ const LEFT_MARGIN_MM = 22;
 const RIGHT_MARGIN_MM = 10;
 const TOP_MARGIN_MM = 15;
 const BOTTOM_MARGIN_MM = 15;
-const SCALE_BAR_EXTRA_MM = 20;
+const BOTTOM_CAPTION_EXTRA_MM = 20;
 
 /**
  * Dimensions cible (mm de dessin) utilisées par le mode d'échelle de dessin "fit", pour le
@@ -100,7 +99,7 @@ const SCALE_BAR_EXTRA_MM = 20;
  */
 const FIT_TARGET_MM = {
   width: 150 - LEFT_MARGIN_MM - RIGHT_MARGIN_MM,
-  height: 80 - TOP_MARGIN_MM - BOTTOM_MARGIN_MM - SCALE_BAR_EXTRA_MM,
+  height: 80 - TOP_MARGIN_MM - BOTTOM_MARGIN_MM - BOTTOM_CAPTION_EXTRA_MM,
 };
 const ARC_STROKE_WIDTH_MM = 1;
 const SEGMENTS_STROKE_WIDTH_MM = 1.2;
@@ -155,6 +154,17 @@ function deltaIDeg(gradeBeforePerMille?: number, gradeAfterPerMille?: number): n
 /** Angles de déviation affichés avec 2 décimales fixes, indépendamment des décimales globales. */
 function formatDeltaIDeg(value: number): string {
   return formatFixed(value, 2);
+}
+
+/**
+ * Formate un dénominateur d'échelle 1/N pour l'étiquette du dessin. Entier → tel quel ;
+ * ≥1 non entier → 1 décimale ; <1 (dessin agrandi, cas fréquent ici car la géométrie modèle
+ * est petite) → 2 chiffres significatifs, sans zéros terminaux inutiles.
+ */
+function formatRatio(ratio: number): string {
+  if (Number.isInteger(ratio)) return String(ratio);
+  if (ratio >= 1) return ratio.toFixed(1);
+  return ratio.toPrecision(2).replace(/\.?0+$/, '');
 }
 
 /** "Pas" arrondi (1/2/5 × 10^n) pour une graduation lisible, visant environ `targetTicks` ticks. */
@@ -218,6 +228,9 @@ interface DrawingGeometry {
   keyPointsDrawing: { name: string; point: Point }[];
   horizontalTicks: { positionMm: number; label: string }[];
   verticalTicks: { positionMm: number; label: string }[];
+  /** Dénominateurs d'échelle (1/N) horizontale et verticale, pour l'étiquette du dessin. */
+  scaleHorizontalRatio: number;
+  scaleVerticalRatio: number;
 }
 
 /**
@@ -329,7 +342,7 @@ function buildDrawingGeometry(
       minX: -LEFT_MARGIN_MM,
       minY: -TOP_MARGIN_MM,
       width: drawingWidth + LEFT_MARGIN_MM + RIGHT_MARGIN_MM,
-      height: drawingHeight + TOP_MARGIN_MM + BOTTOM_MARGIN_MM + SCALE_BAR_EXTRA_MM,
+      height: drawingHeight + TOP_MARGIN_MM + BOTTOM_MARGIN_MM + BOTTOM_CAPTION_EXTRA_MM,
     },
     drawingWidth,
     drawingHeight,
@@ -341,6 +354,10 @@ function buildDrawingGeometry(
     keyPointsDrawing,
     horizontalTicks,
     verticalTicks,
+    // Éch. V = Éch. H / facteur de déformation (l'axe H est agrandi de ce facteur, donc son
+    // dénominateur 1/N est divisé d'autant — cf. profileScale.modelToDrawingY).
+    scaleHorizontalRatio: resolvedScale.horizontal.ratio,
+    scaleVerticalRatio: resolvedScale.horizontal.ratio / verticalExaggeration,
   };
 }
 
@@ -438,8 +455,40 @@ export function RaccVertModulePage() {
     keyPoints = buildKeyPointsTable(core, seg.deltaIEffPerMille);
     polylineVertices = buildPolylineVertices(core, seg);
 
+    // Contexte textuel repris dans les exports PDF (avant le dessin) et Markdown (avant le
+    // tableau récapitulatif) : données de base, ΔI au sommet V, approche/mode/répartition, et
+    // l'avertissement de répartition uniforme le cas échéant.
+    const deltaITotal = inPerMille - i0PerMille;
+    const descriptionLines = [
+      t('export.grades', { i0: formatGrade(i0PerMille), iN: formatGrade(inPerMille) }),
+      t('export.vertex', { kV: formatNumber(kVMm, decimals), hV: formatNumber(hVMm, decimals) }),
+      t('export.deltaI', {
+        permille: formatGrade(deltaITotal),
+        deg: formatDeltaIDeg(permilleToDeg(deltaITotal)),
+      }),
+      activeApproach === 'approche1'
+        ? t('export.approche1', {
+            approach: t('approach.approche1'),
+            part1: t(`approche1.part1.${approche1Part1Mode}`),
+            part2: t(`approche1.part2.${approche1Part2Mode}`),
+          })
+        : t('export.approche2', {
+            approach: t('approach.approche2'),
+            subMode: t(`approche2.subMode.${approche2SubMode}`),
+            distribution: t(`approche2.distributionMode.${approche2DistributionMode}`),
+          }),
+    ];
+    if (seg.distributionMode === 'uniform') {
+      descriptionLines.push(t('approche2.uniformNotice'));
+    }
+
     resultData = {
       title: t('title'),
+      // Séparateur "  \n" = saut de ligne dur Markdown (deux espaces + retour) : chaque ligne
+      // reste distincte dans l'export Markdown (un simple \n y serait fusionné en un seul
+      // paragraphe), tout en restant un \n exploité tel quel par le PDF (jsPDF découpe sur \n,
+      // les espaces en fin de ligne sont sans effet visible).
+      description: descriptionLines.join('  \n'),
       summaryTable: {
         headers: [
           t('result.summary.r'),
@@ -695,12 +744,22 @@ export function RaccVertModulePage() {
           </g>
         ))}
 
-        <ScaleBar
-          resolved={g.resolvedScale.horizontal}
-          x={0}
-          y={g.drawingHeight + BOTTOM_MARGIN_MM}
-          unitCaption={tCommon('drawing.cotesInUnit', { unit: 'mm' })}
-        />
+        {/* Étiquette d'échelle : un profil en long a des échelles H et V distinctes (V
+            déformée), donc une barre d'échelle graduée à axe unique serait trompeuse — les
+            axes gradués K et H ci-dessus tiennent ce rôle. On indique ici les deux ratios
+            (CDC §7.1). */}
+        <g fontFamily="Arial, Helvetica, sans-serif" fill="#1a1a1a">
+          <text x={0} y={g.drawingHeight + BOTTOM_MARGIN_MM} fontSize={3}>
+            {t('drawing.scales', {
+              h: formatRatio(g.scaleHorizontalRatio),
+              v: formatRatio(g.scaleVerticalRatio),
+              factor: verticalExaggeration,
+            })}
+          </text>
+          <text x={0} y={g.drawingHeight + BOTTOM_MARGIN_MM + 5} fontSize={3}>
+            {t('drawing.unit')}
+          </text>
+        </g>
       </svg>
     );
   }

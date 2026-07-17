@@ -1,5 +1,32 @@
 # Changelog — module-raccvert
 
+## 1.3 — 2026-07-17
+
+Enrichissement des exports PDF/Markdown et du dessin :
+
+- Les exports (PDF avant le dessin, Markdown avant le tableau récapitulatif) mentionnent
+  désormais un bloc de contexte : données de base (pentes i0/iN, sommet K_V/H_V), variation
+  totale de pente au sommet V en ‰ **et** en degrés, l'approche + le mode (+ la répartition
+  des Δi en Approche 2), et le texte d'avertissement complet quand la répartition uniforme
+  est active.
+- Dessin : l'étiquette d'échelle indique maintenant les **deux** échelles (horizontale et
+  verticale déformée, CDC §7.1 : « Éch. H : 1/X — Éch. V : 1/Y ») au lieu de la seule
+  échelle horizontale.
+- **Correctif dessin** : l'ancienne barre d'échelle graduée (référence fixe de 10 cm modèle)
+  débordait largement du dessin et était tronquée dès que la géométrie était petite (T de
+  quelques dizaines de mm) — elle était de toute façon trompeuse sur un profil à échelle
+  verticale déformée (valide pour un seul axe). Remplacée par l'étiquette de double échelle
+  ci-dessus ; les axes gradués K (horizontal) et H (vertical) restent la graduation de
+  référence, désormais entièrement dans le cadre du dessin (plus de troncature à l'export).
+- **Correctif générique `packages/commun` (export PDF)** : avant de placer le dessin, si sa
+  hauteur ne tient pas dans l'espace restant de la page, il est reporté sur une page neuve
+  plutôt que tronqué silencieusement par le bord de page (`pdf.addImage` coupe sans
+  avertir). Au pire le dessin occupe seul une page. Sans régression sur module-arc
+  (vérifié par export réel).
+- Note : les libellés du bloc de contexte PDF utilisent des formes ASCII (« i0 »/« iN »
+  plutôt que les indices « i₀ »/« iₙ » de l'interface) car la police standard de jsPDF ne
+  dispose pas des caractères en indice — l'affichage à l'écran garde les indices.
+
 ## 1.2 — 2026-07-17
 
 Nouvelle option en Approche 2 (2a et 2b) : **répartition de Δi entre segments**, au choix :
