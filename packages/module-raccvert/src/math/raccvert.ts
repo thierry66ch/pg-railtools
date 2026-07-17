@@ -79,6 +79,21 @@ export interface ArcCore {
   iPPerMille: number;
 }
 
+/**
+ * Mode de répartition de ΔI entre les segments (Approche 2 uniquement — en Approche 1 l'arc
+ * est déjà défini en Partie 1, donc `midpointSlope` (seul choix disponible) reste la seule
+ * option cohérente) :
+ *  - `midpointSlope` (par défaut) : chaque segment reprend la pente MOYENNE de la portion
+ *    d'arc théorique qu'il remplace (donc le TC/CT n'absorbent qu'un demi-pas, cf.
+ *    `buildPolylineVertices`) — la polyligne colle exactement à un arc de rayon R unique.
+ *  - `uniform` : ΔI est réparti à parts strictement égales entre les n+1 transitions (TC,
+ *    n−1 joints intérieurs, CT). Géométriquement, une telle polyligne ne correspond à AUCUN
+ *    arc à rayon constant (elle rejoindrait les droites i₀/iₙ avec un décalage) — R/f/T/R_int
+ *    restent affichés mais sont alors purement indicatifs (voir décision utilisateur
+ *    2026-07-17 : priorité "répartition régulière" plutôt que "fidélité à un arc unique").
+ */
+export type SegmentDistributionMode = 'midpointSlope' | 'uniform';
+
 /** Matérialisation par segments plats (Partie 2 / dérivé directement en Approche 2). */
 export interface Segmentation {
   n: number;
@@ -94,6 +109,7 @@ export interface Segmentation {
   kCtMatMm: number;
   /** Rayon interne (tangent aux milieux des segments), informatif uniquement, signé comme rMm. */
   rIntMm: number;
+  distributionMode: SegmentDistributionMode;
 }
 
 /**
@@ -237,6 +253,7 @@ export function segmentationFromDeltaTarget(
     kTcMatMm: core.kTcMm,
     kCtMatMm: core.kCtMm,
     rIntMm: internalRadius(core.rMm, lMm),
+    distributionMode: 'midpointSlope',
   });
 }
 
@@ -261,7 +278,13 @@ export function segmentationFromLength(
     kTcMatMm: core.kVMm - (n * lengthMm) / 2,
     kCtMatMm: core.kVMm + (n * lengthMm) / 2,
     rIntMm: internalRadius(core.rMm, lengthMm),
+    distributionMode: 'midpointSlope',
   });
+}
+
+/** Δi effectif par transition selon le mode de répartition (n transitions en midpointSlope, n+1 en uniform). */
+function deltaIEffForMode(deltaI: number, n: number, distributionMode: SegmentDistributionMode): number {
+  return distributionMode === 'uniform' ? deltaI / (n + 1) : deltaI / n;
 }
 
 /**
@@ -272,6 +295,7 @@ export function arcAndSegmentationFrom2a(
   common: CommonInputs,
   n: number,
   lengthMm: number,
+  distributionMode: SegmentDistributionMode = 'midpointSlope',
 ): RaccVertResult<ArcCore & Segmentation> {
   const deltaI = deltaIPerMille(common);
   if (deltaI === 0) return err('delta-i-zero');
@@ -284,10 +308,11 @@ export function arcAndSegmentationFrom2a(
     ...core,
     n,
     lMm: lengthMm,
-    deltaIEffPerMille: deltaI / n,
+    deltaIEffPerMille: deltaIEffForMode(deltaI, n, distributionMode),
     kTcMatMm: core.kTcMm,
     kCtMatMm: core.kCtMm,
     rIntMm: internalRadius(rMm, lengthMm),
+    distributionMode,
   });
 }
 
@@ -299,6 +324,7 @@ export function arcAndSegmentationFrom2b(
   common: CommonInputs,
   lengthMm: number,
   deltaTargetPerMille: number,
+  distributionMode: SegmentDistributionMode = 'midpointSlope',
 ): RaccVertResult<ArcCore & Segmentation> {
   const deltaI = deltaIPerMille(common);
   if (deltaI === 0) return err('delta-i-zero');
@@ -312,10 +338,11 @@ export function arcAndSegmentationFrom2b(
     ...core,
     n,
     lMm: lengthMm,
-    deltaIEffPerMille: deltaI / n,
+    deltaIEffPerMille: deltaIEffForMode(deltaI, n, distributionMode),
     kTcMatMm: core.kTcMm,
     kCtMatMm: core.kCtMm,
     rIntMm: internalRadius(rMm, lengthMm),
+    distributionMode,
   });
 }
 
@@ -378,8 +405,13 @@ export interface PolylineVertex {
   gradeAfterPerMille?: number;
 }
 
-/** Tableau des n+1 sommets de la polyligne rouge matérialisée. */
-export function buildPolylineVertices(core: ArcCore, seg: Segmentation): PolylineVertex[] {
+/**
+ * Sommets pour `distributionMode: 'midpointSlope'` (défaut) : chaque segment a la pente
+ * MOYENNE de la portion d'arc théorique qu'il remplace, donc les sommets sont directement
+ * échantillonnés sur l'arc théorique via `arcHeightAt` — la polyligne colle exactement à
+ * l'arc de rayon R.
+ */
+function buildPolylineVerticesMidpointSlope(core: ArcCore, seg: Segmentation): PolylineVertex[] {
   const vertices: PolylineVertex[] = [];
   for (let k = 0; k <= seg.n; k++) {
     const kMm = seg.kTcMatMm + k * seg.lMm;
@@ -392,4 +424,42 @@ export function buildPolylineVertices(core: ArcCore, seg: Segmentation): Polylin
     vertices.push({ index: k, kMm, hMm, gradeBeforePerMille, gradeAfterPerMille });
   }
   return vertices;
+}
+
+/**
+ * Sommets pour `distributionMode: 'uniform'` (Approche 2 uniquement) : ΔI réparti à parts
+ * égales entre les n+1 transitions (TC, joints intérieurs, CT — `seg.deltaIEffPerMille` vaut
+ * alors ΔI/(n+1), cf. `deltaIEffForMode`). Une telle polyligne ne suit plus l'arc théorique à
+ * rayon constant : les hauteurs sont donc accumulées segment par segment (pente propre à
+ * chaque segment × sa longueur), PAS échantillonnées sur `arcHeightAt`.
+ */
+function buildPolylineVerticesUniform(core: ArcCore, seg: Segmentation): PolylineVertex[] {
+  const step = seg.deltaIEffPerMille;
+  const vertices: PolylineVertex[] = [
+    {
+      index: 0,
+      kMm: seg.kTcMatMm,
+      hMm: core.hTcMm,
+      gradeBeforePerMille: core.i0PerMille,
+      gradeAfterPerMille: core.i0PerMille + step,
+    },
+  ];
+  let penteMille = core.i0PerMille;
+  let kMm = seg.kTcMatMm;
+  let hMm = core.hTcMm;
+  for (let k = 1; k <= seg.n; k++) {
+    penteMille += step;
+    kMm += seg.lMm;
+    hMm += (penteMille / 1000) * seg.lMm;
+    const gradeAfterPerMille = k === seg.n ? core.inPerMille : penteMille + step;
+    vertices.push({ index: k, kMm, hMm, gradeBeforePerMille: penteMille, gradeAfterPerMille });
+  }
+  return vertices;
+}
+
+/** Tableau des n+1 sommets de la polyligne rouge matérialisée. */
+export function buildPolylineVertices(core: ArcCore, seg: Segmentation): PolylineVertex[] {
+  return seg.distributionMode === 'uniform'
+    ? buildPolylineVerticesUniform(core, seg)
+    : buildPolylineVerticesMidpointSlope(core, seg);
 }

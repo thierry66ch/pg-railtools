@@ -1,5 +1,31 @@
 # Changelog — module-raccvert
 
+## 1.2 — 2026-07-17
+
+Nouvelle option en Approche 2 (2a et 2b) : **répartition de Δi entre segments**, au choix :
+
+- **Régulière selon l'arc** (défaut, comportement inchangé) : chaque segment reprend la
+  pente moyenne de la portion d'arc théorique qu'il remplace — la polyligne colle
+  exactement à un arc de rayon R unique, au prix d'un écart de pente deux fois plus petit
+  à TC/CT qu'aux joints intérieurs (ex. 25%-50%-25% pour 2 segments).
+- **Strictement uniforme** (nouveau) : ΔI réparti à parts rigoureusement égales entre
+  tous les joints, y compris TC et CT (ex. 33%-33%-33% pour 2 segments). Géométriquement,
+  cette polyligne ne correspond alors plus à un arc à rayon constant — R/f/T/R_int
+  restent affichés mais deviennent purement indicatifs, et l'arc théorique bleu du dessin
+  ne passe plus exactement par les sommets de la polyligne rouge (mention explicite
+  affichée à l'écran dans ce mode).
+
+Cette option n'est proposée qu'en Approche 2 : en Approche 1, l'arc est déjà défini en
+Partie 1, donc la répartition "régulière selon l'arc" reste la seule cohérente (une
+répartition uniforme y dégraderait sciemment la fidélité à un arc déjà connu et voulu).
+
+Discussion avec l'utilisateur à l'origine de cette option : la répartition non-uniforme du
+comportement par défaut n'est pas un défaut de conception mais une conséquence géométrique
+nécessaire — une répartition parfaitement égale des angles ferait "flotter" la polyligne à
+côté des droites de pente i₀/iₙ plutôt que de les rejoindre exactement (courbe progressive
+à 3 rayons plutôt qu'un raccordement propre), comme confirmé indépendamment par
+l'utilisateur en y réfléchissant.
+
 ## 1.1 — 2026-07-17
 
 Retouches suite aux premiers retours d'usage réel :

@@ -38,7 +38,13 @@
     "n": "Nombre de segments n",
     "length": "Longueur de segment L (mm)",
     "deltaI2b": "Δi cible (‰)",
-    "deltaI2bDeg": "Δi cible (°)"
+    "deltaI2bDeg": "Δi cible (°)",
+    "distributionMode": {
+      "label": "Répartition de Δi entre segments",
+      "midpointSlope": "Régulière selon l'arc (défaut)",
+      "uniform": "Strictement uniforme (arc résultant indicatif)"
+    },
+    "uniformNotice": "Répartition uniforme : chaque joint (y compris TC et CT) subit exactement le même écart de pente. La polyligne rouge ne correspond alors plus à un arc de rayon constant — R, f, T et R_int affichés ci-dessous sont purement indicatifs (l'arc théorique bleu ne passe plus par les sommets de la polyligne)."
   },
   "result": {
     "summary": {

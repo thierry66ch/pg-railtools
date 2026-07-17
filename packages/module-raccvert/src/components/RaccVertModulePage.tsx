@@ -40,6 +40,7 @@ import {
   type CommonInputs,
   type RaccVertErrorCode,
   type Segmentation,
+  type SegmentDistributionMode,
 } from '../math/raccvert';
 import type {
   Approche1Part1Mode,
@@ -368,6 +369,8 @@ export function RaccVertModulePage() {
   const [approche2LengthMm, setApproche2LengthMm] = useState(DEFAULT_APPROCHE2_LENGTH_MM);
   const [deltaI2bPerMille, setDeltaI2bPerMille] = useState(DEFAULT_DELTA_I2B_PER_MILLE);
   const [deltaI2bDeg, setDeltaI2bDeg] = useState(DEFAULT_DELTA_I2B_DEG);
+  const [approche2DistributionMode, setApproche2DistributionMode] =
+    useState<SegmentDistributionMode>('midpointSlope');
 
   const [decimals, setDecimals] = useState(DEFAULT_DECIMALS);
   const [drawingScale, setDrawingScale] = useState<DrawingScale>({ mode: 'fit' });
@@ -412,8 +415,13 @@ export function RaccVertModulePage() {
   } else {
     const result =
       approche2SubMode === '2a'
-        ? arcAndSegmentationFrom2a(common, nSegments, approche2LengthMm)
-        : arcAndSegmentationFrom2b(common, approche2LengthMm, deltaI2bPerMille);
+        ? arcAndSegmentationFrom2a(common, nSegments, approche2LengthMm, approche2DistributionMode)
+        : arcAndSegmentationFrom2b(
+            common,
+            approche2LengthMm,
+            deltaI2bPerMille,
+            approche2DistributionMode,
+          );
     if (result.ok) {
       core = result.value;
       seg = result.value;
@@ -569,6 +577,7 @@ export function RaccVertModulePage() {
       approche2LengthMm,
       deltaI2bPerMille,
       deltaI2bDeg,
+      approche2DistributionMode,
       decimals,
       drawingScale,
       verticalExaggeration,
@@ -595,6 +604,7 @@ export function RaccVertModulePage() {
     setApproche2LengthMm(project.data.approche2LengthMm);
     setDeltaI2bPerMille(project.data.deltaI2bPerMille);
     setDeltaI2bDeg(project.data.deltaI2bDeg);
+    setApproche2DistributionMode(project.data.approche2DistributionMode);
     setDecimals(project.data.decimals);
     setDrawingScale(project.data.drawingScale);
     setVerticalExaggeration(project.data.verticalExaggeration);
@@ -829,6 +839,19 @@ export function RaccVertModulePage() {
               <option value="2b">{t('approche2.subMode.2b')}</option>
             </select>
           </label>
+          <label className="rt-field">
+            <span>{t('approche2.distributionMode.label')}</span>
+            <select
+              className="rt-select"
+              value={approche2DistributionMode}
+              onChange={(event) =>
+                setApproche2DistributionMode(event.target.value as SegmentDistributionMode)
+              }
+            >
+              <option value="midpointSlope">{t('approche2.distributionMode.midpointSlope')}</option>
+              <option value="uniform">{t('approche2.distributionMode.uniform')}</option>
+            </select>
+          </label>
           {approche2SubMode === '2a' && (
             <>
               <label className="rt-field">
@@ -873,6 +896,12 @@ export function RaccVertModulePage() {
         >
           R = {formatNumber(core.rMm, decimals)} mm — f = {formatNumber(core.fMm, decimals)} mm —
           T = {formatNumber(core.tMm, decimals)} mm — n = {seg.n}
+        </p>
+      )}
+
+      {seg?.distributionMode === 'uniform' && (
+        <p className="rt-error" style={{ fontWeight: 400 }}>
+          {t('approche2.uniformNotice')}
         </p>
       )}
 

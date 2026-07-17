@@ -1,4 +1,5 @@
 import type { DrawingScale } from '@railtools/commun';
+import type { SegmentDistributionMode } from './math/raccvert';
 
 export type RaccVertApproach = 'approche1' | 'approche2';
 export type Approche1Part1Mode = 'radius' | 'sagitta' | 'tangent';
@@ -27,6 +28,7 @@ export interface RaccVertProjectData {
   approche2LengthMm: number;
   deltaI2bPerMille: number;
   deltaI2bDeg: number;
+  approche2DistributionMode: SegmentDistributionMode;
 
   decimals: number;
   drawingScale: DrawingScale;
