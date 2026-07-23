@@ -1,5 +1,18 @@
 # Changelog — module-arc
 
+## 1.12 — 2026-07-23
+
+**Correctif générique** (`packages/commun`, `LengthCote`) : le texte d'une cote de
+longueur suivait l'angle brut du segment `from → to`, sans jamais le corriger — un
+segment "reculant" (ex. la cote de tangente A-S, qui pointe vers le haut-gauche)
+faisait pivoter le libellé la tête en bas. Signalé avec capture annotée. Corrigé en
+retournant le texte de 180° au-delà de ±90°, avec une marge de 1e-6° autour du seuil
+pour ne pas faire basculer par erreur les segments parfaitement verticaux (leur angle
+flotte parfois à 90.0000000x° à cause de `cos(π/2)` non nul en JS — piège trouvé en
+testant, pas en lisant le code : la première version du correctif faisait basculer la
+cote de contre-flèche S-D à 270° alors qu'elle était déjà correcte à 90°). Bénéficie à
+tout usage futur de `LengthCote` dans n'importe quel module, pas seulement au sommet S.
+
 ## 1.11 — 2026-07-23
 
 Deux ajouts sur la v1.10, sur retour d'usage :

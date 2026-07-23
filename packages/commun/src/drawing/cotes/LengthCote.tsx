@@ -27,6 +27,15 @@ export function LengthCote({ from, to, offsetMm, label, style, sizing }: LengthC
 
   const dirRad = angleOf(subPoints(to, from));
   const angleDeg = radToDeg(dirRad);
+  // Évite un texte à l'envers : au-delà de ±90°, suivre le sens brut de `from → to`
+  // ferait pivoter le texte tête en bas (ex. une cote de tangente allant vers le haut à
+  // gauche). On le pivote alors de 180° pour qu'il reste lisible, quel que soit le sens
+  // dans lequel `from`/`to` sont passés par l'appelant. Marge de 1e-6° autour du seuil :
+  // un segment exactement vertical (ex. cos(π/2) ≈ 6e-17 en JS, pas 0 pile) peut retomber
+  // à 90.0000000x° plutôt que 90° pile, ce qui basculerait le texte à l'envers pour rien.
+  const FLIP_EPSILON_DEG = 1e-6;
+  const readableAngleDeg =
+    angleDeg > 90 + FLIP_EPSILON_DEG || angleDeg < -90 - FLIP_EPSILON_DEG ? angleDeg + 180 : angleDeg;
   const mid: Point = { x: (dimFrom.x + dimTo.x) / 2, y: (dimFrom.y + dimTo.y) / 2 };
   // Écarte le texte du trait de cote (au-delà du simple `dominantBaseline`).
   const textPoint = offsetPoint(mid, from, to, Math.sign(offset) * (resolvedSizing.textSizeMm * 0.2 + 0.5));
@@ -54,7 +63,7 @@ export function LengthCote({ from, to, offsetMm, label, style, sizing }: LengthC
         fill={svgProps.stroke}
         textAnchor="middle"
         dominantBaseline="text-after-edge"
-        transform={`rotate(${angleDeg}, ${textPoint.x}, ${textPoint.y})`}
+        transform={`rotate(${readableAngleDeg}, ${textPoint.x}, ${textPoint.y})`}
       >
         {label}
       </text>
