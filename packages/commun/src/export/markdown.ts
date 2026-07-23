@@ -3,11 +3,15 @@ import { svgToPngBlob } from './png';
 import type { ResultData, ResultTable } from './types';
 
 function tableToMarkdownLines(table: ResultTable): string[] {
-  const { headers, rows } = table;
+  const { headers, rows, boldCells } = table;
   const lines = [`| ${headers.join(' | ')} |`, `| ${headers.map(() => '---').join(' | ')} |`];
-  for (const row of rows) {
-    lines.push(`| ${row.map((cell) => String(cell)).join(' | ')} |`);
-  }
+  rows.forEach((row, rowIndex) => {
+    const cells = row.map((cell, cellIndex) => {
+      const text = String(cell);
+      return boldCells?.[rowIndex]?.[cellIndex] ? `**${text}**` : text;
+    });
+    lines.push(`| ${cells.join(' | ')} |`);
+  });
   return lines;
 }
 

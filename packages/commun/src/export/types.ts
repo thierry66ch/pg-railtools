@@ -6,6 +6,12 @@
 export interface ResultTable {
   headers: string[];
   rows: (string | number)[][];
+  /**
+   * Cellules à mettre en gras (ex. valeurs saisies par l'utilisateur, par opposition aux
+   * valeurs déduites) — mêmes dimensions que `rows`. Optionnel : si absent, ou si une
+   * ligne/cellule n'y figure pas, la cellule reste en style normal.
+   */
+  boldCells?: boolean[][];
 }
 
 export interface ResultData {

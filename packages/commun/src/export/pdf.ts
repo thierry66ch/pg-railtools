@@ -139,14 +139,14 @@ function drawTable(pdf: jsPDF, table: ResultTable, x: number, y: number, width: 
   cursorY += TABLE_HEADER_HEIGHT_MM;
   pdf.line(x, cursorY, x + width, cursorY);
 
-  pdf.setFont('helvetica', 'normal');
-  for (const row of table.rows) {
+  table.rows.forEach((row, rowIndex) => {
     row.forEach((cell, i) => {
+      pdf.setFont('helvetica', table.boldCells?.[rowIndex]?.[i] ? 'bold' : 'normal');
       pdf.text(String(cell), x + i * colWidth + TABLE_CELL_PADDING_MM, cursorY + TABLE_ROW_HEIGHT_MM - 2.5);
     });
     cursorY += TABLE_ROW_HEIGHT_MM;
     pdf.line(x, cursorY, x + width, cursorY);
-  }
+  });
 
   for (let i = 0; i <= colCount; i++) {
     const lineX = x + i * colWidth;

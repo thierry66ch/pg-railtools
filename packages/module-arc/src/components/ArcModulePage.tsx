@@ -148,15 +148,20 @@ interface DrawingGeometry {
   centralAngleDeg: number;
   /**
    * Cote d'angle optionnelle (absente si non demandée) : entre les tangentes (centrée en
-   * S, angle < seuil) ou au centre réel du cercle (angle ≥ seuil).
+   * S, angle < seuil — avec en plus les longueurs pour coter A-S/B-S et S-D) ou au centre
+   * réel du cercle (angle ≥ seuil).
    */
-  angleCote?: {
-    mode: 'tangent' | 'center';
-    center: Point;
-    radiusMm: number;
-    startAngleRad: number;
-    endAngleRad: number;
-  };
+  angleCote?:
+    | { mode: 'center'; center: Point; radiusMm: number; startAngleRad: number; endAngleRad: number }
+    | {
+        mode: 'tangent';
+        center: Point;
+        radiusMm: number;
+        startAngleRad: number;
+        endAngleRad: number;
+        tangentMm: number;
+        externalMm: number;
+      };
 }
 
 /**
@@ -188,12 +193,14 @@ function buildDrawingGeometry(
   // M — formule fermée (tangentGeometryFromRadiusAngle), pas d'intersection de droites.
   let angleCoteModelCenter: Point | null = null;
   let angleCoteResolvedMode: 'tangent' | 'center' | 'none' = 'none';
+  let angleCoteTangentGeometry: TangentGeometry | null = null;
   if (showCentralAngleCote) {
     if (centralAngleDeg < CENTRAL_ANGLE_TANGENT_THRESHOLD_DEG) {
       const tangentGeometry = tangentGeometryFromRadiusAngle(radiusMm, 2 * alphaRad);
       if (tangentGeometry) {
         angleCoteModelCenter = { x: chordMm / 2, y: tangentGeometry.bisectorMm };
         angleCoteResolvedMode = 'tangent';
+        angleCoteTangentGeometry = tangentGeometry;
       }
     } else {
       angleCoteResolvedMode = 'center';
@@ -243,13 +250,15 @@ function buildDrawingGeometry(
   const pathD = `M ${dPointA.x} ${dPointA.y} A ${dRadius} ${dRadius} 0 0 0 ${dPointB.x} ${dPointB.y}`;
 
   const angleCote: DrawingGeometry['angleCote'] =
-    angleCoteResolvedMode === 'tangent' && angleCoteModelCenter
+    angleCoteResolvedMode === 'tangent' && angleCoteModelCenter && angleCoteTangentGeometry
       ? {
           mode: 'tangent',
           center: toDrawing(angleCoteModelCenter),
           radiusMm: TANGENT_ANGLE_COTE_RADIUS_MM,
           startAngleRad: angleAtB - Math.PI / 2,
           endAngleRad: angleAtA - Math.PI / 2,
+          tangentMm: angleCoteTangentGeometry.tangentMm,
+          externalMm: angleCoteTangentGeometry.externalMm,
         }
       : angleCoteResolvedMode === 'center'
         ? {
@@ -488,6 +497,7 @@ export function ArcModulePage() {
         summaryTable: {
           headers: [t('summary.designation'), t('summary.value')],
           rows: characteristicsRows.map((row) => [t(`summary.${row.labelKey}`), row.value]),
+          boldCells: characteristicsRows.map((row) => [false, row.given]),
         },
         pageBreakBeforeTable: true,
         tableIntro: {
@@ -686,6 +696,27 @@ export function ArcModulePage() {
                   {...lineStyleToSvgProps({ kind: 'dashedShort', color: '#999999', widthMm: 0.2 })}
                 />
                 <PointLabel point={g.angleCote.center} label="S" directionRad={LABEL_DOWN_RIGHT_RAD} />
+                <LengthCote
+                  from={g.angleCote.center}
+                  to={g.dPointA}
+                  offsetMm={DEFAULT_COTE_OFFSET_MM}
+                  label={formatCoteLength(g.angleCote.tangentMm)}
+                  sizing={suggestDimensionSizing()}
+                />
+                <LengthCote
+                  from={g.angleCote.center}
+                  to={g.dPointB}
+                  offsetMm={-DEFAULT_COTE_OFFSET_MM}
+                  label={formatCoteLength(g.angleCote.tangentMm)}
+                  sizing={suggestDimensionSizing()}
+                />
+                <LengthCote
+                  from={g.dPointD}
+                  to={g.angleCote.center}
+                  offsetMm={DEFAULT_COTE_OFFSET_MM}
+                  label={formatCoteLength(g.angleCote.externalMm)}
+                  sizing={suggestDimensionSizing()}
+                />
               </>
             )}
             <AngleCote

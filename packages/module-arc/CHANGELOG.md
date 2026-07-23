@@ -1,5 +1,23 @@
 # Changelog — module-arc
 
+## 1.11 — 2026-07-23
+
+Deux ajouts sur la v1.10, sur retour d'usage :
+
+- **Ajout générique** (`packages/commun`, `ResultTable`) : nouveau champ optionnel
+  `boldCells` (mêmes dimensions que `rows`), respecté par `drawTable` (PDF) et
+  `tableToMarkdownLines` (Markdown, via `**gras**`) — les valeurs saisies par
+  l'utilisateur dans le tableau de caractéristiques sont maintenant en gras
+  dans les exports PDF/Markdown, pas seulement à l'écran. Rétrocompatible
+  (champ absent ⟹ aucun changement pour les autres modules).
+- Cotes de tangente (A-S, B-S) et de contre-flèche (S-D) ajoutées au dessin,
+  affichées uniquement quand le sommet S est représenté (case cochée et angle
+  < 135°). La cote de contre-flèche est décalée du côté opposé à la cote de
+  flèche M-D pour ne pas chevaucher l'étiquette de la cote de longueur d'arc,
+  qui tombe naturellement tout près de D pour les arcs très surbaissés
+  (vérifié dans le navigateur, y compris au zoom, sur le cas par défaut
+  corde=1000/flèche=50 qui est le plus serré).
+
 ## 1.10 — 2026-07-20
 
 Sommet S (intersection des tangentes en A et B) et tableau de caractéristiques
