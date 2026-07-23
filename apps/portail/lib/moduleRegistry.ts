@@ -3,6 +3,7 @@ import { demoModuleManifest } from '@railtools/module-demo';
 import { arcModuleManifest } from '@railtools/module-arc';
 import { empriseLateraleModuleManifest } from '@railtools/module-empriselaterale';
 import { raccVertModuleManifest } from '@railtools/module-raccvert';
+import { arc2polygoneModuleManifest } from '@railtools/module-arc2polygone';
 
 /**
  * Liste des modules affichés sur le portail. Chaque nouveau module ajoute son manifeste ici
@@ -13,4 +14,5 @@ export const moduleRegistry: ModuleManifest[] = [
   arcModuleManifest,
   empriseLateraleModuleManifest,
   raccVertModuleManifest,
+  arc2polygoneModuleManifest,
 ];

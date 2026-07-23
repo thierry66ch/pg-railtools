@@ -1,0 +1,57 @@
+{
+  "title": "Arc2Poly — voie courbe sur supports droits",
+  "description": "Arc2Poly — Poser une voie en courbe sur des supports rectilignes suppose de discrétiser l'arc en une suite de segments droits. Ce module calcule, pour trois familles de supports courantes (planches découpées en trapèze, pavés béton rectangulaires, bordures béton à emboîtement), l'angle d'ouverture de chaque élément, les angles de coupe ou de déviation, les rayons caractéristiques de l'ouvrage et les débords latéraux de part et d'autre de l'axe de voie. Le calcul impose que la voie soit centrée sur le support, c'est-à-dire que le débord minimal côté intérieur de la courbe soit égal au débord minimal côté extérieur. Limites : géométrie plane et circulaire uniquement, sans dévers ni raccordement progressif. Les résultats sont des cotes théoriques : ils n'intègrent ni tolérance de fabrication, ni retrait de matériau, ni jeu de pose autre que celui explicitement paramétré pour les bordures à emboîtement.",
+  "type": {
+    "label": "Type de support",
+    "t1": "1 — Planches trapézoïdales (coupes radiales)",
+    "t2": "2 — Pavés rectangulaires (contact par l'angle intérieur)",
+    "t3": "3 — Bordures à emboîtement (rotule)"
+  },
+  "form": {
+    "Ra": "Rayon de l'axe de la voie Ra (mm)",
+    "B": "Largeur de l'élément B (mm)",
+    "Lm": "Longueur médiane Lm (mm)",
+    "LmRotule": "Entraxe des rotules Lm (mm)",
+    "beta": "Ouverture totale de l'arc β (°)",
+    "j": "Jeu d'emboîtement (mm)",
+    "showOverhangCotes": "Coter les débords sur le dessin"
+  },
+  "result": {
+    "title": "Résultats",
+    "alpha": "Angle par élément α (°)",
+    "Ra": "Rayon axe Ra (mm)",
+    "Rm": "Rayon médian Rm (mm)",
+    "Ri": "Rayon enveloppe intérieur Ri (mm)",
+    "Re": "Rayon enveloppe extérieur Re (mm)",
+    "Li": "Longueur rive intérieure Li (mm)",
+    "Lm": "Longueur médiane Lm (mm)",
+    "Le": "Longueur rive extérieure Le (mm)",
+    "coupe": "Angle de coupe (scie à onglet) (°)",
+    "rentrant": "Angle rentrant 180° − α (°)",
+    "O": "Ouverture O (mm)",
+    "EiMin": "Débord intérieur min. Ei min (mm)",
+    "EiMax": "Débord intérieur max. Ei max (mm)",
+    "EeMin": "Débord extérieur min. Ee min (mm)",
+    "EeMax": "Débord extérieur max. Ee max (mm)",
+    "n": "Nombre d'éléments n",
+    "residual": "Angle résiduel βr (°)",
+    "residualChord": "Corde résiduelle cr (mm)",
+    "exactlyCovered": "Arc couvert exactement par {n} éléments",
+    "specialElement": "Élément spécial à ajuster : βr = {betar}°, corde cr = {chord} mm"
+  },
+  "errors": {
+    "V1": "Le paramètre {param} doit être strictement positif.",
+    "V2": "L'ouverture de l'arc β doit être comprise entre 0° (exclu) et 360°.",
+    "V3": "Le jeu d'emboîtement ne peut pas être négatif.",
+    "V4": "Corde supérieure au diamètre : arc impossible (réduire Lm ou augmenter Ra).",
+    "V5": "Largeur B incompatible avec le rayon Ra pour le type 2 (réduire B ou augmenter Ra).",
+    "V6": "L'élément recouvre le centre de l'arc (rayon intérieur ≤ 0).",
+    "V7": "Configuration de rotule dégénérée (réduire B ou augmenter Ra).",
+    "V8": "Angle par élément trop ouvert (> 45°) : le modèle polygonal n'est plus pertinent (réduire Lm ou augmenter Ra).",
+    "V9": "Échec de résolution numérique."
+  },
+  "footer": {
+    "version": "Version {version} — build {build}"
+  },
+  "wip": "Module en cours d'intégration : le moteur de calcul (3 types, validations, découpage) est en place et testé ; l'interface de saisie, le dessin et la bibliothèque de modèles arrivent dans les phases suivantes."
+}

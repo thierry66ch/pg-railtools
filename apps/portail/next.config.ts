@@ -10,6 +10,7 @@ const nextConfig: NextConfig = {
     '@railtools/module-arc',
     '@railtools/module-empriselaterale',
     '@railtools/module-raccvert',
+    '@railtools/module-arc2polygone',
   ],
 };
 
