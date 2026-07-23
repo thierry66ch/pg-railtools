@@ -1,6 +1,6 @@
 /**
  * Cœur métier du module « Calculs d'arc » : formules pures pour un arc de cercle défini
- * par sa corde AB (longueur c), sa flèche CD (f) et son rayon R.
+ * par sa corde AB (longueur c), sa flèche MD (f) et son rayon R.
  *
  * Ce fichier ne dépend d'aucun composant ni d'aucune brique de `@railtools/commun` :
  * uniquement `Math`, pour rester trivialement testable en isolation. Toutes les longueurs
@@ -8,9 +8,14 @@
  *
  * Notations (voir docs/module_2_calcul_d_arc/Calcul_d_arc.md) :
  *  - c  : longueur de la corde AB
- *  - f  : flèche = CD (distance perpendiculaire entre le milieu de la corde et le sommet)
+ *  - M  : milieu de la corde AB
+ *  - f  : flèche = MD (distance perpendiculaire entre le milieu de la corde et le sommet)
  *  - R  : rayon du cercle
  *  - α  : demi-angle au centre sous-tendu par la demi-corde, α = asin((c/2)/R)
+ *  - S  : sommet, intersection des tangentes au cercle en A et B
+ *  - T  : longueur de tangente, T = A-S = B-S = R·tan(α)
+ *  - bissectrice : distance S-M = R·(1/cos α − cos α)
+ *  - contre-flèche : distance S-D = R·(1/cos α − 1) (distance externe standard)
  *  - E  : point courant sur la corde, à la distance AE de A
  *  - EF : flèche locale au point E (0 en A et B, f au milieu)
  */
@@ -24,6 +29,9 @@ export type ArcErrorCode =
   | 'radius-too-small' // R < c/2 : la corde dépasse le diamètre, impossible
   | 'angle-not-positive' // angle au centre ≤ 0
   | 'angle-too-large' // angle au centre > π : dépasse le demi-cercle, non pris en charge
+  | 'tangent-not-positive' // T ≤ 0
+  | 'tangent-too-small' // T ≤ c/2 : arc dégénéré en droite, non pris en charge
+  | 'tangent-angle-too-large' // angle au centre ≥ π : tangentes parallèles, aucun R fini
   | 'intervals-too-small' // n < 2
   | 'intervals-not-integer'; // n non entier
 
@@ -91,6 +99,75 @@ export function chordSagittaFromRadiusAngle(
  */
 export function centralAngleFromRadiusChord(radiusMm: number, chordMm: number): number {
   return 2 * Math.asin(chordMm / (2 * radiusMm));
+}
+
+/**
+ * Fonctionnalité 4 — Rayon R à partir de la longueur de tangente T (A-S ou B-S, S =
+ * sommet, intersection des tangentes en A et B) et de l'angle au centre (angle plein,
+ * en radians). R = T / tan(angle/2).
+ *
+ * Requiert T > 0 et 0 < angle < π **strictement** (contrairement à
+ * `chordSagittaFromRadiusAngle`, l'angle π lui-même est ici invalide : à 180° les
+ * tangentes en A et B sont parallèles, aucun rayon fini ne correspond à une tangente
+ * donnée).
+ */
+export function radiusFromTangentAngle(tangentMm: number, angleRad: number): ArcResult<number> {
+  if (!(tangentMm > 0)) return err('tangent-not-positive');
+  if (!(angleRad > 0)) return err('angle-not-positive');
+  if (angleRad >= Math.PI) return err('tangent-angle-too-large');
+  return ok(tangentMm / Math.tan(angleRad / 2));
+}
+
+/**
+ * Fonctionnalité 5 — Rayon R et angle au centre (angle plein, en radians) à partir de
+ * la longueur de tangente T et de la corde c.
+ * cos(angle/2) = c/(2T) ⟹ angle = 2·acos(c/(2T)) ; R = T/tan(angle/2).
+ *
+ * Requiert c > 0 et T > c/2 **strictement** (T = c/2 correspondrait à un arc dégénéré
+ * en droite — angle → 0, rayon → l'infini — cas limite non représentable).
+ */
+export function radiusAngleFromTangentChord(
+  tangentMm: number,
+  chordMm: number,
+): ArcResult<{ radiusMm: number; angleRad: number }> {
+  if (!(chordMm > 0)) return err('chord-not-positive');
+  if (!(tangentMm > 0)) return err('tangent-not-positive');
+  if (tangentMm <= chordMm / 2) return err('tangent-too-small');
+  const half = Math.acos(chordMm / (2 * tangentMm));
+  return ok({ radiusMm: tangentMm / Math.tan(half), angleRad: 2 * half });
+}
+
+/** Tangente (A-S = B-S), bissectrice (S-M) et contre-flèche (S-D, distance externe). */
+export interface TangentGeometry {
+  tangentMm: number;
+  bisectorMm: number;
+  externalMm: number;
+}
+
+/** Tolérance (radians) sous laquelle l'angle plein est considéré indiscernable de π. */
+const SEMICIRCLE_EPSILON_RAD = 1e-9;
+
+/**
+ * Grandeurs caractéristiques du sommet S (intersection des tangentes en A et B) à
+ * partir du rayon R et de l'angle au centre (angle plein, en radians). Fonction
+ * volontairement non validante (appelée uniquement sur une configuration déjà
+ * validée), à l'image de `centralAngleFromRadiusChord`.
+ *
+ * Retourne `undefined` à la limite du demi-cercle (angle → π) : les tangentes en A et
+ * B deviennent parallèles, S s'éloigne à l'infini — aucune valeur finie n'existe.
+ */
+export function tangentGeometryFromRadiusAngle(
+  radiusMm: number,
+  angleRad: number,
+): TangentGeometry | undefined {
+  const half = angleRad / 2;
+  if (Math.PI / 2 - half < SEMICIRCLE_EPSILON_RAD) return undefined;
+  const secant = 1 / Math.cos(half);
+  return {
+    tangentMm: radiusMm * Math.tan(half),
+    bisectorMm: radiusMm * (secant - Math.cos(half)),
+    externalMm: radiusMm * (secant - 1),
+  };
 }
 
 /** Un point d'implantation de l'arc (une ligne du tableau). */

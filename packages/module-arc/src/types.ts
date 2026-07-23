@@ -1,7 +1,7 @@
 import type { DrawingScale } from '@railtools/commun';
 
 /** Mode de saisie : quel couple de valeurs l'utilisateur fournit, le 3e étant déduit. */
-export type ArcInputMode = 'chordSagitta' | 'radiusChord' | 'radiusAngle';
+export type ArcInputMode = 'chordSagitta' | 'radiusChord' | 'radiusAngle' | 'tangentAngle' | 'tangentChord';
 
 /**
  * Données d'un projet du module « Calculs d'arc ». Toutes les longueurs sont en mm
@@ -16,8 +16,10 @@ export interface ArcProjectData {
   sagittaMm: number;
   /** Rayon R (mm) — saisi en mode `radiusChord`/`radiusAngle`, déduit en mode `chordSagitta`. */
   radiusMm: number;
-  /** Angle au centre (°) — saisi en mode `radiusAngle`, déduit dans les 2 autres modes. */
+  /** Angle au centre (°) — saisi en mode `radiusAngle`/`tangentAngle`, déduit ailleurs. */
   centralAngleDeg: number;
+  /** Longueur de tangente T (mm) — saisie en mode `tangentAngle`/`tangentChord`. */
+  tangentMm: number;
   /** Représenter l'angle au centre sur le dessin (entre tangentes ou au centre). */
   showCentralAngleCote: boolean;
   /** Nombre d'intervalles le long de l'arc pour le tableau d'implantation (≥ 2). */

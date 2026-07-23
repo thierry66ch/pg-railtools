@@ -1,5 +1,32 @@
 # Changelog — module-arc
 
+## 1.10 — 2026-07-20
+
+Sommet S (intersection des tangentes en A et B) et tableau de caractéristiques
+standardisé, sur demande de l'utilisateur :
+
+- Point C (milieu de la corde) renommé **M** pour ne plus être confondu avec le
+  centre du cercle.
+- Nouvelles grandeurs caractéristiques du sommet S : **tangente** (A-S = B-S),
+  **bissectrice** (S-M) et **contre-flèche** (S-D, distance externe standard des
+  tracés routiers/ferroviaires). Le point S de la cote d'angle existante (entre
+  tangentes) est désormais calculé par formule fermée (`tangentGeometryFromRadiusAngle`)
+  au lieu d'une intersection de droites, et étiqueté « S » sur le dessin. Au cas
+  limite du demi-cercle (angle → 180°, tangentes parallèles), ces 3 valeurs
+  affichent « ∞ » plutôt qu'un nombre flottant sans sens physique.
+- 2 nouvelles méthodes de calcul : **tangente + angle au centre** et
+  **tangente + corde** → toutes les autres valeurs.
+- Toutes les valeurs caractéristiques (données comme calculées) sont désormais
+  regroupées dans un **tableau standard à 2 colonnes** (désignation → valeur),
+  identique pour les 5 méthodes, avec les valeurs saisies en gras — remplace
+  l'ancien paragraphe de résultat qui variait selon le mode. Le même tableau
+  alimente le résumé d'export PDF/Markdown (auparavant une ligne à 5 colonnes,
+  incomplète). Ce tableau reste affiché même si le nombre d'intervalles est
+  invalide (la longueur d'arc n'a plus besoin du tableau d'implantation pour se
+  calculer).
+- Libellés des méthodes de calcul uniformisés : la partie après la flèche (`→`)
+  devient « autres valeurs » pour toutes, cohérent avec les 2 nouvelles méthodes.
+
 ## 1.9 — 2026-07-10
 
 Retouche cosmétique : la ligne "Nombre d'intervalles" avait un `justifyContent:
