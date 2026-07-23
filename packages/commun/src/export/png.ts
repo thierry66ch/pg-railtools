@@ -43,11 +43,28 @@ export function getSvgContentBBoxMm(svg: SVGSVGElement): {
   return { x: bbox.x, y: bbox.y, width: bbox.width, height: bbox.height };
 }
 
+/**
+ * Budget de pixels raisonnable pour un canvas d'export PNG. Bien en-dessous de la limite
+ * de la plupart des navigateurs (~268 mégapixels sous Chromium) pour rester rapide et
+ * garder une marge de sécurité, tout en couvrant largement les besoins d'export courants.
+ */
+const MAX_CANVAS_PIXELS = 32_000_000;
+
 export async function svgToPngBlob(svg: SVGSVGElement, scaleFactor = 4): Promise<Blob> {
   const { width, height } = getSvgMmSize(svg);
   if (width <= 0 || height <= 0) {
     throw new Error('Impossible de déterminer les dimensions du dessin SVG à exporter.');
   }
+
+  // Un dessin à grande échelle (ex. 1:1 sur une géométrie de plusieurs mètres) peut produire
+  // un canvas dépassant la limite du navigateur (cf. pieges-a-eviter.md, "Export PNG/PDF :
+  // limiter la taille du canvas") : on réduit l'échelle effective pour rester dans un budget
+  // de pixels raisonnable, plutôt que de laisser l'export planter.
+  const requestedPixels = width * scaleFactor * height * scaleFactor;
+  const effectiveScaleFactor =
+    requestedPixels > MAX_CANVAS_PIXELS
+      ? scaleFactor * Math.sqrt(MAX_CANVAS_PIXELS / requestedPixels)
+      : scaleFactor;
 
   const serialized = new XMLSerializer().serializeToString(svg);
   const svgDataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(serialized)}`;
@@ -61,8 +78,8 @@ export async function svgToPngBlob(svg: SVGSVGElement, scaleFactor = 4): Promise
   await loaded;
 
   const canvas = document.createElement('canvas');
-  canvas.width = Math.round(width * scaleFactor);
-  canvas.height = Math.round(height * scaleFactor);
+  canvas.width = Math.max(1, Math.round(width * effectiveScaleFactor));
+  canvas.height = Math.max(1, Math.round(height * effectiveScaleFactor));
   const ctx = canvas.getContext('2d');
   if (!ctx) {
     throw new Error('Contexte de rendu Canvas 2D indisponible.');
@@ -73,7 +90,12 @@ export async function svgToPngBlob(svg: SVGSVGElement, scaleFactor = 4): Promise
   return new Promise<Blob>((resolve, reject) => {
     canvas.toBlob((blob) => {
       if (blob) resolve(blob);
-      else reject(new Error('Échec de la génération du PNG.'));
+      else
+        reject(
+          new Error(
+            "Échec de la génération du PNG : dessin trop grand pour l'export à cette échelle. Choisissez une échelle plus petite ou le mode « Ajustée à la page ».",
+          ),
+        );
     }, 'image/png');
   });
 }

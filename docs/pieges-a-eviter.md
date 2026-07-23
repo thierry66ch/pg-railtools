@@ -421,3 +421,22 @@ mis à jour par React juste après avoir déclenché un clic dans le **même** a
 jour du DOM peut ne pas être encore committée au moment de la lecture synchrone qui suit —
 relire l'état dans un appel séparé (ou après un `setTimeout`/`await`) avant de conclure que
 le clic n'a rien fait.
+
+## Export PNG/PDF : limiter la taille du canvas
+
+`svgToPngBlob()` (`export/png.ts`) rasterise le SVG sur un canvas dimensionné
+`largeurViewBox * scaleFactor` x `hauteurViewBox * scaleFactor` (`scaleFactor` par défaut à
+8 pour les exports PDF et Markdown). Avec une échelle de dessin 1:1 (`DrawingScaleSelector`)
+et une géométrie réelle de plusieurs mètres, ce canvas peut dépasser la limite du navigateur
+(~268 mégapixels sous Chromium) et faire échouer `canvas.toBlob` — reproduit dans
+`module-arc` avec le mode « Rayon et angle au centre », angle 90°, rayon 2500 mm par défaut,
+échelle 1:1 (`viewBox` ≈ 3575×1858 mm, soit ≈ 425 mégapixels à `scaleFactor` 8). Ce n'était
+pas un bug métier d'un module en particulier : n'importe quel module peut le déclencher dès
+qu'un dessin assez grand est exporté à une échelle assez fine.
+
+Correctif : `svgToPngBlob()` réduit désormais l'échelle effective (proportionnellement dans
+les deux dimensions, via `Math.sqrt`) si `largeur*scaleFactor * hauteur*scaleFactor`
+dépasserait un budget de pixels raisonnable (`MAX_CANVAS_PIXELS`), au lieu de laisser le
+canvas planter silencieusement. Si `canvas.toBlob` échoue malgré tout, l'erreur renvoyée
+invite l'utilisateur à choisir une échelle plus petite ou le mode « Ajustée à la page »,
+plutôt que de remonter un message générique jusqu'à l'overlay d'erreur Next.js.
