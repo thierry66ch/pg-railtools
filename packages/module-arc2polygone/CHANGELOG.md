@@ -40,9 +40,26 @@ Toutes les évolutions notables de ce module sont documentées ici. Versionnemen
 - Gestion de projets (ProjectManager + Enregistrer avec rafraîchissement de la liste),
   export/import d'environnement, exports PDF/Markdown (tableau) via `ExportButtons`.
 
+### Phase 4 — dessin technique (fait)
+
+- Tronçon de 3 éléments au contour réel selon le type : trapèzes (coupes radiales),
+  rectangles (contact par l'angle intérieur, ouverture O), bordures en stade (rotule B/2,
+  pivots).
+- Les 4 rayons caractéristiques en trait d'axe aux couleurs imposées (Ra bleu, Rm rouge,
+  Ri brun, Re vert), labellisés ; rayons-vecteurs O → joints ; cotation de l'angle α au
+  centre.
+- Annotations par type : angle de coupe/onglet (type 1), angle rentrant 180°−α (types 2
+  et 3), ouverture O (type 2), cercle de rotule B/2 (type 3).
+- Interrupteur « cotation des débords » (best-effort) : Ei min/max, Ee min/max.
+- Sélecteur d'échelle de dessin + barre d'échelle graduée (bibliothèque commune) ; vue
+  agrandie (lightbox) ; export PNG à l'échelle via `ExportButtons`.
+- Dessin rendu côté client uniquement (évite un mismatch d'hydratation dû aux différences
+  d'ULP sin/cos entre moteurs JS serveur/navigateur sur les coordonnées SVG).
+
 ### À venir
 
-- Phase 4 : dessin (3 éléments, 4 rayons aux couleurs imposées, barre d'échelle,
-  cotation des débords) + export PNG.
+- Phase 5 : bibliothèque de modèles de support (copie figée à l'insertion) + finalisation
+  des exports.
+- Ultérieur : gabarit de coupe 1:1 imprimable (type 1), pavage multi-pages.
 - Phase 5 : bibliothèque de modèles (copie figée) + exports PDF/Markdown/PNG.
 - Ultérieur : gabarit de coupe 1:1 imprimable (type 1), pavage multi-pages.

@@ -52,6 +52,13 @@
     "V8": "Angle par élément trop ouvert (> 45°) : le modèle polygonal n'est plus pertinent (réduire Lm ou augmenter Ra).",
     "V9": "Échec de résolution numérique."
   },
+  "drawing": {
+    "rotule": "rotule B/2",
+    "EiMin": "Ei min",
+    "EiMax": "Ei max",
+    "EeMin": "Ee min",
+    "EeMax": "Ee max"
+  },
   "footer": {
     "version": "Version {version} — build {build}"
   }
