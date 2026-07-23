@@ -18,6 +18,8 @@
   },
   "result": {
     "title": "Résultats",
+    "designation": "Grandeur",
+    "value": "Valeur",
     "alpha": "Angle par élément α (°)",
     "Ra": "Rayon axe Ra (mm)",
     "Rm": "Rayon médian Rm (mm)",
@@ -52,6 +54,5 @@
   },
   "footer": {
     "version": "Version {version} — build {build}"
-  },
-  "wip": "Module en cours d'intégration : le moteur de calcul (3 types, validations, découpage) est en place et testé ; l'interface de saisie, le dessin et la bibliothèque de modèles arrivent dans les phases suivantes."
+  }
 }
