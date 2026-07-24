@@ -10,8 +10,8 @@ import type { SupportType } from './calc/arc2poly';
 export interface Arc2PolyLibraryEntry {
   /** Identifiant interne. */
   id: string;
-  /** Libellé utilisateur. */
-  nom: string;
+  /** Libellé utilisateur (champ requis par `LibraryItem` de la base commune). */
+  name: string;
   type: SupportType;
   /** Largeur [mm]. */
   B: number;
@@ -29,7 +29,7 @@ export interface Arc2PolyLibraryEntry {
  */
 export interface Arc2PolyModelOrigin {
   id: string;
-  nom: string;
+  name: string;
 }
 
 /**

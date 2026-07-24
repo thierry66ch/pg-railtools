@@ -56,10 +56,21 @@ Toutes les évolutions notables de ce module sont documentées ici. Versionnemen
 - Dessin rendu côté client uniquement (évite un mismatch d'hydratation dû aux différences
   d'ULP sin/cos entre moteurs JS serveur/navigateur sur les coordonnées SVG).
 
+### Phase 5 — bibliothèque de modèles de support (fait)
+
+- Bibliothèque partagée entre projets (base commune `itemLibrary`, `kind = 'support'`) :
+  créer, modifier, dupliquer, supprimer un modèle (nom, type, B, Lm, jeu, commentaire).
+- Insertion dans un projet = **copie figée** (CDC §10.2) : les dimensions du support sont
+  copiées ; seul le nom d'origine est conservé (informatif). Toute édition manuelle d'une
+  dimension détache le projet du modèle.
+- Export / import **JSON dédié** de la bibliothèque, indépendant des projets (CDC §10.3) ;
+  import additif (les entrées reçoivent un nouvel id, sans écraser l'existant).
+- Le panneau se rafraîchit après un import d'environnement (remount par `key`).
+
+La base fonctionnelle de la v0.1 est complète (calcul, UI, dessin, bibliothèque, exports).
+
 ### À venir
 
-- Phase 5 : bibliothèque de modèles de support (copie figée à l'insertion) + finalisation
-  des exports.
 - Ultérieur : gabarit de coupe 1:1 imprimable (type 1), pavage multi-pages.
 - Phase 5 : bibliothèque de modèles (copie figée) + exports PDF/Markdown/PNG.
 - Ultérieur : gabarit de coupe 1:1 imprimable (type 1), pavage multi-pages.

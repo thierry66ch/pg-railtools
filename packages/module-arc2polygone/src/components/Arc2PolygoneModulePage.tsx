@@ -28,7 +28,8 @@ import {
 import versionInfo from '../../version.json';
 import { computeArc2Poly, type SupportType } from '../calc/arc2poly';
 import { buildArc2PolyDrawing, RADIUS_COLORS, type Arc2PolyDrawing } from '../drawing/geometry';
-import type { Arc2PolyProjectData } from '../types';
+import { Arc2PolyLibraryPanel } from './Arc2PolyLibraryPanel';
+import type { Arc2PolyLibraryEntry, Arc2PolyModelOrigin, Arc2PolyProjectData } from '../types';
 
 const MODULE_ID = 'arc2polygone';
 
@@ -93,6 +94,7 @@ export function Arc2PolygoneModulePage() {
   const [beta, setBeta] = useState(DEFAULT_BETA_DEG);
   const [j, setJ] = useState(DEFAULT_J_MM);
   const [showOverhangCotes, setShowOverhangCotes] = useState(false);
+  const [modelOrigin, setModelOrigin] = useState<Arc2PolyModelOrigin | undefined>();
   const [drawingScale, setDrawingScale] = useState<DrawingScale>(DEFAULT_DRAWING_SCALE);
   const [activeProjectId, setActiveProjectId] = useState<string | undefined>();
   const [activeProjectName, setActiveProjectName] = useState<string | undefined>();
@@ -179,7 +181,7 @@ export function Arc2PolygoneModulePage() {
     : undefined;
 
   function createDefaultData(): Arc2PolyProjectData {
-    return { type, Ra, B, Lm, beta, j, drawingScale, showOverhangCotes };
+    return { type, Ra, B, Lm, beta, j, modelOrigin, drawingScale, showOverhangCotes };
   }
 
   function handleOpen(project: Project<Arc2PolyProjectData>) {
@@ -190,11 +192,31 @@ export function Arc2PolygoneModulePage() {
     setLm(d.Lm);
     setBeta(d.beta);
     setJ(d.j);
+    setModelOrigin(d.modelOrigin);
     setShowOverhangCotes(d.showOverhangCotes);
     setDrawingScale(d.drawingScale);
     setActiveProjectId(project.id);
     setActiveProjectName(project.name);
   }
+
+  /**
+   * Insertion d'un modèle de bibliothèque : COPIE FIGÉE (CDC §10.2). Les dimensions du
+   * support (type, B, Lm, jeu) sont copiées dans le projet ; Ra/β/échelle restent propres
+   * au projet. Seul le nom d'origine est conservé, à titre informatif.
+   */
+  function handleUseModel(entry: Arc2PolyLibraryEntry) {
+    setType(entry.type);
+    setB(entry.B);
+    setLm(entry.Lm);
+    setJ(entry.jeu);
+    setModelOrigin({ id: entry.id, name: entry.name });
+  }
+
+  /** Toute édition manuelle d'une dimension de support détache le projet du modèle inséré. */
+  const editSupport = <T,>(setter: (v: T) => void) => (v: T) => {
+    setter(v);
+    setModelOrigin(undefined);
+  };
 
   async function handleSave() {
     if (!activeProjectId) return;
@@ -368,7 +390,7 @@ export function Arc2PolygoneModulePage() {
           <select
             className="rt-select"
             value={type}
-            onChange={(event) => setType(Number(event.target.value) as SupportType)}
+            onChange={(event) => editSupport(setType)(Number(event.target.value) as SupportType)}
           >
             <option value={1}>{t('type.t1')}</option>
             <option value={2}>{t('type.t2')}</option>
@@ -384,11 +406,11 @@ export function Arc2PolygoneModulePage() {
         </label>
         <label className="rt-field">
           <span>{t('form.B')}</span>
-          <NumberInput value={B} onChange={setB} />
+          <NumberInput value={B} onChange={editSupport(setB)} />
         </label>
         <label className="rt-field">
           <span>{type === 3 ? t('form.LmRotule') : t('form.Lm')}</span>
-          <NumberInput value={Lm} onChange={setLm} />
+          <NumberInput value={Lm} onChange={editSupport(setLm)} />
         </label>
         <label className="rt-field">
           <span>{t('form.beta')}</span>
@@ -397,7 +419,7 @@ export function Arc2PolygoneModulePage() {
         {type === 3 && (
           <label className="rt-field">
             <span>{t('form.j')}</span>
-            <NumberInput value={j} onChange={setJ} />
+            <NumberInput value={j} onChange={editSupport(setJ)} />
           </label>
         )}
         {activeProjectId && (
@@ -406,6 +428,10 @@ export function Arc2PolygoneModulePage() {
           </button>
         )}
       </div>
+
+      {modelOrigin && (
+        <p style={{ margin: 0, color: 'var(--rt-color-text-muted)' }}>{t('library.usedModel', { name: modelOrigin.name })}</p>
+      )}
 
       {!outcome.ok && (
         <p className="rt-error">
@@ -478,6 +504,8 @@ export function Arc2PolygoneModulePage() {
           )}
         </>
       )}
+
+      <Arc2PolyLibraryPanel key={`lib${projectListVersion}`} onUseInProject={handleUseModel} />
 
       <ProjectManager<Arc2PolyProjectData>
         key={projectListVersion}

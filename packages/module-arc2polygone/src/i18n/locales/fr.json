@@ -5,7 +5,10 @@
     "label": "Type de support",
     "t1": "1 — Planches trapézoïdales (coupes radiales)",
     "t2": "2 — Pavés rectangulaires (contact par l'angle intérieur)",
-    "t3": "3 — Bordures à emboîtement (rotule)"
+    "t3": "3 — Bordures à emboîtement (rotule)",
+    "t1Short": "Planches (type 1)",
+    "t2Short": "Pavés (type 2)",
+    "t3Short": "Bordures (type 3)"
   },
   "form": {
     "Ra": "Rayon de l'axe de la voie Ra (mm)",
@@ -51,6 +54,28 @@
     "V7": "Configuration de rotule dégénérée (réduire B ou augmenter Ra).",
     "V8": "Angle par élément trop ouvert (> 45°) : le modèle polygonal n'est plus pertinent (réduire Lm ou augmenter Ra).",
     "V9": "Échec de résolution numérique."
+  },
+  "library": {
+    "title": "Bibliothèque de modèles de support",
+    "empty": "Aucun modèle enregistré. Ajoutez-en un ou importez une bibliothèque.",
+    "add": "Ajouter un modèle",
+    "useInProject": "Utiliser dans le projet",
+    "edit": "Modifier",
+    "duplicate": "Dupliquer",
+    "delete": "Supprimer",
+    "exportJson": "Exporter la bibliothèque (JSON)",
+    "importJson": "Importer une bibliothèque (JSON)",
+    "importError": "Ce fichier n'est pas une bibliothèque Arc2Poly valide.",
+    "usedModel": "Modèle inséré : {name}",
+    "fields": {
+      "name": "Nom",
+      "type": "Type",
+      "B": "Largeur B (mm)",
+      "Lm": "Longueur médiane Lm (mm)",
+      "LmRotule": "Entraxe des rotules Lm (mm)",
+      "jeu": "Jeu d'emboîtement (mm)",
+      "commentaire": "Commentaire"
+    }
   },
   "drawing": {
     "rotule": "rotule B/2",
